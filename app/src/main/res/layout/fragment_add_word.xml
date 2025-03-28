@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/englishWordInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Слово на английском" />
+
+    <Button
+        android:id="@+id/chooseEnglishTranslationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Выбрать перевод на английский"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/russianWordInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Перевод на русский"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/chooseRussianTranslationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Выбрать перевод на русский"
+        android:layout_marginTop="8dp" />
+
+    <ImageView
+        android:id="@+id/wordImageView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="16dp"
+        android:scaleType="centerCrop"
+        android:background="@android:color/darker_gray" />
+
+    <Spinner
+        android:id="@+id/categorySpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Сохранить"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/reviewButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Перейти к повторению"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/addCategoryButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Добавить категорию"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/deleteCategoryButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Удалить категорию"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/cropImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Кадрировать"
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
+
+</LinearLayout>

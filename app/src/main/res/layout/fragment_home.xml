@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <!-- Выбор категории -->
+    <Spinner
+        android:id="@+id/categorySpinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Кнопка для перехода к обучению -->
+    <Button
+        android:id="@+id/startLearningButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Начать обучение"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/wordListButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Список слов"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Настройки"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>
