@@ -11,13 +11,16 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
+import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentReviewBinding
-import com.example.tala.entity.learningMode.LearningMode
 import com.example.tala.entity.learningMode.LearningModeViewModel
 import com.example.tala.entity.card.CardViewModel
 import com.example.tala.entity.card.Card
+import com.example.tala.fragment.card.CardEnterWordFragment
+import com.example.tala.fragment.card.CardReverseTranslateFragment
+import com.example.tala.fragment.card.CardReviewBase
+import com.example.tala.fragment.card.CardTranslateFragment
 import com.example.tala.integration.mistral.MistralRequest
 import com.example.tala.integration.mistral.MistralRequestMessage
 import com.example.tala.integration.mistral.SentenceResponse
@@ -38,8 +41,8 @@ class ReviewFragment : Fragment() {
 
     private var isTranslationShown = false
     private var currentCard: Card? = null
+    private var currentCardFragment: CardReviewBase? = null
     private lateinit var reviewSettings: ReviewSettings
-    private var sentenceResponse: SentenceResponse? = null
 
     private var selectedCategoryId: Int = 0 // ID выбранной категории
 
@@ -88,11 +91,6 @@ class ReviewFragment : Fragment() {
                 Toast.makeText(requireContext(), "Озвучка не поддерживается на этом устройстве", Toast.LENGTH_SHORT).show()
             }
         }
-
-        binding.speakButton.setOnClickListener {
-            val word = currentCard?.english ?: return@setOnClickListener
-            textToSpeechHelper.speak(word)
-        }
     }
 
     override fun onDestroyView() {
@@ -102,141 +100,60 @@ class ReviewFragment : Fragment() {
 
     // Загружает следующее слово для повторения
     private suspend fun loadNextWord() {
+        Log.i(TAG, "loadNextWord")
+
+        isTranslationShown = false
         val endDayTime = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-        viewModel.getNextWordToReview(endDayTime)?.let { word ->
-            Log.i("ReviewFragment", "loadNextWord: $word")
-            currentCard = word
-            updateUIForLearningMode()
-            isTranslationShown = false
+        val card = viewModel.getNextWordToReview(endDayTime)
 
-            word.imagePath?.let { path ->
-                Glide.with(this)
-                    .load(path)
-                    .into(binding.wordImageView)
-                binding.wordImageView.visibility = View.VISIBLE
-            } ?: run {
-                binding.wordImageView.visibility = View.GONE
+        Log.i(TAG, "loadNextWord: card - $card")
+        if (card != null) {
+            binding.reviewContentContainer.visibility = View.VISIBLE
+            binding.showTranslationButton.visibility = View.VISIBLE
+            (binding.newChip.parent as View).visibility = View.VISIBLE
+
+            currentCard = card
+            currentCardFragment = when (card.cardType) {
+                CardTypeEnum.TRANSLATE -> CardTranslateFragment { card }
+                CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment { card }
+                CardTypeEnum.ENTER_WORD -> CardEnterWordFragment { card }
+                CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> TODO()
+                CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> TODO()
             }
 
-            // todo убрать в метод updateUIForLearningMode
-            if (currentCard!!.cardType == CardTypeEnum.TRANSLATE) {
-                currentCard?.english?.let { textToSpeechHelper.speak(it) }
-                binding.wordImageView.visibility = View.GONE
+            Log.i(TAG, "loadNextWord: currentCardFragment - $currentCardFragment")
+            currentCardFragment?.let {
+                childFragmentManager.beginTransaction()
+                    .replace(R.id.reviewContentContainer, it)
+                    .commit()
             }
 
-        } ?: {
-            // Если слов для повторения нет
-            Log.i("ReviewFragment", "loadNextWord: not words")
-            binding.wordTextView.text = "Слова для повторения закончились!"
+            binding.showTranslationButton.visibility = View.VISIBLE
+            (binding.easyButton.parent as View).visibility = View.GONE
+        } else {
+            Log.i(TAG, "loadNextWord: there is no next word")
+            binding.messageTextView.visibility = View.VISIBLE
+
+            binding.reviewContentContainer.visibility = View.GONE
             binding.showTranslationButton.visibility = View.GONE
-            binding.progressTextView.visibility = View.GONE
-            binding.wordImageView.visibility = View.GONE
-            binding.speakButton.visibility = View.GONE
+            (binding.easyButton.parent as View).visibility = View.GONE
+            (binding.newChip.parent as View).visibility = View.GONE
         }
         setupProgress()
     }
 
-    private fun updateUIForLearningMode() {
-        binding.reviewTextView.visibility = View.GONE
-
-        when (currentCard!!.cardType) {
-            CardTypeEnum.TRANSLATE -> {
-                binding.wordTextView.text = currentCard?.english
-                binding.answerTextView.visibility = View.GONE
-                binding.reviewTextView.visibility = View.GONE
-                binding.showTranslationButton.visibility = View.VISIBLE
-                binding.translationInput.visibility = View.GONE
-            }
-            CardTypeEnum.REVERSE_TRANSLATE -> {
-                binding.wordTextView.text = currentCard?.russian
-                binding.answerTextView.visibility = View.GONE
-                binding.reviewTextView.visibility = View.GONE
-                binding.showTranslationButton.visibility = View.VISIBLE
-                binding.translationInput.visibility = View.GONE
-            }
-            CardTypeEnum.ENTER_WORD -> {
-                binding.wordTextView.text = currentCard?.russian
-                binding.answerTextView.visibility = View.GONE
-                binding.reviewTextView.visibility = View.GONE
-                binding.showTranslationButton.visibility = View.VISIBLE
-                binding.translationInput.visibility = View.VISIBLE
-                binding.translationInput.setText("")
-            }
-            CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> {
-                currentCard?.let {
-                    binding.wordTextView.text = ""
-                    binding.answerTextView.visibility = View.GONE
-                    binding.reviewTextView.visibility = View.GONE
-                    binding.showTranslationButton.visibility = View.GONE
-                    binding.translationInput.visibility = View.GONE
-                    lifecycleScope.launch {
-                        sentenceResponse = getSentence(it.english, it.russian)
-
-                        binding.wordTextView.text = sentenceResponse?.rus
-                        binding.showTranslationButton.visibility = View.VISIBLE
-                        binding.translationInput.visibility = View.VISIBLE
-                        binding.translationInput.setText("")
-                    }
-                }
-            }
-            else -> {
-                Log.i("ReviewFragment", "showTranslation: not mode")
-            }
-        }
-    }
-
     // Показывает перевод слова
     private fun showTranslation() {
+        currentCardFragment?.roll()
         currentCard?.let {
             hideKeyboard()
             isTranslationShown = true
-            binding.answerTextView.visibility = View.VISIBLE
             binding.showTranslationButton.visibility = View.GONE
-            binding.wordImageView.visibility = View.VISIBLE
 
             binding.hardButton.text = "Сложно ${viewModel.getHardInterval(currentCard!!)}"
             binding.mediumButton.text = "Средне ${viewModel.getMediumInterval(currentCard!!)}"
             binding.easyButton.text = "Легко ${viewModel.getEasyInterval(currentCard!!)}"
             (binding.easyButton.parent as View).visibility = View.VISIBLE
-
-            when (currentCard!!.cardType) {
-                CardTypeEnum.TRANSLATE -> {
-                    binding.wordTextView.text = currentCard?.english
-                    binding.answerTextView.text = currentCard?.russian
-                    binding.translationInput.visibility = View.GONE
-                }
-                CardTypeEnum.REVERSE_TRANSLATE -> {
-                    binding.wordTextView.text = currentCard?.english
-                    binding.answerTextView.text = currentCard?.russian
-                    binding.translationInput.visibility = View.GONE
-
-                    currentCard?.english?.let { textToSpeechHelper.speak(it) }
-                }
-                CardTypeEnum.ENTER_WORD -> {
-                    binding.wordTextView.text = currentCard?.english
-                    binding.answerTextView.text = currentCard?.russian
-                    binding.translationInput.visibility = View.VISIBLE
-
-                    currentCard?.english?.let { textToSpeechHelper.speak(it) }
-                }
-                CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> {
-                    binding.wordTextView.text = sentenceResponse?.rus
-                    binding.answerTextView.text = sentenceResponse?.eng
-                    binding.translationInput.visibility = View.VISIBLE
-                    lifecycleScope.launch {
-                        sentenceResponse?.let {
-                            val review = getReview(it, binding.translationInput.text.toString())
-                            binding.reviewTextView.visibility = View.VISIBLE
-                            binding.reviewTextView.text = review
-
-                            sentenceResponse?.eng?.let { sentence -> textToSpeechHelper.speak(sentence) }
-                        }
-                    }
-                }
-                else -> {
-                    Log.i("ReviewFragment", "showTranslation: not mode")
-                }
-            }
         }
     }
 
@@ -271,9 +188,14 @@ class ReviewFragment : Fragment() {
     }
 
     private fun setupProgress() {
-        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        viewModel.getWordsToReviewCount(endDate).observe(viewLifecycleOwner) { count ->
-            binding.progressTextView.text = "Слов для повторения: $count"
+        viewModel.getNewCardsCount().observe(viewLifecycleOwner) { count ->
+            binding.newChip.text = "$count"
+        }
+        viewModel.getResetCardsCount().observe(viewLifecycleOwner) { count ->
+            binding.resetChip.text = "$count"
+        }
+        viewModel.getInProgressCardCount().observe(viewLifecycleOwner) { count ->
+            binding.inProgressChip.text = "$count"
         }
     }
 
@@ -327,6 +249,8 @@ class ReviewFragment : Fragment() {
     }
 
     companion object {
+        private const val TAG = "ReviewFragment"
+
         fun newInstance(categoryId: Int): ReviewFragment {
             val fragment = ReviewFragment()
             val args = Bundle()

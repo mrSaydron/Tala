@@ -1,12 +1,13 @@
 package com.example.tala.entity.card
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.UUID
 
 @Entity(tableName = "card")
 data class Card(

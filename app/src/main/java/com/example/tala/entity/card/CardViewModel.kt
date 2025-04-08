@@ -13,6 +13,7 @@ import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.card.CardTypeFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -81,8 +82,19 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         repository.update(id, nextReviewDate, interval)
     }
 
-    fun getWordsToReviewCount(currentDate: Long): LiveData<Int> {
-        return repository.getCountToReview(currentDate)
+    fun getNewCardsCount(): LiveData<Int> {
+        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
+        return repository.getCountToReview(endDate, StatusEnum.NEW)
+    }
+
+    fun getResetCardsCount(): LiveData<Int> {
+        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
+        return repository.getCountToReview(endDate, StatusEnum.PROGRESS_RESET)
+    }
+
+    fun getInProgressCardCount(): LiveData<Int> {
+        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
+        return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS)
     }
 
     fun updateImagePath(id: Int, imagePath: String) = viewModelScope.launch {
@@ -126,6 +138,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resultHard(card: Card) {
+        Log.i(TAG, "resultHard")
         val ef = if (card.status == StatusEnum.IN_PROGRESS) {
             maxOf(card.ef - 0.5, 1.3)
         } else {
@@ -140,6 +153,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resultMedium(card: Card) {
+        Log.i(TAG, "resultMedium")
         val interval = Math.round(card.interval * card.ef).toInt()
         val savingWord = card.copy(
             status = StatusEnum.IN_PROGRESS,
@@ -149,6 +163,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resultEasy(card: Card) {
+        Log.i(TAG, "resultEasy")
         val interval = Math.round(card.interval * card.ef * 1.5).toInt()
         val ef = card.ef + 0.1
         val savingWord = card.copy(
@@ -161,5 +176,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun calculateNextReviewDate(add: Int, unit: ChronoUnit): Long {
         return LocalDateTime.now().plus(add.toLong(), unit).atZone(ZoneId.systemDefault()).toEpochSecond()
+    }
+
+    companion object {
+        private const val TAG = "CardViewModel"
+
     }
 }

@@ -3,6 +3,7 @@ package com.example.tala.entity.card
 import android.util.Log
 import androidx.lifecycle.LiveData
 import com.example.tala.model.enums.CardTypeEnum
+import com.example.tala.model.enums.StatusEnum
 
 class CardRepository(private val cardDao: CardDao) {
 
@@ -51,8 +52,8 @@ class CardRepository(private val cardDao: CardDao) {
         cardDao.update(id, nextReviewDate, interval)
     }
 
-    fun getCountToReview(currentDate: Long): LiveData<Int> {
-        return cardDao.getCountToReview(currentDate)
+    fun getCountToReview(currentDate: Long, status: StatusEnum): LiveData<Int> {
+        return cardDao.getCountToReview(currentDate, status)
     }
 
     suspend fun updateImagePath(id: Int, imagePath: String) {

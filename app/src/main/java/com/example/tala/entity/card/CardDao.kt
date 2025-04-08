@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.example.tala.model.enums.CardTypeEnum
+import com.example.tala.model.enums.StatusEnum
 
 @Dao
 interface CardDao {
@@ -53,8 +54,8 @@ interface CardDao {
     @Query("UPDATE card SET nextReviewDate = :nextReviewDate, interval = :interval WHERE id = :id")
     suspend fun update(id: Int, nextReviewDate: Long, interval: Int)
 
-    @Query("SELECT COUNT(*) FROM card WHERE nextReviewDate < :endFindDate")
-    fun getCountToReview(endFindDate: Long): LiveData<Int>
+    @Query("SELECT COUNT(*) FROM card WHERE nextReviewDate < :endFindDate AND status = :status")
+    fun getCountToReview(endFindDate: Long, status: StatusEnum): LiveData<Int>
 
     @Query("UPDATE card SET imagePath = :imagePath WHERE id = :id")
     suspend fun updateImagePath(id: Int, imagePath: String)

@@ -12,48 +12,64 @@
         android:gravity="center_horizontal">
 
         <!-- Карточка с словом -->
-        <TextView
-            android:id="@+id/wordTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:text="Слово"
-            android:gravity="center"
-            android:padding="8dp" />
+<!--        <TextView-->
+<!--            android:id="@+id/wordTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:textSize="16sp"-->
+<!--            android:text="Слово"-->
+<!--            android:gravity="center"-->
+<!--            android:padding="8dp" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/answerTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:textSize="16sp"-->
+<!--            android:text="Перевод"-->
+<!--            android:gravity="center"-->
+<!--            android:padding="8dp" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/reviewTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:textSize="12sp"-->
+<!--            android:text="Комментарий"-->
+<!--            android:gravity="center"-->
+<!--            android:padding="8dp" />-->
+
+<!--        <ImageView-->
+<!--            android:id="@+id/wordImageView"-->
+<!--            android:layout_width="150dp"-->
+<!--            android:layout_height="150dp"-->
+<!--            android:layout_marginTop="16dp"-->
+<!--            android:scaleType="centerCrop"-->
+<!--            android:background="@android:color/darker_gray" />-->
+
+<!--        <EditText-->
+<!--            android:id="@+id/translationInput"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Введите перевод"-->
+<!--            android:visibility="gone"-->
+<!--            android:layout_marginTop="16dp" />-->
 
         <TextView
-            android:id="@+id/answerTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:text="Перевод"
-            android:gravity="center"
-            android:padding="8dp" />
-
-        <TextView
-            android:id="@+id/reviewTextView"
+            android:id="@+id/messageTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:text="Комментарий"
+            android:text="Слова закончились"
             android:gravity="center"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/wordImageView"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_marginTop="16dp"
-            android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray" />
-
-        <EditText
-            android:id="@+id/translationInput"
+        <FrameLayout
+            android:id="@+id/reviewContentContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Введите перевод"
-            android:visibility="gone"
-            android:layout_marginTop="16dp" />
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <!-- Кнопка для показа перевода -->
         <Button
@@ -61,7 +77,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Показать перевод"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
         <!-- Кнопки для оценки -->
         <LinearLayout
@@ -92,20 +109,43 @@
                 android:layout_marginEnd="4dp" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/progressTextView"
-            android:layout_width="wrap_content"
+        <!-- 3. Статистика прогресса -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Слов для повторения: 0"
-            android:layout_marginTop="16dp"
-            android:gravity="center"/>
+            android:orientation="vertical"
+            android:layout_marginTop="24dp">
 
-        <Button
-            android:id="@+id/speakButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Озвучить"
-            android:layout_marginTop="16dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" >
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/newChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:text="Новых" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/resetChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:text="Возвращенных"
+                    android:layout_marginStart="8dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/inProgressChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:text="Изучаемых"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

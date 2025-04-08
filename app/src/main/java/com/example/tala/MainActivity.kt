@@ -1,6 +1,7 @@
 package com.example.tala
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -10,6 +11,7 @@ import com.example.tala.entity.category.CategoryViewModel
 import com.example.tala.entity.learningMode.LearningMode
 import com.example.tala.entity.learningMode.LearningModeViewModel
 import com.example.tala.fragment.HomeFragment
+import com.example.tala.service.TextToSpeechHelper
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -19,6 +21,12 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge() // Для красивого отображения на edge-to-edge экранах
         setContentView(R.layout.activity_main)
+
+        textToSpeechHelper = TextToSpeechHelper(this) { isInitialized ->
+            if (!isInitialized) {
+                Toast.makeText(this, "Озвучка не поддерживается на этом устройстве", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         if (savedInstanceState == null) {
             replaceFragment(HomeFragment())
@@ -34,5 +42,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         lateinit var APP: AppCompatActivity
+        lateinit var textToSpeechHelper: TextToSpeechHelper
     }
 }
