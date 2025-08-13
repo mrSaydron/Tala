@@ -14,6 +14,7 @@ import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentSettingsBinding
 import com.example.tala.entity.category.CategoryViewModel
 import com.example.tala.entity.card.CardViewModel
+import com.example.tala.model.enums.CardTypeEnum
 import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
@@ -37,9 +38,11 @@ class SettingsFragment : Fragment() {
         reviewSettings = ReviewSettings(requireContext())
 
         // Заполняем поля текущими значениями
-        binding.easyIntervalInput.setText(reviewSettings.easyInterval.toString())
-        binding.mediumIntervalInput.setText(reviewSettings.mediumInterval.toString())
-        binding.hardIntervalInput.setText(reviewSettings.hardInterval.toString())
+        binding.translateEfInput.setText(reviewSettings.getEf(CardTypeEnum.TRANSLATE).toString())
+        binding.reverseTranslateEfInput.setText(reviewSettings.getEf(CardTypeEnum.REVERSE_TRANSLATE).toString())
+        binding.enterWordEfInput.setText(reviewSettings.getEf(CardTypeEnum.ENTER_WORD).toString())
+        binding.sentenceToStudiedEfInput.setText(reviewSettings.getEf(CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE).toString())
+        binding.sentenceToStudentEfInput.setText(reviewSettings.getEf(CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE).toString())
 
         // Инициализация Spinner
         val levels = resources.getStringArray(R.array.english_levels)
@@ -66,14 +69,18 @@ class SettingsFragment : Fragment() {
     }
 
     private fun saveSettings() {
-        val easyInterval = binding.easyIntervalInput.text.toString().toIntOrNull() ?: 4
-        val mediumInterval = binding.mediumIntervalInput.text.toString().toIntOrNull() ?: 2
-        val hardInterval = binding.hardIntervalInput.text.toString().toIntOrNull() ?: 1
+        val translateEf = binding.translateEfInput.text.toString().toDoubleOrNull() ?: CardTypeEnum.TRANSLATE.defaultEf
+        val reverseTranslateEf = binding.reverseTranslateEfInput.text.toString().toDoubleOrNull() ?: CardTypeEnum.REVERSE_TRANSLATE.defaultEf
+        val enterWordEf = binding.enterWordEfInput.text.toString().toDoubleOrNull() ?: CardTypeEnum.ENTER_WORD.defaultEf
+        val sentenceToStudiedEf = binding.sentenceToStudiedEfInput.text.toString().toDoubleOrNull() ?: CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE.defaultEf
+        val sentenceToStudentEf = binding.sentenceToStudentEfInput.text.toString().toDoubleOrNull() ?: CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE.defaultEf
         val englishLevel = binding.levelSpinner.selectedItem.toString().substring(0, 2)
 
-        reviewSettings.easyInterval = easyInterval
-        reviewSettings.mediumInterval = mediumInterval
-        reviewSettings.hardInterval = hardInterval
+        reviewSettings.setEf(CardTypeEnum.TRANSLATE, translateEf)
+        reviewSettings.setEf(CardTypeEnum.REVERSE_TRANSLATE, reverseTranslateEf)
+        reviewSettings.setEf(CardTypeEnum.ENTER_WORD, enterWordEf)
+        reviewSettings.setEf(CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE, sentenceToStudiedEf)
+        reviewSettings.setEf(CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE, sentenceToStudentEf)
         reviewSettings.englishLevel = englishLevel
 
         Toast.makeText(requireContext(), "Настройки сохранены", Toast.LENGTH_SHORT).show()

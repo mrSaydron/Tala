@@ -2,22 +2,30 @@ package com.example.tala
 
 import android.content.Context
 import androidx.core.content.edit
+import com.example.tala.model.enums.CardTypeEnum
 
 class ReviewSettings(context: Context) {
 
     private val sharedPreferences = context.getSharedPreferences("review_settings", Context.MODE_PRIVATE)
 
-    var easyInterval: Int
-        get() = sharedPreferences.getInt("easy_interval", 4) // По умолчанию 4 дня
-        set(value) = sharedPreferences.edit { putInt("easy_interval", value) }
+    fun getEf(cardType: CardTypeEnum): Double {
+        val key = efKey(cardType)
+        val defaultValue = cardType.defaultEf.toFloat()
+        return sharedPreferences.getFloat(key, defaultValue).toDouble()
+    }
 
-    var mediumInterval: Int
-        get() = sharedPreferences.getInt("medium_interval", 2) // По умолчанию 2 дня
-        set(value) = sharedPreferences.edit { putInt("medium_interval", value) }
+    fun setEf(cardType: CardTypeEnum, value: Double) {
+        val key = efKey(cardType)
+        sharedPreferences.edit { putFloat(key, value.toFloat()) }
+    }
 
-    var hardInterval: Int
-        get() = sharedPreferences.getInt("hard_interval", 1) // По умолчанию 1 день
-        set(value) = sharedPreferences.edit { putInt("hard_interval", value) }
+    private fun efKey(cardType: CardTypeEnum): String = when (cardType) {
+        CardTypeEnum.TRANSLATE -> "ef_translate"
+        CardTypeEnum.REVERSE_TRANSLATE -> "ef_reverse_translate"
+        CardTypeEnum.ENTER_WORD -> "ef_enter_word"
+        CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> "ef_sentence_to_studied"
+        CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> "ef_sentence_to_student"
+    }
 
     var englishLevel: String
         get() = sharedPreferences.getString("english_level", "A0") ?: "A0"

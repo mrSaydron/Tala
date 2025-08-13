@@ -13,7 +13,8 @@ class CardTypeReverseTranslate : CardType {
             russian = cardDto.russian,
             categoryId = cardDto.categoryId,
             imagePath = cardDto.imagePath,
-            cardType = CardTypeEnum.REVERSE_TRANSLATE
+            cardType = CardTypeEnum.REVERSE_TRANSLATE,
+            ef = CardTypeEnum.REVERSE_TRANSLATE.defaultEf
         )
     }
 
@@ -27,6 +28,12 @@ class CardTypeReverseTranslate : CardType {
     }
 
     override fun toListDto(card: Card): CardListDto {
-        TODO("Not yet implemented")
+        return CardListDto(
+            commonId = card.commonId,
+            english = card.english,
+            russian = card.russian,
+            categoryId = card.categoryId,
+            imagePath = card.imagePath
+        )
     }
 }

@@ -13,7 +13,8 @@ class CardTypeEnterWord : CardType {
             russian = cardDto.russian,
             categoryId = cardDto.categoryId,
             imagePath = cardDto.imagePath,
-            cardType = CardTypeEnum.ENTER_WORD
+            cardType = CardTypeEnum.ENTER_WORD,
+            ef = CardTypeEnum.ENTER_WORD.defaultEf
         )
     }
 
@@ -27,6 +28,12 @@ class CardTypeEnterWord : CardType {
     }
 
     override fun toListDto(card: Card): CardListDto {
-        TODO("Not yet implemented")
+        return CardListDto(
+            commonId = card.commonId,
+            english = card.english,
+            russian = card.russian,
+            categoryId = card.categoryId,
+            imagePath = card.imagePath
+        )
     }
 }

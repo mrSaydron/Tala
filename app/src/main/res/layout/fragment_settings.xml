@@ -8,40 +8,66 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Интервал для 'Легко' (дни):"
+        android:text="Базовая сложность (EF) для TRANSLATE:"
         android:layout_marginBottom="8dp" />
 
     <EditText
-        android:id="@+id/easyIntervalInput"
+        android:id="@+id/translateEfInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number" />
+        android:inputType="numberDecimal" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Интервал для 'Средне' (дни):"
+        android:text="Базовая сложность (EF) для REVERSE_TRANSLATE:"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp" />
 
     <EditText
-        android:id="@+id/mediumIntervalInput"
+        android:id="@+id/reverseTranslateEfInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number" />
+        android:inputType="numberDecimal" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Интервал для 'Сложно' (дни):"
+        android:text="Базовая сложность (EF) для ENTER_WORD:"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp" />
 
     <EditText
-        android:id="@+id/hardIntervalInput"
+        android:id="@+id/enterWordEfInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number" />
+        android:inputType="numberDecimal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Базовая сложность (EF) для SENTENCE_TO_STUDIED_LANGUAGE:"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/sentenceToStudiedEfInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Базовая сложность (EF) для SENTENCE_TO_STUDENT_LANGUAGE:"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/sentenceToStudentEfInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" />
 
     <!-- Выбор уровня языка -->
     <TextView

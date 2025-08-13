@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.tala.TalaDatabase
+import com.example.tala.ReviewSettings
 import com.example.tala.model.dto.CardListDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -22,10 +23,12 @@ import java.util.UUID
 class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: CardRepository
+    private val reviewSettings: ReviewSettings
 
     init {
         val wordDao = TalaDatabase.getDatabase(application).cardDao()
         repository = CardRepository(wordDao)
+        reviewSettings = ReviewSettings(application.applicationContext)
     }
 
     fun insert(cardDto: CardListDto) = viewModelScope.launch {
@@ -33,7 +36,11 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         val cardDtoWithCommonId = cardDto.copy(commonId = commonId)
         CardTypeEnum.entries
             .filter { it.use }
-            .map { CardTypeFactory.getCardType(it).create(cardDtoWithCommonId) }
+            .map { cardType ->
+                val baseCard = CardTypeFactory.getCardType(cardType).create(cardDtoWithCommonId)
+                val ef = reviewSettings.getEf(cardType)
+                baseCard.copy(ef = ef)
+            }
             .let { repository.insertAll(it) }
     }
 

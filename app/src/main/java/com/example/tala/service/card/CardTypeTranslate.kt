@@ -13,7 +13,8 @@ class CardTypeTranslate : CardType {
             russian = cardDto.russian,
             categoryId = cardDto.categoryId,
             imagePath = cardDto.imagePath,
-            cardType = CardTypeEnum.TRANSLATE
+            cardType = CardTypeEnum.TRANSLATE,
+            ef = CardTypeEnum.TRANSLATE.defaultEf
         )
     }
 
