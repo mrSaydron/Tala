@@ -15,7 +15,8 @@ import com.example.tala.model.dto.CardListDto
 class CardAdapter(
     private val cards: List<CardListDto>,
     private val onEditClick: (CardListDto) -> Unit,
-    private val onDeleteClick: (CardListDto) -> Unit
+    private val onDeleteClick: (CardListDto) -> Unit,
+    private val categoryIdToName: Map<Int, String>
 ) : RecyclerView.Adapter<CardAdapter.CardViewHolder>() {
 
     inner class CardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -29,7 +30,7 @@ class CardAdapter(
         fun bind(card: CardListDto) {
             englishWordTextView.text = card.english
             russianWordTextView.text = card.russian
-            categoryTextView.text = "Категория: ${card.categoryId}" // Замени на реальное название категории
+            categoryTextView.text = "Категория: ${categoryIdToName[card.categoryId] ?: "—"}"
             card.imagePath?.let { path ->
                 Glide.with(itemView.context)
                     .load(path)

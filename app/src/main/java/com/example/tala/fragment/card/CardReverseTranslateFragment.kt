@@ -27,12 +27,17 @@ class CardReverseTranslateFragment(private val getCard: () -> Card) : CardReview
 
         card = getCard()
         bind()
+
+        binding.playButton.setOnClickListener {
+            card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
+        }
     }
 
     override fun roll() {
         binding.wordTextView.visibility = View.VISIBLE
 
         card?.let { MainActivity.textToSpeechHelper.speak(card!!.english) }
+        binding.playButton.visibility = View.VISIBLE
     }
 
     override fun bind() {
@@ -45,6 +50,7 @@ class CardReverseTranslateFragment(private val getCard: () -> Card) : CardReview
                     .into(binding.wordImageView)
             }
             binding.wordTextView.visibility = View.GONE
+            binding.playButton.visibility = View.GONE
         }
     }
 

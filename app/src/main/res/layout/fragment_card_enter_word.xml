@@ -35,6 +35,13 @@
         android:gravity="center"
         android:padding="8dp" />
 
+    <Button
+        android:id="@+id/playButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Произнести"
+        android:layout_marginTop="8dp" />
+
     <ImageView
         android:id="@+id/wordImageView"
         android:layout_width="150dp"

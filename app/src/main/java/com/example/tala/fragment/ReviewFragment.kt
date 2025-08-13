@@ -158,30 +158,31 @@ class ReviewFragment : Fragment() {
     }
 
     private fun resultHard() {
-        currentCard?.let {
-            viewModel.resultHard(it)
+        currentCard?.let { card ->
             lifecycleScope.launch {
-                loadNextWord() // Загружаем следующее слово
+                // Дожидаемся записи изменений, чтобы избежать повторного показа карточки из-за гонки
+                viewModel.resultHardSuspend(card)
+                loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
             }
         }
     }
 
     private fun resultMedium() {
-        currentCard?.let {
-            viewModel.resultMedium(it)
+        currentCard?.let { card ->
             lifecycleScope.launch {
-                loadNextWord() // Загружаем следующее слово
+                viewModel.resultMediumSuspend(card)
+                loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
             }
         }
     }
 
     private fun resultEasy() {
-        currentCard?.let {
-            viewModel.resultEasy(it)
+        currentCard?.let { card ->
             lifecycleScope.launch {
-                loadNextWord() // Загружаем следующее слово
+                viewModel.resultEasySuspend(card)
+                loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
             }
         }

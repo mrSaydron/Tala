@@ -27,12 +27,17 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
 
         card = getCard()
         bind()
+
+        binding.playButton.setOnClickListener {
+            card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
+        }
     }
 
     override fun roll() {
         binding.wordTextView.visibility = View.VISIBLE
 
         card?.let { MainActivity.textToSpeechHelper.speak(card!!.english) }
+        binding.playButton.visibility = View.VISIBLE
     }
 
     override fun bind() {
@@ -46,6 +51,7 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
             }
         }
         binding.wordTextView.visibility = View.GONE
+        binding.playButton.visibility = View.GONE
     }
 
 }

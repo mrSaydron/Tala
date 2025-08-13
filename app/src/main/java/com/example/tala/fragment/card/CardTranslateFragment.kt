@@ -29,6 +29,10 @@ class CardTranslateFragment(private val getCard: () -> Card) : CardReviewBase() 
         bind()
 
         card?.let { MainActivity.textToSpeechHelper.speak(card!!.english) }
+
+        binding.playButton.setOnClickListener {
+            card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
+        }
     }
 
     override fun roll() {
@@ -47,6 +51,7 @@ class CardTranslateFragment(private val getCard: () -> Card) : CardReviewBase() 
             }
             binding.answerTextView.visibility = View.GONE
             binding.wordImageView.visibility = View.GONE
+            binding.playButton.visibility = View.VISIBLE
         }
     }
 

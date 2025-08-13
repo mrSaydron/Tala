@@ -87,6 +87,7 @@ class WordListFragment : Fragment() {
         }
 
         wordsLiveData.observe(viewLifecycleOwner) { words ->
+            val categoryIdToName = categories.associate { it.id to it.name }
             val adapter = CardAdapter(
                 words,
                 onEditClick = { word ->
@@ -96,7 +97,8 @@ class WordListFragment : Fragment() {
                 onDeleteClick = { word ->
                     cardViewModel.delete(word)
                     Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
-                }
+                },
+                categoryIdToName = categoryIdToName
             )
             binding.wordRecyclerView.adapter = adapter
         }
