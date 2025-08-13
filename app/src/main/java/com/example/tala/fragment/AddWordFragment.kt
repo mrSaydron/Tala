@@ -109,7 +109,7 @@ class AddWordFragment : Fragment() {
                             commonId = currentCard!!.commonId,
                             english = englishWord,
                             russian = russianWord,
-                            categoryId = currentCard!!.categoryId,
+                            categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
                         )
                         cardViewModel.update(cardDto)
