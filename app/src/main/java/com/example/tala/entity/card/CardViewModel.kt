@@ -102,6 +102,21 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS)
     }
 
+    fun getNewCardsCountByCategory(categoryId: Int): LiveData<Int> {
+        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
+        return repository.getCountToReview(endDate, StatusEnum.NEW, categoryId)
+    }
+
+    fun getResetCardsCountByCategory(categoryId: Int): LiveData<Int> {
+        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
+        return repository.getCountToReview(endDate, StatusEnum.PROGRESS_RESET, categoryId)
+    }
+
+    fun getInProgressCardCountByCategory(categoryId: Int): LiveData<Int> {
+        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
+        return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS, categoryId)
+    }
+
     fun updateImagePath(id: Int, imagePath: String) = viewModelScope.launch {
         repository.updateImagePath(id, imagePath)
     }

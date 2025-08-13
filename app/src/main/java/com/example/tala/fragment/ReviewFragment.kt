@@ -189,13 +189,13 @@ class ReviewFragment : Fragment() {
     }
 
     private fun setupProgress() {
-        viewModel.getNewCardsCount().observe(viewLifecycleOwner) { count ->
+        viewModel.getNewCardsCountByCategory(selectedCategoryId).observe(viewLifecycleOwner) { count ->
             binding.newChip.text = "$count"
         }
-        viewModel.getResetCardsCount().observe(viewLifecycleOwner) { count ->
+        viewModel.getResetCardsCountByCategory(selectedCategoryId).observe(viewLifecycleOwner) { count ->
             binding.resetChip.text = "$count"
         }
-        viewModel.getInProgressCardCount().observe(viewLifecycleOwner) { count ->
+        viewModel.getInProgressCardCountByCategory(selectedCategoryId).observe(viewLifecycleOwner) { count ->
             binding.inProgressChip.text = "$count"
         }
     }

@@ -4,19 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.tala.R
 import com.example.tala.databinding.FragmentHomeBinding
 import com.example.tala.entity.category.Category
 import com.example.tala.entity.category.CategoryViewModel
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.tala.fragment.adapter.CategoryAdapter
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
 
-    private lateinit var categoryAdapter: ArrayAdapter<String>
+    private lateinit var categoryAdapter: CategoryAdapter
     private val categories = mutableListOf<Category>()
 
     override fun onCreateView(
@@ -30,19 +33,39 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Инициализация списка категорий
-        categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, mutableListOf())
-        binding.categoryListView.adapter = categoryAdapter
+        // Корректная отрисовка под статус/навигационные панели
+        val initialPaddingLeft = binding.root.paddingLeft
+        val initialPaddingTop = binding.root.paddingTop
+        val initialPaddingRight = binding.root.paddingRight
+        val initialPaddingBottom = binding.root.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(
+                initialPaddingLeft,
+                initialPaddingTop + systemBars.top,
+                initialPaddingRight,
+                initialPaddingBottom + systemBars.bottom
+            )
+            WindowInsetsCompat.CONSUMED
+        }
+
+        // Инициализация RecyclerView категорий
+        binding.categoryRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        categoryAdapter = CategoryAdapter(
+            categories,
+            onCategoryClick = { category ->
+                val reviewFragment = ReviewFragment.newInstance(category.id)
+                replaceFragment(reviewFragment)
+            },
+            cardViewModelProvider = { ViewModelProvider(this)[com.example.tala.entity.card.CardViewModel::class.java] },
+            lifecycleOwner = viewLifecycleOwner
+        )
+        binding.categoryRecyclerView.adapter = categoryAdapter
 
         // Загрузка категорий
         loadCategories()
 
-        // Переход к обучению по нажатию на категорию
-        binding.categoryListView.setOnItemClickListener { _, _, position, _ ->
-            val categoryId = categories[position].id
-            val reviewFragment = ReviewFragment.newInstance(categoryId)
-            replaceFragment(reviewFragment)
-        }
+        // Переход к обучению по нажатию выполняется через адаптер
 
         binding.settingsButton.setOnClickListener {
             val settingsFragment = SettingsFragment()
@@ -61,9 +84,7 @@ class HomeFragment : Fragment() {
         viewModel.getAllCategories().observe(viewLifecycleOwner) { categoryList ->
             categories.clear()
             categories.addAll(categoryList)
-            categoryAdapter.clear()
-            categoryAdapter.addAll(categories.map { it.name })
-            categoryAdapter.notifyDataSetChanged()
+            categoryAdapter.updateData(categories)
         }
     }
 
