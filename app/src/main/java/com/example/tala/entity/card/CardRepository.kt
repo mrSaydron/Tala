@@ -56,6 +56,14 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.getCountToReview(currentDate, status)
     }
 
+    fun getCountToReview(
+        currentDate: Long,
+        status: StatusEnum,
+        categoryId: Int,
+    ): LiveData<Int> {
+        return cardDao.getCountToReview(currentDate, status, categoryId)
+    }
+
     suspend fun updateImagePath(id: Int, imagePath: String) {
         cardDao.updateImagePath(id, imagePath)
     }

@@ -57,6 +57,18 @@ interface CardDao {
     @Query("SELECT COUNT(*) FROM card WHERE nextReviewDate < :endFindDate AND status = :status")
     fun getCountToReview(endFindDate: Long, status: StatusEnum): LiveData<Int>
 
+    @Query("""
+        SELECT COUNT(*) 
+        FROM card 
+        WHERE nextReviewDate < :endFindDate 
+        AND status = :status 
+        AND categoryId = :categoryId""")
+    fun getCountToReview(
+        endFindDate: Long,
+        status: StatusEnum,
+        categoryId: Int,
+    ): LiveData<Int>
+
     @Query("UPDATE card SET imagePath = :imagePath WHERE id = :id")
     suspend fun updateImagePath(id: Int, imagePath: String)
 

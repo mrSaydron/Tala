@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.tala.R
@@ -20,7 +18,6 @@ class HomeFragment : Fragment() {
 
     private lateinit var categoryAdapter: ArrayAdapter<String>
     private val categories = mutableListOf<Category>()
-    private var selectedCategoryId: Int = 0 // ID выбранной категории
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,33 +30,18 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Инициализация Spinner
-        categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.categorySpinner.adapter = categoryAdapter
+        // Инициализация списка категорий
+        categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, mutableListOf())
+        binding.categoryListView.adapter = categoryAdapter
 
         // Загрузка категорий
         loadCategories()
 
-        // Обработка выбора категории
-        binding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedCategoryId = categories[position].id
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                selectedCategoryId = 0
-            }
-        }
-
-        // Переход к обучению
-        binding.startLearningButton.setOnClickListener {
-            if (selectedCategoryId != 0) {
-                val reviewFragment = ReviewFragment.newInstance(selectedCategoryId)
-                replaceFragment(reviewFragment)
-            } else {
-                Toast.makeText(requireContext(), "Выберите категорию!", Toast.LENGTH_SHORT).show()
-            }
+        // Переход к обучению по нажатию на категорию
+        binding.categoryListView.setOnItemClickListener { _, _, position, _ ->
+            val categoryId = categories[position].id
+            val reviewFragment = ReviewFragment.newInstance(categoryId)
+            replaceFragment(reviewFragment)
         }
 
         binding.settingsButton.setOnClickListener {

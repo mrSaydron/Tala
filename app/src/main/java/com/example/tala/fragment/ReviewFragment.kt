@@ -104,7 +104,7 @@ class ReviewFragment : Fragment() {
 
         isTranslationShown = false
         val endDayTime = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-        val card = viewModel.getNextWordToReview(endDayTime)
+        val card = viewModel.getNextWordToReview(selectedCategoryId, endDayTime)
 
         Log.i(TAG, "loadNextWord: card - $card")
         if (card != null) {
