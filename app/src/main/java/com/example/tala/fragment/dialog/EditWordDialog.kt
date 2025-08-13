@@ -31,7 +31,6 @@ class EditWordDialog(private val card: Card, private val onSave: (Card) -> Unit)
         saveEditButton.setOnClickListener {
             val englishWord = editEnglishWord.text.toString()
             val russianWord = editRussianWord.text.toString()
-            val categoryId = 
 
             if (englishWord.isNotEmpty() && russianWord.isNotEmpty()) {
                 val updatedWord = card.copy(english = englishWord, russian = russianWord)
