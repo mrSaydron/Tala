@@ -11,7 +11,7 @@ import com.example.tala.entity.learningMode.LearningModeDao
 import com.example.tala.entity.card.Card
 import com.example.tala.entity.card.CardDao
 
-@Database(entities = [Card::class, Category::class, LearningMode::class], version = 9, exportSchema = false)
+@Database(entities = [Card::class, Category::class, LearningMode::class], version = 10, exportSchema = false)
 abstract class TalaDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun categoryDao(): CategoryDao

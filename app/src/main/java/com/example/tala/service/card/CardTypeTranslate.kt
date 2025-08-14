@@ -13,6 +13,7 @@ class CardTypeTranslate : CardType {
             russian = cardDto.russian,
             categoryId = cardDto.categoryId,
             imagePath = cardDto.imagePath,
+            info = cardDto.info,
             cardType = CardTypeEnum.TRANSLATE,
             ef = CardTypeEnum.TRANSLATE.defaultEf
         )
@@ -23,7 +24,8 @@ class CardTypeTranslate : CardType {
             english = cardDto.english,
             russian = cardDto.russian,
             categoryId = cardDto.categoryId,
-            imagePath = cardDto.imagePath
+            imagePath = cardDto.imagePath,
+            info = cardDto.info
         )
     }
 
@@ -33,7 +35,8 @@ class CardTypeTranslate : CardType {
             english = card.english,
             russian = card.russian,
             categoryId = card.categoryId,
-            imagePath = card.imagePath
+            imagePath = card.imagePath,
+            info = card.info
         )
     }
 }

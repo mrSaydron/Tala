@@ -20,6 +20,7 @@ data class Card(
     val nextReviewDate: Long = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond(),
     val categoryId: Int = 0,
     val imagePath: String? = null,
+    val info: String? = null,
     val cardType: CardTypeEnum,
 
     val interval: Int = 1,

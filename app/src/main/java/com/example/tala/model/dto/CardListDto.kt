@@ -7,4 +7,5 @@ data class CardListDto(
     val russian: String,
     val categoryId: Int = 0,
     val imagePath: String? = null,
+    val info: String? = null,
 )

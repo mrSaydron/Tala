@@ -42,6 +42,16 @@
         android:gravity="center"
         android:padding="8dp" />
 
+    <TextView
+        android:id="@+id/hintTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:gravity="center"
+        android:padding="4dp"
+        android:visibility="gone" />
+
     <ImageView
         android:id="@+id/wordImageView"
         android:layout_width="150dp"

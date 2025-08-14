@@ -65,6 +65,9 @@ class AddWordFragment : Fragment() {
         currentCard?.let {
             binding.englishWordInput.setText(it.english)
             binding.russianWordInput.setText(it.russian)
+            binding.hintInput.setText(it.info?.let { info ->
+                try { org.json.JSONObject(info).optString("hint", "") } catch (_: Exception) { "" }
+            })
 
             Glide.with(this)
                 .load(it.imagePath)
@@ -97,26 +100,35 @@ class AddWordFragment : Fragment() {
                 if (englishWord.isNotEmpty() && russianWord.isNotEmpty()) {
 
                     if (currentCard == null) {
+                        val hint = binding.hintInput.text.toString().trim()
+                        val info = if (hint.isNotEmpty()) org.json.JSONObject().put("hint", hint).toString() else null
                         val cardDto = CardListDto(
                             english = englishWord,
                             russian = russianWord,
                             categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
+                            info = info,
                         )
                         cardViewModel.insert(cardDto)
                     } else {
+                        val hint = binding.hintInput.text.toString().trim()
+                        val info = if (hint.isNotEmpty()) {
+                            try { org.json.JSONObject().put("hint", hint).toString() } catch (_: Exception) { null }
+                        } else null
                         val cardDto = CardListDto(
                             commonId = currentCard!!.commonId,
                             english = englishWord,
                             russian = russianWord,
                             categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
+                            info = info,
                         )
                         cardViewModel.update(cardDto)
                         parentFragmentManager.popBackStack()
                     }
                     binding.englishWordInput.text.clear()
                     binding.russianWordInput.text.clear()
+                    binding.hintInput.text.clear()
                     binding.wordImageView.setImageDrawable(null)
                     imagePath = null
                     Toast.makeText(requireContext(), "Слово сохранено!", Toast.LENGTH_SHORT).show()

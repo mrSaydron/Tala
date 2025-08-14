@@ -44,6 +44,15 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
         card?.let {
             binding.wordTextView.text = it.english
             binding.translationTextView.text = it.russian
+            val hint = try {
+                it.info?.let { info -> org.json.JSONObject(info).optString("hint", "") }
+            } catch (_: Exception) { "" }
+            if (!hint.isNullOrEmpty()) {
+                binding.hintTextView.text = hint
+                binding.hintTextView.visibility = View.VISIBLE
+            } else {
+                binding.hintTextView.visibility = View.GONE
+            }
             it.imagePath?.let { path ->
                 Glide.with(this)
                     .load(path)

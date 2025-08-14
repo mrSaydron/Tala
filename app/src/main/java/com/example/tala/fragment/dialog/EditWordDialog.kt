@@ -16,6 +16,7 @@ class EditWordDialog(private val card: Card, private val onSave: (Card) -> Unit)
         val view = requireActivity().layoutInflater.inflate(R.layout.dialog_edit_word, null)
         val editEnglishWord: EditText = view.findViewById(R.id.editEnglishWord)
         val editRussianWord: EditText = view.findViewById(R.id.editRussianWord)
+        val editHint: EditText = view.findViewById(R.id.editHint)
         val saveEditButton: Button = view.findViewById(R.id.saveEditButton)
 
         val dialog = AlertDialog.Builder(requireContext())
@@ -26,6 +27,13 @@ class EditWordDialog(private val card: Card, private val onSave: (Card) -> Unit)
         // Заполняем поля текущими значениями
         editEnglishWord.setText(card.english)
         editRussianWord.setText(card.russian)
+        // info.hint в json-строке info (если есть)
+        card.info?.let { infoJson ->
+            try {
+                val hint = org.json.JSONObject(infoJson).optString("hint", "")
+                if (hint.isNotEmpty()) editHint.setText(hint)
+            } catch (_: Exception) { }
+        }
 
         // Обработка нажатия на кнопку "Сохранить"
         saveEditButton.setOnClickListener {
@@ -33,7 +41,27 @@ class EditWordDialog(private val card: Card, private val onSave: (Card) -> Unit)
             val russianWord = editRussianWord.text.toString()
 
             if (englishWord.isNotEmpty() && russianWord.isNotEmpty()) {
-                val updatedWord = card.copy(english = englishWord, russian = russianWord)
+                val hint = editHint.text.toString().trim()
+                val newInfo = if (hint.isNotEmpty()) {
+                    try {
+                        val base = if (card.info.isNullOrEmpty()) org.json.JSONObject() else org.json.JSONObject(card.info)
+                        base.put("hint", hint)
+                        base.toString()
+                    } catch (_: Exception) {
+                        org.json.JSONObject().put("hint", hint).toString()
+                    }
+                } else {
+                    // если подсказка очищена, пробуем удалить её из info
+                    try {
+                        if (!card.info.isNullOrEmpty()) {
+                            val base = org.json.JSONObject(card.info)
+                            base.remove("hint")
+                            if (base.length() == 0) null else base.toString()
+                        } else null
+                    } catch (_: Exception) { card.info }
+                }
+
+                val updatedWord = card.copy(english = englishWord, russian = russianWord, info = newInfo)
                 onSave(updatedWord)
                 dialog.dismiss()
             } else {
