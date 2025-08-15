@@ -175,21 +175,6 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun resultHard(card: Card) {
-        Log.i(TAG, "resultHard")
-        val ef = if (card.status == StatusEnum.IN_PROGRESS) {
-            maxOf(card.ef - 0.5, 1.3)
-        } else {
-            card.ef
-        }
-        val savingWord = card.copy(
-            status = StatusEnum.PROGRESS_RESET,
-            nextReviewDate = calculateNextReviewDate(10, ChronoUnit.MINUTES),
-            ef = ef
-        )
-        update(savingWord)
-    }
-
     suspend fun resultHardSuspend(card: Card) {
         Log.i(TAG, "resultHardSuspend")
         val ef = if (card.status == StatusEnum.IN_PROGRESS) {
@@ -205,19 +190,13 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         updateSync(savingWord)
     }
 
-    fun resultMedium(card: Card) {
-        Log.i(TAG, "resultMedium")
-        val interval = Math.round(card.interval * card.ef).toInt()
-        val savingWord = card.copy(
-            status = StatusEnum.IN_PROGRESS,
-            nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS)
-        )
-        update(savingWord)
-    }
-
     suspend fun resultMediumSuspend(card: Card) {
         Log.i(TAG, "resultMediumSuspend")
-        val interval = Math.round(card.interval * card.ef).toInt()
+        val interval = if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
+            1
+        } else {
+            Math.round(card.interval * card.ef).toInt()
+        }
         val savingWord = card.copy(
             status = StatusEnum.IN_PROGRESS,
             nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS)
@@ -225,22 +204,17 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         updateSync(savingWord)
     }
 
-    fun resultEasy(card: Card) {
-        Log.i(TAG, "resultEasy")
-        val interval = Math.round(card.interval * card.ef * 1.5).toInt()
-        val ef = card.ef + 0.1
-        val savingWord = card.copy(
-            status = StatusEnum.IN_PROGRESS,
-            nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS),
-            ef = ef
-        )
-        update(savingWord)
-    }
-
     suspend fun resultEasySuspend(card: Card) {
         Log.i(TAG, "resultEasySuspend")
-        val interval = Math.round(card.interval * card.ef * 1.5).toInt()
-        val ef = card.ef + 0.1
+        val interval: Int
+        val ef: Double
+        if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
+            interval = 2
+            ef = card.ef
+        } else {
+            interval = Math.round(card.interval * card.ef * 1.5).toInt()
+            ef = card.ef + 0.1
+        }
         val savingWord = card.copy(
             status = StatusEnum.IN_PROGRESS,
             nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS),
