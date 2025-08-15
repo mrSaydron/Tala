@@ -88,6 +88,7 @@ class ImagePickerDialog(
     private fun openImagePicker() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         startActivityForResult(intent, REQUEST_IMAGE_PICK)
     }
 

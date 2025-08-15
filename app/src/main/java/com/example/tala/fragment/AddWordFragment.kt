@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import android.graphics.BitmapFactory
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -35,6 +36,7 @@ import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import android.webkit.MimeTypeMap
 import kotlin.math.max
 
 class AddWordFragment : Fragment() {
@@ -210,14 +212,34 @@ class AddWordFragment : Fragment() {
                         loadImageFromUrl(imageUrl) { file ->
                             file?.let {
                                 val fileUri = Uri.fromFile(file)
-                                binding.wordImageView.setImageURI(fileUri)
-                                imagePath = fileUri.toString() // Сохраняем путь к локальной копии
+                                if (shouldCrop(fileUri)) {
+                                    startCropping(fileUri)
+                                } else {
+                                    binding.wordImageView.setImageURI(fileUri)
+                                    imagePath = fileUri.toString() // Сохраняем путь к локальной копии
+                                }
                             }
                         }
                     } else {
-                        val fileUri = Uri.parse(imageUrl)
-                        binding.wordImageView.setImageURI(fileUri)
-                        imagePath = fileUri.toString() // Сохраняем путь к локальной копии
+                        val contentUri = Uri.parse(imageUrl)
+                        val localFile = copyImageToInternalStorage(contentUri)
+                        if (localFile != null) {
+                            val localUri = Uri.fromFile(localFile)
+                            if (shouldCrop(localUri)) {
+                                startCropping(localUri)
+                            } else {
+                                binding.wordImageView.setImageURI(localUri)
+                                imagePath = localUri.toString() // Сохраняем путь к локальной копии
+                            }
+                        } else {
+                            // fallback: если копирование не удалось — пробуем кадрировать напрямую или ставим как есть
+                            if (shouldCrop(contentUri)) {
+                                startCropping(contentUri)
+                            } else {
+                                binding.wordImageView.setImageURI(contentUri)
+                                imagePath = contentUri.toString()
+                            }
+                        }
                     }
                 }
             )
@@ -383,8 +405,29 @@ class AddWordFragment : Fragment() {
     private fun startCropping(imageUri: Uri) {
         val destinationUri = Uri.fromFile(File(requireContext().cacheDir, "cropped_image.jpg"))
         UCrop.of(imageUri, destinationUri)
-            .withAspectRatio(1f, 1f) // Квадратное изображение
+            .withAspectRatio(1f, 1f)
+            .withMaxResultSize(1280, 1280)
             .start(requireContext(), this)
+    }
+
+    private fun shouldCrop(uri: Uri): Boolean {
+        val (width, height) = getImageDimensions(uri) ?: return false
+        val maxSide = max(width, height)
+        return maxSide > 2048
+    }
+
+    private fun getImageDimensions(uri: Uri): Pair<Int, Int>? {
+        return try {
+            requireContext().contentResolver.openInputStream(uri)?.use { inputStream ->
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(inputStream, null, options)
+                val width = options.outWidth
+                val height = options.outHeight
+                if (width > 0 && height > 0) Pair(width, height) else null
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun setupEnglishWordFocus() {
@@ -470,13 +513,22 @@ class AddWordFragment : Fragment() {
 
     private fun copyImageToInternalStorage(uri: Uri): File? {
         return try {
-            val inputStream = requireContext().contentResolver.openInputStream(uri)
-            val file = File(requireContext().cacheDir, "temp_image.jpg")
-            val outputStream = FileOutputStream(file)
-            inputStream?.copyTo(outputStream)
-            inputStream?.close()
-            outputStream.close()
-            file
+            val resolver = requireContext().contentResolver
+            val mimeType = resolver.getType(uri)
+            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
+
+            val imagesDir = File(requireContext().filesDir, "images")
+            if (!imagesDir.exists()) imagesDir.mkdirs()
+
+            val fileName = "img_${System.currentTimeMillis()}.$extension"
+            val outFile = File(imagesDir, fileName)
+
+            resolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(outFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            outFile
         } catch (e: Exception) {
             null
         }
