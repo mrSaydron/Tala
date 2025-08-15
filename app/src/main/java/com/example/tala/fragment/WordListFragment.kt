@@ -1,6 +1,7 @@
 package com.example.tala.fragment
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,10 @@ class WordListFragment : Fragment() {
 
     private lateinit var categoryAdapter: ArrayAdapter<String>
     private val categories = mutableListOf<Category>()
+
+    // Сохранение состояния фильтра и списка при возврате к фрагменту
+    private var selectedCategoryPosition: Int = 0
+    private var recyclerViewState: Parcelable? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,13 +60,23 @@ class WordListFragment : Fragment() {
             categoryAdapter.clear()
             categoryAdapter.addAll(categories.map { it.name })
             categoryAdapter.notifyDataSetChanged()
+
+            // Восстанавливаем выбранную категорию после пересоздания вью
+            if (selectedCategoryPosition in 0 until categories.size) {
+                binding.categorySpinner.setSelection(selectedCategoryPosition, false)
+            } else {
+                binding.categorySpinner.setSelection(0, false)
+            }
         }
 
         // Обработка выбора категории
         binding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedCategory = categories[position]
-                loadWordsByCategory(selectedCategory.id)
+                if (position in categories.indices) {
+                    selectedCategoryPosition = position
+                    val selectedCategory = categories[position]
+                    loadWordsByCategory(selectedCategory.id)
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -69,11 +84,10 @@ class WordListFragment : Fragment() {
             }
         }
 
-        // Загрузка всех слов по умолчанию
-        loadWordsByCategory(0)
-
         // Переход к добавлению слов
         binding.addWordsButton.setOnClickListener {
+            // Сохраняем позицию прокрутки перед переходом
+            recyclerViewState = binding.wordRecyclerView.layoutManager?.onSaveInstanceState()
             val addWordFragment = AddWordFragment()
             replaceFragment(addWordFragment)
         }
@@ -91,6 +105,8 @@ class WordListFragment : Fragment() {
             val adapter = CardAdapter(
                 words,
                 onEditClick = { word ->
+                    // Сохраняем позицию прокрутки перед переходом к редактированию
+                    recyclerViewState = binding.wordRecyclerView.layoutManager?.onSaveInstanceState()
                     val editFragment = AddWordFragment.newInstance(word)
                     replaceFragment(editFragment)
                 },
@@ -101,6 +117,12 @@ class WordListFragment : Fragment() {
                 categoryIdToName = categoryIdToName
             )
             binding.wordRecyclerView.adapter = adapter
+
+            // Восстанавливаем позицию прокрутки списка, если есть сохранённая
+            recyclerViewState?.let { state ->
+                binding.wordRecyclerView.layoutManager?.onRestoreInstanceState(state)
+                recyclerViewState = null
+            }
         }
     }
 
@@ -109,5 +131,12 @@ class WordListFragment : Fragment() {
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Сохраняем текущую выбранную категорию и позицию прокрутки при уничтожении вью
+        selectedCategoryPosition = binding.categorySpinner.selectedItemPosition
+        recyclerViewState = binding.wordRecyclerView.layoutManager?.onSaveInstanceState()
     }
 }
