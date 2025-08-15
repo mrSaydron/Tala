@@ -14,7 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentReviewBinding
-import com.example.tala.entity.learningMode.LearningModeViewModel
 import com.example.tala.entity.card.CardViewModel
 import com.example.tala.entity.card.Card
 import com.example.tala.fragment.card.CardEnterWordFragment
@@ -36,7 +35,6 @@ import java.time.ZoneId
 class ReviewFragment : Fragment() {
 
     private lateinit var viewModel: CardViewModel
-    private lateinit var learningModeViewModel: LearningModeViewModel
     private lateinit var binding: FragmentReviewBinding
     private lateinit var textToSpeechHelper: TextToSpeechHelper
 
@@ -65,7 +63,6 @@ class ReviewFragment : Fragment() {
 
         // Инициализация ViewModel
         viewModel = ViewModelProvider(this)[CardViewModel::class.java]
-        learningModeViewModel = ViewModelProvider(this)[LearningModeViewModel::class.java]
 
         // Загружаем следующее слово для повторения
         lifecycleScope.launch {

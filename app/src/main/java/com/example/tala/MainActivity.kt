@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.tala.entity.category.CategoryViewModel
 import com.example.tala.entity.learningMode.LearningMode
-import com.example.tala.entity.learningMode.LearningModeViewModel
 import com.example.tala.fragment.HomeFragment
 import com.example.tala.service.TextToSpeechHelper
 import kotlinx.coroutines.launch

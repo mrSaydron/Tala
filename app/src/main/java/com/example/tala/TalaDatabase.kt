@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase
 import com.example.tala.entity.category.CategoryDao
 import com.example.tala.entity.category.Category
 import com.example.tala.entity.learningMode.LearningMode
-import com.example.tala.entity.learningMode.LearningModeDao
 import com.example.tala.entity.card.Card
 import com.example.tala.entity.card.CardDao
 
@@ -15,7 +14,6 @@ import com.example.tala.entity.card.CardDao
 abstract class TalaDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun categoryDao(): CategoryDao
-    abstract fun learningModeDao(): LearningModeDao
 
     companion object {
         @Volatile
