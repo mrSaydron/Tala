@@ -25,13 +25,6 @@
         android:hint="Перевод на русский"
         android:layout_marginTop="8dp" />
 
-    <EditText
-        android:id="@+id/hintInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Подсказка (необязательно)"
-        android:layout_marginTop="8dp" />
-
     <Button
         android:id="@+id/chooseRussianTranslationButton"
         android:layout_width="wrap_content"
@@ -39,6 +32,13 @@
         android:text="Выбрать перевод на русский"
         android:layout_marginTop="8dp" />
 
+    <EditText
+        android:id="@+id/hintInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Подсказка (необязательно)"
+        android:layout_marginTop="8dp" />
+        
     <ImageView
         android:id="@+id/wordImageView"
         android:layout_width="100dp"

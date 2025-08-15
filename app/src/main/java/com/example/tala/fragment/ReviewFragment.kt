@@ -21,6 +21,7 @@ import com.example.tala.fragment.card.CardEnterWordFragment
 import com.example.tala.fragment.card.CardReverseTranslateFragment
 import com.example.tala.fragment.card.CardReviewBase
 import com.example.tala.fragment.card.CardTranslateFragment
+import com.example.tala.model.dto.CardListDto
 import com.example.tala.integration.mistral.MistralRequest
 import com.example.tala.integration.mistral.MistralRequestMessage
 import com.example.tala.integration.mistral.SentenceResponse
@@ -78,6 +79,25 @@ class ReviewFragment : Fragment() {
             }
         }
 
+        // Переход к редактированию через AddWordFragment
+        binding.editButton.setOnClickListener {
+            currentCard?.let { card ->
+                val dto = CardListDto(
+                    commonId = card.commonId,
+                    english = card.english,
+                    russian = card.russian,
+                    categoryId = card.categoryId,
+                    imagePath = card.imagePath,
+                    info = card.info,
+                )
+                val editFragment = AddWordFragment.newInstance(dto)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, editFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
+        }
+
         // Инициализация настроек
         reviewSettings = ReviewSettings(requireContext())
 
@@ -110,6 +130,7 @@ class ReviewFragment : Fragment() {
         if (card != null) {
             binding.reviewContentContainer.visibility = View.VISIBLE
             binding.showTranslationButton.visibility = View.VISIBLE
+            binding.editButton.visibility = View.VISIBLE
             (binding.newChip.parent as View).visibility = View.VISIBLE
 
             currentCard = card
@@ -136,10 +157,19 @@ class ReviewFragment : Fragment() {
 
             binding.reviewContentContainer.visibility = View.GONE
             binding.showTranslationButton.visibility = View.GONE
+            binding.editButton.visibility = View.GONE
             (binding.easyButton.parent as View).visibility = View.GONE
             (binding.newChip.parent as View).visibility = View.GONE
         }
         setupProgress()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // После возврата из AddWordFragment перезагружаем текущее слово/интерфейс
+        lifecycleScope.launch {
+            loadNextWord()
+        }
     }
 
     // Показывает перевод слова
