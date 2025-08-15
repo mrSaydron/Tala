@@ -29,6 +29,7 @@ import com.example.tala.fragment.dialog.TranslationPickerDialog
 import com.example.tala.integration.dictionary.YandexDictionaryApi.Companion.YANDEX_API_KEY
 import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KEY
 import com.example.tala.model.dto.CardListDto
+import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.service.ApiClient
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
@@ -75,6 +76,11 @@ class AddWordFragment : Fragment() {
 //            binding.wordImageView.setImageURI(Uri.parse(it.imagePath))
 
             imagePath = it.imagePath
+
+            // Загрузка статистики повторений по типам
+            lifecycleScope.launch {
+                showReviewStats(it.commonId)
+            }
         }
 
         // Инициализация Spinner
@@ -243,6 +249,32 @@ class AddWordFragment : Fragment() {
                         .show()
                 }
             }
+        }
+    }
+
+    private suspend fun showReviewStats(commonId: String?) {
+        if (commonId.isNullOrEmpty()) return
+        val sb = StringBuilder()
+        CardTypeEnum.entries.filter { it.use }.forEach { type ->
+            val card = cardViewModel.getCardByTypeAndCommonId(type, commonId)
+            if (card != null) {
+                val next = java.time.Instant.ofEpochSecond(card.nextReviewDate)
+                val localNext = java.time.LocalDateTime.ofInstant(next, java.time.ZoneId.systemDefault())
+                val formatted = localNext.toLocalDate().toString()
+                sb.append("${type.name}: ")
+                    .append(formatted)
+                    .append('\n')
+            }
+        }
+
+        val text = sb.toString().trim()
+        if (text.isNotEmpty()) {
+            binding.reviewStatsLabel.visibility = View.VISIBLE
+            binding.reviewStatsText.visibility = View.VISIBLE
+            binding.reviewStatsText.text = text
+        } else {
+            binding.reviewStatsLabel.visibility = View.GONE
+            binding.reviewStatsText.visibility = View.GONE
         }
     }
 

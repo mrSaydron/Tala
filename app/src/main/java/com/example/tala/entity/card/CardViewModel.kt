@@ -142,6 +142,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         repository.deleteAll()
     }
 
+    suspend fun getCardByTypeAndCommonId(cardType: CardTypeEnum, commonId: String?): Card? {
+        return repository.byTypeAndCommonId(cardType, commonId)
+    }
+
     fun getHardInterval(card: Card): String {
         return "<10 мин."
     }

@@ -53,6 +53,23 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp" />
 
+    <TextView
+        android:id="@+id/reviewStatsLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Статистика повторений"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/reviewStatsText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@android:color/black"
+        android:visibility="gone" />
+
     <Button
         android:id="@+id/saveButton"
         android:layout_width="match_parent"
