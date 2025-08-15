@@ -91,6 +91,20 @@ class AddWordFragment : Fragment() {
         // Загрузка категорий
         loadCategories()
 
+        // Кнопка удаления (только для существующих слов)
+        if (currentCard != null) {
+            binding.deleteWordButton.visibility = View.VISIBLE
+            binding.deleteWordButton.setOnClickListener {
+                currentCard?.let { card ->
+                    cardViewModel.delete(card)
+                    Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
+                }
+            }
+        } else {
+            binding.deleteWordButton.visibility = View.GONE
+        }
+
         binding.saveButton.setOnClickListener {
             try {
                 val englishWord = binding.englishWordInput.text.toString()
@@ -145,14 +159,6 @@ class AddWordFragment : Fragment() {
             } catch (e: Exception) {
                 println("---> ${e.message}")
             }
-        }
-
-        binding.reviewButton.setOnClickListener {
-            val reviewFragment = ReviewFragment()
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, reviewFragment)
-                .addToBackStack(null)
-                .commit()
         }
 
         binding.addCategoryButton.setOnClickListener {

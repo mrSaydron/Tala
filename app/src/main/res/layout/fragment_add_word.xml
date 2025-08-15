@@ -78,11 +78,14 @@
         android:layout_marginTop="16dp" />
 
     <Button
-        android:id="@+id/reviewButton"
+        android:id="@+id/deleteWordButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Перейти к повторению"
-        android:layout_marginTop="16dp" />
+        android:text="Удалить слово"
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
+
+    
 
     <Button
         android:id="@+id/addCategoryButton"

@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
@@ -104,15 +103,11 @@ class WordListFragment : Fragment() {
             val categoryIdToName = categories.associate { it.id to it.name }
             val adapter = CardAdapter(
                 words,
-                onEditClick = { word ->
+                onItemClick = { word ->
                     // Сохраняем позицию прокрутки перед переходом к редактированию
                     recyclerViewState = binding.wordRecyclerView.layoutManager?.onSaveInstanceState()
                     val editFragment = AddWordFragment.newInstance(word)
                     replaceFragment(editFragment)
-                },
-                onDeleteClick = { word ->
-                    cardViewModel.delete(word)
-                    Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
                 },
                 categoryIdToName = categoryIdToName
             )
