@@ -82,6 +82,6 @@ interface CardDao {
     suspend fun deleteAll()
 
     @Query("DELETE FROM card WHERE commonId = :commonId")
-    fun delete(commonId: String)
+    suspend fun delete(commonId: String)
 
 }

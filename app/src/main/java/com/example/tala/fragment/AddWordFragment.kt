@@ -95,10 +95,16 @@ class AddWordFragment : Fragment() {
         if (currentCard != null) {
             binding.deleteWordButton.visibility = View.VISIBLE
             binding.deleteWordButton.setOnClickListener {
-                currentCard?.let { card ->
-                    cardViewModel.delete(card)
-                    Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
-                    parentFragmentManager.popBackStack()
+                val commonId = currentCard?.commonId
+                if (!commonId.isNullOrEmpty()) {
+                    lifecycleScope.launch {
+                        try {
+                            cardViewModel.deleteSync(commonId)
+                        } finally {
+                            Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
+                            parentFragmentManager.popBackStack()
+                        }
+                    }
                 }
             }
         } else {

@@ -14,6 +14,7 @@ import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.card.CardTypeFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -68,8 +69,14 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun delete(card: CardListDto) = viewModelScope.launch {
+    fun delete(card: CardListDto) = viewModelScope.launch(Dispatchers.IO) {
         repository.delete(card.commonId!!)
+    }
+
+    suspend fun deleteSync(commonId: String) {
+        withContext(Dispatchers.IO) {
+            repository.delete(commonId)
+        }
     }
 
     fun allCardList(): LiveData<List<CardListDto>> {
