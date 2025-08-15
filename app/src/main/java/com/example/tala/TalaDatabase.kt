@@ -6,11 +6,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.tala.entity.category.CategoryDao
 import com.example.tala.entity.category.Category
-import com.example.tala.entity.learningMode.LearningMode
 import com.example.tala.entity.card.Card
 import com.example.tala.entity.card.CardDao
 
-@Database(entities = [Card::class, Category::class, LearningMode::class], version = 10, exportSchema = false)
+@Database(entities = [Card::class, Category::class], version = 11, exportSchema = false)
 abstract class TalaDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun categoryDao(): CategoryDao

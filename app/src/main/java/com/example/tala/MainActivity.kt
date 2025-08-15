@@ -5,13 +5,8 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import com.example.tala.entity.category.CategoryViewModel
-import com.example.tala.entity.learningMode.LearningMode
 import com.example.tala.fragment.HomeFragment
 import com.example.tala.service.TextToSpeechHelper
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
