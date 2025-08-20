@@ -4,10 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.graphics.Color
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.BackgroundColorSpan
 import com.bumptech.glide.Glide
 import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardEnterWordBinding
 import com.example.tala.entity.card.Card
+import com.example.tala.util.TextDiffHighlighter
 
 class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() {
 
@@ -35,10 +40,23 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
 
     override fun roll() {
         binding.wordTextView.visibility = View.VISIBLE
-
-        card?.let { MainActivity.textToSpeechHelper.speak(card!!.english) }
         binding.playButton.visibility = View.VISIBLE
+
+        // Спрятать поле ввода и показать ответ пользователя с подсветкой
+        val userInput = binding.translationInput.text?.toString() ?: ""
+        val correctAnswer = binding.wordTextView.text?.toString() ?: ""
+
+        val coloredAnswer = TextDiffHighlighter.buildColoredAnswer(userInput, correctAnswer)
+
+        binding.translationInput.visibility = View.GONE
+        binding.userAnswerTextView.visibility = View.VISIBLE
+        binding.userAnswerTextView.setTextColor(Color.BLACK)
+        binding.userAnswerTextView.text = coloredAnswer
+
+        card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
     }
+
+    
 
     override fun bind() {
         card?.let {
@@ -61,6 +79,9 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
         }
         binding.wordTextView.visibility = View.GONE
         binding.playButton.visibility = View.GONE
+        binding.translationInput.visibility = View.VISIBLE
+        binding.translationInput.setText("")
+        binding.userAnswerTextView.visibility = View.GONE
     }
 
 }

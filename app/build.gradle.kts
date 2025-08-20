@@ -37,6 +37,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -78,4 +84,7 @@ dependencies {
     // Загрузка изображений интернета
     implementation("com.github.bumptech.glide:glide:4.12.0")
     kapt("com.github.bumptech.glide:compiler:4.12.0")
+
+    // Robolectric for JVM tests using Android SDK
+    testImplementation("org.robolectric:robolectric:4.12.2")
 }

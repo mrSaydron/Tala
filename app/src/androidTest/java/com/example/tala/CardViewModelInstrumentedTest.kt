@@ -73,7 +73,7 @@ class CardViewModelInstrumentedTest {
 
         val endToday = endOfTodayEpoch()
         val fetched = viewModel.getNextWordToReview(endToday)!!
-        viewModel.resultMedium(fetched)
+        viewModel.resultMediumSuspend(fetched)
 
         // Ждем применения update в БД
         pollUntilTrue {
@@ -108,7 +108,7 @@ class CardViewModelInstrumentedTest {
 
         val endToday = endOfTodayEpoch()
         val fetched = viewModel.getNextWordToReview(endToday)!!
-        viewModel.resultEasy(fetched)
+        viewModel.resultEasySuspend(fetched)
 
         pollUntilTrue {
             val updated = cardDao.getNextToReview(Long.MAX_VALUE)
@@ -144,7 +144,7 @@ class CardViewModelInstrumentedTest {
 
         val endToday = endOfTodayEpoch()
         val fetched = viewModel.getNextWordToReview(endToday)!!
-        viewModel.resultHard(fetched)
+        viewModel.resultHardSuspend(fetched)
 
         pollUntilTrue {
             val updated = cardDao.getNextToReview(Long.MAX_VALUE)
