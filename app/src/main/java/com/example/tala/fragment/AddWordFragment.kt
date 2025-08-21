@@ -35,6 +35,7 @@ import com.example.tala.service.ApiClient
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import android.webkit.MimeTypeMap
 import kotlin.math.max
@@ -211,12 +212,13 @@ class AddWordFragment : Fragment() {
                     if (imageUrl.startsWith("http", true)) {
                         loadImageFromUrl(imageUrl) { file ->
                             file?.let {
-                                val fileUri = Uri.fromFile(file)
-                                if (shouldCrop(fileUri)) {
-                                    startCropping(fileUri)
+                                val localFile = copyFileToInternalImages(it)
+                                val localUri = Uri.fromFile(localFile ?: it)
+                                if (shouldCrop(localUri)) {
+                                    startCropping(localUri)
                                 } else {
-                                    binding.wordImageView.setImageURI(fileUri)
-                                    imagePath = fileUri.toString() // Сохраняем путь к локальной копии
+                                    binding.wordImageView.setImageURI(localUri)
+                                    imagePath = localUri.toString()
                                 }
                             }
                         }
@@ -403,7 +405,7 @@ class AddWordFragment : Fragment() {
     }
 
     private fun startCropping(imageUri: Uri) {
-        val destinationUri = Uri.fromFile(File(requireContext().cacheDir, "cropped_image.jpg"))
+        val destinationUri = Uri.fromFile(File(getAppImagesDir(), "cropped_${System.currentTimeMillis()}.jpg"))
         UCrop.of(imageUri, destinationUri)
             .withAspectRatio(1f, 1f)
             .withMaxResultSize(1280, 1280)
@@ -418,9 +420,13 @@ class AddWordFragment : Fragment() {
 
     private fun getImageDimensions(uri: Uri): Pair<Int, Int>? {
         return try {
-            requireContext().contentResolver.openInputStream(uri)?.use { inputStream ->
+            val inputStream = when (uri.scheme?.lowercase()) {
+                "file" -> FileInputStream(File(uri.path ?: return null))
+                else -> requireContext().contentResolver.openInputStream(uri)
+            } ?: return null
+            inputStream.use { stream ->
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeStream(inputStream, null, options)
+                BitmapFactory.decodeStream(stream, null, options)
                 val width = options.outWidth
                 val height = options.outHeight
                 if (width > 0 && height > 0) Pair(width, height) else null
@@ -439,12 +445,13 @@ class AddWordFragment : Fragment() {
                     lifecycleScope.launch {
                         val images = fetchImages(englishWord)
                         if (images.isNotEmpty()) {
-                            val imageUrl = images.first() // Выбираем первое изображение
+                            val imageUrl = images.first()
                             loadImageFromUrl(imageUrl) { file ->
                                 file?.let {
-                                    val fileUri = Uri.fromFile(file)
-                                    binding.wordImageView.setImageURI(fileUri)
-                                    imagePath = fileUri.toString() // Сохраняем путь к локальной копии
+                                    val localFile = copyFileToInternalImages(it)
+                                    val localUri = Uri.fromFile(localFile ?: it)
+                                    binding.wordImageView.setImageURI(localUri)
+                                    imagePath = localUri.toString()
                                 }
                             }
                         } else {
@@ -476,12 +483,13 @@ class AddWordFragment : Fragment() {
                     lifecycleScope.launch {
                         val images = fetchImages(russianWord)
                         if (images.isNotEmpty()) {
-                            val imageUrl = images.first() // Выбираем первое изображение
+                            val imageUrl = images.first()
                             loadImageFromUrl(imageUrl) { file ->
                                 file?.let {
-                                    val fileUri = Uri.fromFile(file)
-                                    binding.wordImageView.setImageURI(fileUri)
-                                    imagePath = fileUri.toString() // Сохраняем путь к локальной копии
+                                    val localFile = copyFileToInternalImages(it)
+                                    val localUri = Uri.fromFile(localFile ?: it)
+                                    binding.wordImageView.setImageURI(localUri)
+                                    imagePath = localUri.toString()
                                 }
                             }
                         } else {
@@ -517,8 +525,7 @@ class AddWordFragment : Fragment() {
             val mimeType = resolver.getType(uri)
             val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
 
-            val imagesDir = File(requireContext().filesDir, "images")
-            if (!imagesDir.exists()) imagesDir.mkdirs()
+            val imagesDir = getAppImagesDir()
 
             val fileName = "img_${System.currentTimeMillis()}.$extension"
             val outFile = File(imagesDir, fileName)
@@ -530,6 +537,27 @@ class AddWordFragment : Fragment() {
             }
             outFile
         } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun getAppImagesDir(): File {
+        val imagesDir = File(requireContext().filesDir, "images")
+        if (!imagesDir.exists()) imagesDir.mkdirs()
+        return imagesDir
+    }
+
+    private fun copyFileToInternalImages(sourceFile: File, suggestedExtension: String? = null): File? {
+        return try {
+            val extension = suggestedExtension ?: sourceFile.extension.ifBlank { "jpg" }
+            val destFile = File(getAppImagesDir(), "img_${System.currentTimeMillis()}.$extension")
+            FileInputStream(sourceFile).use { input ->
+                FileOutputStream(destFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            destFile
+        } catch (_: Exception) {
             null
         }
     }
