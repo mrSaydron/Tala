@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -8,66 +9,68 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Базовая сложность (EF) для TRANSLATE:"
+        android:text="Базовая сложность (EF)"
+        android:textSize="16sp"
         android:layout_marginBottom="8dp" />
 
-    <EditText
-        android:id="@+id/translateEfInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal" />
+        android:hint="TRANSLATE">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/translateEfInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Базовая сложность (EF) для REVERSE_TRANSLATE:"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
-
-    <EditText
-        android:id="@+id/reverseTranslateEfInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal" />
+        android:layout_marginTop="12dp"
+        android:hint="REVERSE_TRANSLATE">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/reverseTranslateEfInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Базовая сложность (EF) для ENTER_WORD:"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
-
-    <EditText
-        android:id="@+id/enterWordEfInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal" />
+        android:layout_marginTop="12dp"
+        android:hint="ENTER_WORD">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/enterWordEfInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Базовая сложность (EF) для SENTENCE_TO_STUDIED_LANGUAGE:"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
-
-    <EditText
-        android:id="@+id/sentenceToStudiedEfInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal" />
+        android:layout_marginTop="12dp"
+        android:hint="SENTENCE_TO_STUDIED_LANGUAGE">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/sentenceToStudiedEfInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Базовая сложность (EF) для SENTENCE_TO_STUDENT_LANGUAGE:"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
-
-    <EditText
-        android:id="@+id/sentenceToStudentEfInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal" />
+        android:layout_marginTop="12dp"
+        android:hint="SENTENCE_TO_STUDENT_LANGUAGE">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/sentenceToStudentEfInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Выбор уровня языка -->
     <TextView
@@ -82,18 +85,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/saveSettingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Сохранить"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="24dp"
+        app:icon="@drawable/ic_check"
+        app:iconPadding="8dp"
+        app:iconGravity="textStart"
+        app:backgroundTint="?attr/colorSecondaryContainer"
+        android:textColor="?attr/colorOnSecondaryContainer"
+        app:iconTint="?attr/colorOnSecondaryContainer" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/clearDataButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Очистить данные"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp"
+        app:icon="@drawable/ic_delete"
+        app:iconPadding="8dp"
+        app:iconGravity="textStart"
+        app:backgroundTint="?attr/colorErrorContainer"
+        android:textColor="?attr/colorOnErrorContainer"
+        app:iconTint="?attr/colorOnErrorContainer" />
 
 </LinearLayout>

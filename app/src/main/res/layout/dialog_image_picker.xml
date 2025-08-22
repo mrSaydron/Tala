@@ -9,13 +9,21 @@
     android:padding="16dp">
 
     <!-- Поле для ввода запроса -->
-    <EditText
-        android:id="@+id/searchQueryInput"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/searchInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Поиск изображений"
-        android:imeOptions="actionSearch"
-        android:inputType="text" />
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_search">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/searchQueryInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Горизонтальный RecyclerView для изображений -->
     <androidx.recyclerview.widget.RecyclerView
@@ -27,11 +35,17 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_image" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/addImageButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Выбрать изображение"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        app:icon="@drawable/ic_image"
+        app:iconPadding="8dp"
+        app:iconGravity="textStart"
+        app:backgroundTint="?attr/colorSecondaryContainer"
+        android:textColor="?attr/colorOnSecondaryContainer"
+        app:iconTint="?attr/colorOnSecondaryContainer" />
 
 </LinearLayout>

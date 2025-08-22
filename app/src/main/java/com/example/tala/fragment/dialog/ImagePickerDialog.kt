@@ -10,6 +10,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
+import androidx.core.widget.addTextChangedListener
 import com.example.tala.databinding.DialogImagePickerBinding
 import com.example.tala.fragment.adapter.ImageAdapter
 import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KEY
@@ -36,6 +37,11 @@ class ImagePickerDialog(
 
         // Инициализация поля ввода
         binding.searchQueryInput.setText(initialQuery)
+        // Начальное состояние иконки-лупы: показываем только если есть текст
+        binding.searchInputLayout.isEndIconVisible = !binding.searchQueryInput.text.isNullOrBlank()
+        binding.searchQueryInput.addTextChangedListener { text ->
+            binding.searchInputLayout.isEndIconVisible = !text.isNullOrBlank()
+        }
 
         // Обработка нажатия на кнопку поиска
         binding.searchQueryInput.setOnEditorActionListener { _, actionId, _ ->
@@ -45,6 +51,11 @@ class ImagePickerDialog(
             } else {
                 false
             }
+        }
+
+        // Клик по иконке-лупе справа от поля
+        binding.searchInputLayout.setEndIconOnClickListener {
+            performSearch()
         }
 
         // Выполняем поиск при открытии диалога
