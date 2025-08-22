@@ -103,6 +103,17 @@ class ReviewFragment : Fragment() {
         binding.mediumButton.setOnClickListener { resultMedium() }
         binding.hardButton.setOnClickListener { resultHard() }
 
+        // Подсказки для статистики
+        binding.newChip.setOnClickListener {
+            Toast.makeText(requireContext(), "новых слов", Toast.LENGTH_SHORT).show()
+        }
+        binding.resetChip.setOnClickListener {
+            Toast.makeText(requireContext(), "возвращенных", Toast.LENGTH_SHORT).show()
+        }
+        binding.inProgressChip.setOnClickListener {
+            Toast.makeText(requireContext(), "в обучении", Toast.LENGTH_SHORT).show()
+        }
+
         textToSpeechHelper = TextToSpeechHelper(requireContext()) { isInitialized ->
             if (!isInitialized) {
                 Toast.makeText(requireContext(), "Озвучка не поддерживается на этом устройстве", Toast.LENGTH_SHORT).show()
@@ -177,9 +188,9 @@ class ReviewFragment : Fragment() {
             isTranslationShown = true
             binding.showTranslationButton.visibility = View.GONE
 
-            binding.hardButton.text = "Сложно ${viewModel.getHardInterval(currentCard!!)}"
-            binding.mediumButton.text = "Средне ${viewModel.getMediumInterval(currentCard!!)}"
-            binding.easyButton.text = "Легко ${viewModel.getEasyInterval(currentCard!!)}"
+            binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(currentCard!!)}"
+            binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(currentCard!!)}"
+            binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(currentCard!!)}"
             (binding.easyButton.parent as View).visibility = View.VISIBLE
         }
     }

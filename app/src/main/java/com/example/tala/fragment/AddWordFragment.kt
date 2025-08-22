@@ -39,6 +39,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import android.webkit.MimeTypeMap
 import kotlin.math.max
+import androidx.core.widget.addTextChangedListener
 
 class AddWordFragment : Fragment() {
 
@@ -90,6 +91,15 @@ class AddWordFragment : Fragment() {
         categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.categorySpinner.adapter = categoryAdapter
+
+        // Переводные иконки: состояние доступности
+        setupTranslationButtonsState()
+        binding.englishWordInput.addTextChangedListener { text ->
+            binding.chooseRussianTranslationButton.isEnabled = !text.isNullOrBlank()
+        }
+        binding.russianWordInput.addTextChangedListener { text ->
+            binding.chooseEnglishTranslationButton.isEnabled = !text.isNullOrBlank()
+        }
 
         // Загрузка категорий
         loadCategories()
@@ -155,11 +165,12 @@ class AddWordFragment : Fragment() {
                         cardViewModel.update(cardDto)
                         parentFragmentManager.popBackStack()
                     }
-                    binding.englishWordInput.text.clear()
-                    binding.russianWordInput.text.clear()
-                    binding.hintInput.text.clear()
+                    binding.englishWordInput.text?.clear()
+                    binding.russianWordInput.text?.clear()
+                    binding.hintInput.text?.clear()
                     binding.wordImageView.setImageDrawable(null)
                     imagePath = null
+                    setupTranslationButtonsState()
                     Toast.makeText(requireContext(), "Слово сохранено!", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(requireContext(), "Заполните оба поля!", Toast.LENGTH_SHORT)
@@ -575,6 +586,13 @@ class AddWordFragment : Fragment() {
                     callback(null)
                 }
             })
+    }
+
+    private fun setupTranslationButtonsState() {
+        val english = binding.englishWordInput.text?.toString()?.trim().orEmpty()
+        val russian = binding.russianWordInput.text?.toString()?.trim().orEmpty()
+        binding.chooseRussianTranslationButton.isEnabled = english.isNotEmpty()
+        binding.chooseEnglishTranslationButton.isEnabled = russian.isNotEmpty()
     }
 
     companion object {

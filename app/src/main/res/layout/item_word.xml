@@ -10,44 +10,59 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="16dp">
 
-        <!-- Слово на английском -->
-        <TextView
-            android:id="@+id/englishWordTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="English Word"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <!-- Перевод на русский -->
-        <TextView
-            android:id="@+id/russianWordTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Russian Translation"
-            android:textSize="16sp"
-            android:layout_marginTop="4dp" />
-
-        <!-- Категория -->
-        <TextView
-            android:id="@+id/categoryTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Category"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
-
-        <!-- Изображение -->
+        <!-- Изображение слева -->
         <ImageView
             android:id="@+id/wordImageView"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_marginTop="8dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center_vertical"
             android:scaleType="centerCrop"
             android:background="@android:color/darker_gray" />
+
+        <!-- Тексты справа -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Слово на английском -->
+            <TextView
+                android:id="@+id/englishWordTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="English Word"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Перевод на русский -->
+            <TextView
+                android:id="@+id/russianWordTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Russian Translation"
+                android:textSize="16sp"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Категория -->
+            <TextView
+                android:id="@+id/categoryTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Category"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

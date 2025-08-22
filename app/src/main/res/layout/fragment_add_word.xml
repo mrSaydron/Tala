@@ -1,113 +1,232 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <EditText
-        android:id="@+id/englishWordInput"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Слово на английском" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <Button
-        android:id="@+id/chooseEnglishTranslationButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Выбрать перевод на английский"
-        android:layout_marginTop="8dp" />
+        <!-- Категория: перенесено вверх -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Категория"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-    <EditText
-        android:id="@+id/russianWordInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Перевод на русский"
-        android:layout_marginTop="8dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-    <Button
-        android:id="@+id/chooseRussianTranslationButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Выбрать перевод на русский"
-        android:layout_marginTop="8dp" />
+            <Spinner
+                android:id="@+id/categorySpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:spinnerMode="dropdown" />
 
-    <EditText
-        android:id="@+id/hintInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Подсказка (необязательно)"
-        android:layout_marginTop="8dp" />
-        
-    <ImageView
-        android:id="@+id/wordImageView"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="16dp"
-        android:scaleType="centerCrop"
-        android:background="@android:color/darker_gray" />
+            <ImageButton
+                android:id="@+id/addCategoryButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Добавить категорию"
+                android:padding="8dp"
+                android:src="@drawable/ic_add"
+                app:tint="?attr/colorPrimary" />
 
-    <Spinner
-        android:id="@+id/categorySpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
+            <ImageButton
+                android:id="@+id/deleteCategoryButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Удалить категорию"
+                android:padding="8dp"
+                android:src="@drawable/ic_delete"
+                app:tint="?attr/colorOnSurface"
+                android:visibility="gone" />
+        </LinearLayout>
 
-    <TextView
-        android:id="@+id/reviewStatsLabel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Статистика повторений"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:visibility="gone" />
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            app:thickness="1dp" />
 
-    <TextView
-        android:id="@+id/reviewStatsText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="@android:color/black"
-        android:visibility="gone" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-    <Button
-        android:id="@+id/saveButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Сохранить"
-        android:layout_marginTop="16dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Слово на английском"
+                app:startIconDrawable="@android:drawable/ic_menu_edit">
 
-    <Button
-        android:id="@+id/deleteWordButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Удалить слово"
-        android:layout_marginTop="8dp"
-        android:visibility="gone" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/englishWordInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-    
+            <ImageButton
+                android:id="@+id/chooseEnglishTranslationButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Выбрать перевод на английский"
+                android:padding="8dp"
+                android:src="@drawable/ic_translate"
+                app:tint="@color/translation_icon_tint"
+                android:enabled="false" />
+        </LinearLayout>
 
-    <Button
-        android:id="@+id/addCategoryButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Добавить категорию"
-        android:layout_marginTop="16dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
 
-    <Button
-        android:id="@+id/deleteCategoryButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Удалить категорию"
-        android:layout_marginTop="16dp"
-        android:visibility="gone" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Перевод на русский"
+                app:startIconDrawable="@android:drawable/ic_menu_edit">
 
-    <Button
-        android:id="@+id/cropImageButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Кадрировать"
-        android:layout_marginTop="8dp"
-        android:visibility="gone" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/russianWordInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-</LinearLayout>
+            <ImageButton
+                android:id="@+id/chooseRussianTranslationButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Выбрать перевод на русский"
+                android:padding="8dp"
+                android:src="@drawable/ic_translate"
+                app:tint="@color/translation_icon_tint"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Подсказка (необязательно)"
+            android:layout_marginTop="8dp"
+            app:startIconDrawable="@android:drawable/ic_menu_info_details">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/hintInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:maxLines="4" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp">
+
+                <ImageView
+                    android:id="@+id/wordImageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Изображение слова" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Нажмите, чтобы выбрать изображение"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOutline" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/reviewStatsLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Статистика повторений"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/reviewStatsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@android:color/black"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveButton"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Сохранить"
+            android:layout_marginTop="16dp"
+            app:icon="@drawable/ic_check"
+            app:iconPadding="8dp"
+            app:iconGravity="textStart"
+            app:backgroundTint="?attr/colorSecondaryContainer"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            app:iconTint="?attr/colorOnSecondaryContainer" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/deleteWordButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Удалить слово"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cropImageButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Кадрировать"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

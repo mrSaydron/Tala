@@ -1,160 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingTop="16dp">
+    android:layout_height="match_parent">
 
+    <!-- Top bar with edit button on the right -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:gravity="center_horizontal">
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Карточка с словом -->
-<!--        <TextView-->
-<!--            android:id="@+id/wordTextView"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:textSize="16sp"-->
-<!--            android:text="Слово"-->
-<!--            android:gravity="center"-->
-<!--            android:padding="8dp" />-->
-
-<!--        <TextView-->
-<!--            android:id="@+id/answerTextView"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:textSize="16sp"-->
-<!--            android:text="Перевод"-->
-<!--            android:gravity="center"-->
-<!--            android:padding="8dp" />-->
-
-<!--        <TextView-->
-<!--            android:id="@+id/reviewTextView"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:textSize="12sp"-->
-<!--            android:text="Комментарий"-->
-<!--            android:gravity="center"-->
-<!--            android:padding="8dp" />-->
-
-<!--        <ImageView-->
-<!--            android:id="@+id/wordImageView"-->
-<!--            android:layout_width="150dp"-->
-<!--            android:layout_height="150dp"-->
-<!--            android:layout_marginTop="16dp"-->
-<!--            android:scaleType="centerCrop"-->
-<!--            android:background="@android:color/darker_gray" />-->
-
-<!--        <EditText-->
-<!--            android:id="@+id/translationInput"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:hint="Введите перевод"-->
-<!--            android:visibility="gone"-->
-<!--            android:layout_marginTop="16dp" />-->
-
-        <TextView
-            android:id="@+id/messageTextView"
-            android:layout_width="wrap_content"
+        <Space
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:text="Слова закончились"
-            android:gravity="center"
-            android:padding="8dp"
-            android:visibility="gone" />
-
-        <FrameLayout
-            android:id="@+id/reviewContentContainer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Кнопка для показа перевода -->
-        <Button
-            android:id="@+id/showTranslationButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Показать перевод"
-            android:layout_marginTop="16dp"
-            android:visibility="gone" />
-
-        <!-- Кнопка редактирования слова -->
-        <Button
+        <ImageButton
             android:id="@+id/editButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Редактировать"
-            android:layout_marginTop="8dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Редактировать"
+            android:padding="2dp"
+            android:src="@drawable/ic_edit"
+            app:tint="?attr/colorPrimary"
             android:visibility="gone" />
+    </LinearLayout>
 
-        <!-- Кнопки для оценки -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="32dp"
-            android:visibility="gone">
+    <!-- Scrollable content area between top bar and bottom bar -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollArea"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-            <Button
-                android:id="@+id/hardButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Сложно" />
-
-            <Button
-                android:id="@+id/mediumButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Средне"
-                android:layout_marginEnd="4dp" />
-
-            <Button
-                android:id="@+id/easyButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Легко"
-                android:layout_marginEnd="4dp" />
-        </LinearLayout>
-
-        <!-- 3. Статистика прогресса -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="24dp">
+            android:padding="16dp"
+            android:gravity="center_horizontal">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/messageTextView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:visibility="gone" >
+                android:textSize="12sp"
+                android:text="Слова закончились"
+                android:gravity="center"
+                android:padding="8dp"
+                android:visibility="gone" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/newChip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/Widget.Material3.Chip.Assist"
-                    android:text="Новых" />
+            <FrameLayout
+                android:id="@+id/reviewContentContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/resetChip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/Widget.Material3.Chip.Assist"
-                    android:text="Возвращенных"
-                    android:layout_marginStart="8dp" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/inProgressChip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/Widget.Material3.Chip.Assist"
-                    android:text="Изучаемых"
-                    android:layout_marginStart="8dp" />
-            </LinearLayout>
+    <!-- Bottom bar with show translation, rating buttons and stats -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/showTranslationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Показать перевод"
+            android:visibility="gone"
+            app:icon="@drawable/ic_visibility"
+            app:iconPadding="8dp"
+            app:iconGravity="textStart"
+            app:backgroundTint="?attr/colorSecondaryContainer"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            app:iconTint="?attr/colorOnSecondaryContainer" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/hardButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Сложно"
+                android:maxLines="2"
+                android:ellipsize="end"
+                app:backgroundTint="?attr/colorErrorContainer"
+                android:textColor="?attr/colorOnErrorContainer" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/mediumButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Средне"
+                android:layout_marginEnd="4dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                app:backgroundTint="?attr/colorSecondaryContainer"
+                android:textColor="?attr/colorOnSecondaryContainer" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/easyButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Легко"
+                android:layout_marginEnd="4dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                app:backgroundTint="?attr/colorPrimaryContainer"
+                android:textColor="?attr/colorOnPrimaryContainer" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/newChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:text="Новых" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/resetChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:text="Возвращенных"
+                android:layout_marginStart="8dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/inProgressChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:text="Изучаемых"
+                android:layout_marginStart="8dp" />
         </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
