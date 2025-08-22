@@ -80,8 +80,8 @@
                     android:id="@+id/englishWordInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:imeOptions="actionNext"
-                    android:inputType="textCapWords" />
+                    android:imeOptions="actionNext|flagNoPersonalizedLearning|flagNoFullscreen"
+                    android:inputType="textNoSuggestions|textVisiblePassword" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
@@ -115,8 +115,8 @@
                     android:id="@+id/russianWordInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:imeOptions="actionNext"
-                    android:inputType="textCapWords" />
+                    android:imeOptions="actionNext|flagNoPersonalizedLearning|flagNoFullscreen"
+                    android:inputType="textNoSuggestions|textVisiblePassword" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
@@ -144,7 +144,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:imeOptions="actionDone"
-                android:maxLines="4" />
+                android:maxLines="1"
+                android:singleLine="true" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.card.MaterialCardView

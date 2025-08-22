@@ -36,6 +36,14 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
         binding.playButton.setOnClickListener {
             card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
         }
+
+        // Нажатие на кнопку Done на клавиатуре имитирует "Показать перевод"
+        binding.translationInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                (parentFragment as? com.example.tala.fragment.ReviewFragment)?.showTranslation()
+                true
+            } else false
+        }
     }
 
     override fun roll() {

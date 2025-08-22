@@ -181,7 +181,7 @@ class ReviewFragment : Fragment() {
     }
 
     // Показывает перевод слова
-    private fun showTranslation() {
+    fun showTranslation() {
         currentCardFragment?.roll()
         currentCard?.let {
             hideKeyboard()
