@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Top bar with edit button on the right -->
     <LinearLayout
@@ -29,7 +30,8 @@
             android:padding="2dp"
             android:src="@drawable/ic_edit"
             app:tint="?attr/colorPrimary"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:visibility="visible"/>
     </LinearLayout>
 
     <!-- Scrollable content area between top bar and bottom bar -->
@@ -62,7 +64,9 @@
             <FrameLayout
                 android:id="@+id/reviewContentContainer"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                tools:layout="@layout/fragment_card_translate"
+                tools:visibility="visible"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -90,14 +94,16 @@
             app:iconGravity="textStart"
             app:backgroundTint="?attr/colorSecondaryContainer"
             android:textColor="?attr/colorOnSecondaryContainer"
-            app:iconTint="?attr/colorOnSecondaryContainer" />
+            app:iconTint="?attr/colorOnSecondaryContainer"
+            tools:visibility="visible"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="16dp"
-            android:visibility="gone">
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/hardButton"
@@ -138,7 +144,8 @@
             android:orientation="horizontal"
             android:layout_marginTop="12dp"
             android:gravity="center"
-            android:visibility="gone">
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/newChip"

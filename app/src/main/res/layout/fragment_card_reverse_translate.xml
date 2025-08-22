@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
     android:gravity="center_horizontal"
     tools:context=".fragment.card.CardReverseTranslateFragment">
 
@@ -36,6 +35,7 @@
         android:gravity="center"
         android:drawableStart="@drawable/ic_info"
         android:drawablePadding="6dp"
+        app:drawableTint="?attr/colorOnSurfaceVariant"
         android:padding="2dp"
         android:visibility="gone" />
 
