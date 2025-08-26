@@ -26,7 +26,6 @@ import com.example.tala.entity.category.Category
 import com.example.tala.entity.category.CategoryViewModel
 import com.example.tala.fragment.dialog.AddCategoryDialog
 import com.example.tala.fragment.dialog.ImagePickerDialog
-import com.example.tala.fragment.dialog.TranslationPickerDialog
 import com.example.tala.integration.dictionary.YandexDictionaryApi.Companion.YANDEX_API_KEY
 import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KEY
 import com.example.tala.model.dto.CardListDto
@@ -274,13 +273,14 @@ class AddWordFragment : Fragment() {
                 val englishWord = binding.englishWordInput.text.toString()
                 val translations = fetchTranslationEnRu(englishWord)
                 if (translations.isNotEmpty()) {
-                    val dialog = TranslationPickerDialog(
-                        translations = translations,
-                        onTranslationSelected = { translation ->
-                            binding.russianWordInput.setText(translation)
+                    val items = translations.toTypedArray()
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Русский перевод")
+                        .setItems(items) { _, which ->
+                            binding.russianWordInput.setText(items[which])
                         }
-                    )
-                    dialog.show(parentFragmentManager, "TranslationPickerDialog")
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
                 } else {
                     Toast.makeText(requireContext(), "Нет доступных переводов", Toast.LENGTH_SHORT)
                         .show()
@@ -293,13 +293,14 @@ class AddWordFragment : Fragment() {
                 val russianWord = binding.russianWordInput.text.toString()
                 val translations = fetchTranslationRuEn(russianWord)
                 if (translations.isNotEmpty()) {
-                    val dialog = TranslationPickerDialog(
-                        translations = translations,
-                        onTranslationSelected = { translation ->
-                            binding.englishWordInput.setText(translation)
+                    val items = translations.toTypedArray()
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Английский перевод")
+                        .setItems(items) { _, which ->
+                            binding.englishWordInput.setText(items[which])
                         }
-                    )
-                    dialog.show(parentFragmentManager, "TranslationPickerDialog")
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
                 } else {
                     Toast.makeText(requireContext(), "Нет доступных переводов", Toast.LENGTH_SHORT)
                         .show()
