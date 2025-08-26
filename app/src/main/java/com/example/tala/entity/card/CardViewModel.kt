@@ -33,10 +33,13 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun insert(cardDto: CardListDto) = viewModelScope.launch {
+        if (cardDto.types.isEmpty()) {
+            Log.e(TAG, "insert: types is empty, nothing to insert")
+            return@launch
+        }
         val commonId = UUID.randomUUID().toString()
         val cardDtoWithCommonId = cardDto.copy(commonId = commonId)
-        CardTypeEnum.entries
-            .filter { it.use }
+        cardDto.types
             .map { cardType ->
                 val baseCard = CardTypeFactory.getCardType(cardType).create(cardDtoWithCommonId)
                 val ef = reviewSettings.getEf(cardType)
@@ -56,14 +59,46 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     fun update(cardDto: CardListDto) = viewModelScope.launch(Dispatchers.IO) {
         try {
-            CardTypeEnum.entries
-                .filter { it.use }
-                .mapNotNull { cardType ->
-                    val card = repository.byTypeAndCommonId(cardType, cardDto.commonId)
-                    Log.i("CardViewModel", "update: $card")
-                    card?.let { CardTypeFactory.getCardType(cardType).update(cardDto, card) }
+            if (cardDto.types.isEmpty()) {
+                Log.e(TAG, "update: types is empty, nothing to update")
+                return@launch
+            }
+
+            // 1) Получаем все карточки по commonId за один запрос
+            val existingList = repository.byCommonId(cardDto.commonId!!)
+            val existingMap: Map<CardTypeEnum, Card> = existingList.associateBy { it.cardType }
+
+            val existingTypes = existingMap.keys
+            val desiredTypes = cardDto.types
+
+            // 2) Типы к удалению: были раньше, но теперь не нужны
+            val typesToDelete = existingTypes - desiredTypes
+            typesToDelete.forEach { type ->
+                existingMap[type]?.let { repository.delete(it) }
+            }
+
+            // 3) Типы к добавлению: нужны теперь, но их не было
+            val typesToAdd = desiredTypes - existingTypes
+            if (typesToAdd.isNotEmpty()) {
+                val cardsToInsert = typesToAdd.map { type ->
+                    val base = CardTypeFactory.getCardType(type).create(cardDto)
+                    val ef = reviewSettings.getEf(type)
+                    base.copy(ef = ef)
                 }
-                .let { cards -> repository.updateAll(cards) }
+                repository.insertAll(cardsToInsert)
+            }
+
+            // 4) Типы к обновлению: были и остаются — обновляем поля
+            val typesToUpdate = desiredTypes intersect existingTypes
+            if (typesToUpdate.isNotEmpty()) {
+                val cardsToUpdate = typesToUpdate.mapNotNull { type ->
+                    val existing = existingMap[type]
+                    existing?.let { CardTypeFactory.getCardType(type).update(cardDto, it) }
+                }
+                if (cardsToUpdate.isNotEmpty()) {
+                    repository.updateAll(cardsToUpdate)
+                }
+            }
         } catch (e: Exception) {
             Log.e("CardViewModel", "update:", e)
         }
@@ -80,8 +115,21 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun allCardList(): LiveData<List<CardListDto>> {
-        return repository.getAllByType(CardTypeEnum.TRANSLATE).map {
-            it.map { card -> CardTypeFactory.getCardType(CardTypeEnum.TRANSLATE).toListDto(card) }
+        return repository.getAll().map { cards ->
+            cards
+                .groupBy { it.commonId ?: "__single_${'$'}{it.id}" }
+                .map { (_, group) ->
+                    val primary = group.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: group.first()
+                    CardListDto(
+                        commonId = primary.commonId,
+                        english = primary.english,
+                        russian = primary.russian,
+                        categoryId = primary.categoryId,
+                        imagePath = primary.imagePath,
+                        info = primary.info,
+                        types = group.map { it.cardType }.toSet(),
+                    )
+                }
         }
     }
 

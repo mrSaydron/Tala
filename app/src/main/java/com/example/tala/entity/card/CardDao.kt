@@ -32,6 +32,9 @@ interface CardDao {
     @Query("SELECT * FROM card WHERE cardType = :cardType AND commonId = :commonId")
     suspend fun byTypeAndCommonId(cardType: CardTypeEnum, commonId: String?): Card?
 
+    @Query("SELECT * FROM card WHERE commonId = :commonId")
+    suspend fun getByCommonId(commonId: String): List<Card>
+
     @Query("SELECT * FROM card WHERE cardType = :cardType")
     fun getAllByType(cardType: CardTypeEnum): LiveData<List<Card>>
 

@@ -11,6 +11,10 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.byTypeAndCommonId(cardType, commonId)
     }
 
+    suspend fun byCommonId(commonId: String): List<Card> {
+        return cardDao.getByCommonId(commonId)
+    }
+
     suspend fun insert(card: Card) {
         return cardDao.insert(card)
     }

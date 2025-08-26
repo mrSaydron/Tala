@@ -32,6 +32,7 @@ import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KE
 import com.example.tala.model.dto.CardListDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.service.ApiClient
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
 import java.io.File
@@ -52,6 +53,7 @@ class AddWordFragment : Fragment() {
     private lateinit var categoryAdapter: ArrayAdapter<String>
     private val categories = mutableListOf<Category>()
     private var imagePath: String? = null
+    private val selectedTypes = mutableSetOf<CardTypeEnum>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -67,6 +69,14 @@ class AddWordFragment : Fragment() {
         cardViewModel = ViewModelProvider(this)[CardViewModel::class.java]
         categoryViewModel = ViewModelProvider(this)[CategoryViewModel::class.java]
 
+        // Инициализируем выбранные типы карточек
+        if (currentCard?.types?.isNotEmpty() == true) {
+            selectedTypes.clear()
+            selectedTypes.addAll(currentCard!!.types)
+        } else if (selectedTypes.isEmpty()) {
+            selectedTypes.addAll(CardTypeEnum.entries.filter { it.use })
+        }
+
         currentCard?.let {
             binding.englishWordInput.setText(it.english)
             binding.russianWordInput.setText(it.russian)
@@ -77,7 +87,6 @@ class AddWordFragment : Fragment() {
             Glide.with(this)
                 .load(it.imagePath)
                 .into(binding.wordImageView)
-//            binding.wordImageView.setImageURI(Uri.parse(it.imagePath))
 
             imagePath = it.imagePath
 
@@ -137,6 +146,10 @@ class AddWordFragment : Fragment() {
                 Log.i("AddWordFragment", "onViewCreated: selectCategory")
 
                 if (englishWord.isNotEmpty() && russianWord.isNotEmpty()) {
+                    if (selectedTypes.isEmpty()) {
+                        Toast.makeText(requireContext(), "Выберите хотя бы один тип карточек", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
 
                     if (currentCard == null) {
                         val hint = binding.hintInput.text.toString().trim()
@@ -147,6 +160,7 @@ class AddWordFragment : Fragment() {
                             categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
                             info = info,
+                            types = selectedTypes.toSet(),
                         )
                         cardViewModel.insert(cardDto)
                     } else {
@@ -161,6 +175,7 @@ class AddWordFragment : Fragment() {
                             categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
                             info = info,
+                            types = selectedTypes.toSet(),
                         )
                         cardViewModel.update(cardDto)
                         parentFragmentManager.popBackStack()
@@ -201,19 +216,8 @@ class AddWordFragment : Fragment() {
             }
         }
 
-        // Обработка нажатия на кнопку "Добавить изображение"
-//        binding.addImageButton.setOnClickListener {
-//            openImagePicker()
-//        }
-
-//        setupTranslationListener()
         setupEnglishWordFocus()
         setupRussianWordFocus()
-
-//        cropImageButton.setOnClickListener {
-//            val imageUri = // Получи URI изображения (например, из Glide)
-//                startCropping(imageUri)
-//        }
 
         // Обработка нажатия на изображение
         binding.wordImageView.setOnClickListener {
@@ -257,6 +261,11 @@ class AddWordFragment : Fragment() {
                 }
             )
             dialog.show(parentFragmentManager, "ImagePickerDialog")
+        }
+
+        // Кнопка настроек типов карточек
+        binding.cardTypesSettingsButton.setOnClickListener {
+            showCardTypesDialog()
         }
 
         // Кнопка для выбора перевода
@@ -348,18 +357,6 @@ class AddWordFragment : Fragment() {
         intent.type = "image/*"
         startActivityForResult(intent, REQUEST_IMAGE_PICK)
     }
-
-//    @Deprecated("Deprecated in Java")
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//        if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK && data != null) {
-//            val imageUri = data.data
-//            imageUri?.let {
-//                wordImageView.setImageURI(it)
-//                imagePath = it.toString() // Сохраняем путь к изображению
-//            }
-//        }
-//    }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -521,6 +518,22 @@ class AddWordFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showCardTypesDialog() {
+        val availableTypes = CardTypeEnum.entries.filter { it.use }
+        val titles = availableTypes.map { it.titleRu }.toTypedArray()
+        val checked = availableTypes.map { selectedTypes.contains(it) }.toBooleanArray()
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Типы карточек")
+            .setMultiChoiceItems(titles, checked) { _, which, isChecked ->
+                val type = availableTypes[which]
+                if (isChecked) selectedTypes.add(type) else selectedTypes.remove(type)
+            }
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun loadImage(imageUrl: String) {
