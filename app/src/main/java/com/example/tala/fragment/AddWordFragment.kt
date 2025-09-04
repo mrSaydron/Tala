@@ -78,7 +78,14 @@ class AddWordFragment : Fragment() {
             selectedTypes.addAll(CardTypeEnum.entries.filter { it.use })
         }
 
-        currentCard?.let {
+        // Если пришел commonId в аргументах — загрузим карточку
+        val argCommonId = arguments?.getString(ARG_COMMON_ID)
+        if (!argCommonId.isNullOrEmpty()) {
+            lifecycleScope.launch {
+                currentCard = cardViewModel.getCardListByCommonId(argCommonId)
+                bindCurrentCard()
+            }
+        } else currentCard?.let {
             binding.englishWordInput.setText(it.english)
             binding.russianWordInput.setText(it.russian)
             binding.hintInput.setText(it.info?.let { info ->
@@ -623,10 +630,38 @@ class AddWordFragment : Fragment() {
         binding.chooseEnglishTranslationButton.isEnabled = russian.isNotEmpty()
     }
 
+    private fun bindCurrentCard() {
+        currentCard?.let {
+            binding.englishWordInput.setText(it.english)
+            binding.russianWordInput.setText(it.russian)
+            binding.hintInput.setText(it.info?.let { info ->
+                try { org.json.JSONObject(info).optString("hint", "") } catch (_: Exception) { "" }
+            })
+
+            Glide.with(this)
+                .load(it.imagePath)
+                .into(binding.wordImageView)
+
+            imagePath = it.imagePath
+
+            lifecycleScope.launch {
+                showReviewStats(it.commonId)
+            }
+        }
+    }
+
     companion object {
         private const val REQUEST_IMAGE_PICK = 100
 
-        private const val ARG_WORD = "word"
+        private const val ARG_COMMON_ID = "common_id"
+
+        fun newInstance(commonId: String?): AddWordFragment {
+            val fragment = AddWordFragment()
+            val args = Bundle()
+            if (!commonId.isNullOrEmpty()) args.putString(ARG_COMMON_ID, commonId)
+            fragment.arguments = args
+            return fragment
+        }
 
         fun newInstance(card: CardListDto?): AddWordFragment {
             val fragment = AddWordFragment()
@@ -634,5 +669,4 @@ class AddWordFragment : Fragment() {
             return fragment
         }
     }
-
 }

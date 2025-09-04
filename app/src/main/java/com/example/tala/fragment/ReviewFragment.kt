@@ -18,6 +18,7 @@ import com.example.tala.entity.card.CardViewModel
 import com.example.tala.entity.card.Card
 import com.example.tala.model.dto.CardDto
 import com.example.tala.model.dto.toCardDto
+import com.example.tala.model.dto.toEntityCard
 import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.fragment.card.CardEnterWordFragment
 import com.example.tala.fragment.card.CardReverseTranslateFragment
@@ -42,7 +43,6 @@ class ReviewFragment : Fragment() {
     private lateinit var textToSpeechHelper: TextToSpeechHelper
 
     private var isTranslationShown = false
-    private var currentCard: Card? = null
     private var currentDto: CardDto? = null
     private var currentCardFragment: CardReviewBase? = null
     private lateinit var reviewSettings: ReviewSettings
@@ -82,16 +82,8 @@ class ReviewFragment : Fragment() {
 
         // Переход к редактированию через AddWordFragment
         binding.editButton.setOnClickListener {
-            currentCard?.let { card ->
-                val dto = CardListDto(
-                    commonId = card.commonId,
-                    english = card.english,
-                    russian = card.russian,
-                    categoryId = card.categoryId,
-                    imagePath = card.imagePath,
-                    info = card.info,
-                )
-                val editFragment = AddWordFragment.newInstance(dto)
+            currentDto?.commonId?.let { commonId ->
+                val editFragment = AddWordFragment.newInstance(commonId)
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainer, editFragment)
                     .addToBackStack(null)
@@ -187,22 +179,23 @@ class ReviewFragment : Fragment() {
     // Показывает перевод слова
     fun showTranslation() {
         currentCardFragment?.roll()
-        currentCard?.let {
+        currentDto?.let { dto ->
             hideKeyboard()
             isTranslationShown = true
             binding.showTranslationButton.visibility = View.GONE
 
-            binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(currentCard!!)}"
-            binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(currentCard!!)}"
-            binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(currentCard!!)}"
+            val cardEntity = dto.toEntityCard()
+            binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(cardEntity)}"
+            binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(cardEntity)}"
+            binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(cardEntity)}"
             (binding.easyButton.parent as View).visibility = View.VISIBLE
         }
     }
 
     private fun resultHard() {
-        currentCard?.let { card ->
+        currentDto?.let { dto ->
             lifecycleScope.launch {
-                // Дожидаемся записи изменений, чтобы избежать повторного показа карточки из-за гонки
+                val card = dto.toEntityCard()
                 viewModel.resultHardSuspend(card)
                 loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
@@ -211,8 +204,9 @@ class ReviewFragment : Fragment() {
     }
 
     private fun resultMedium() {
-        currentCard?.let { card ->
+        currentDto?.let { dto ->
             lifecycleScope.launch {
+                val card = dto.toEntityCard()
                 viewModel.resultMediumSuspend(card)
                 loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
@@ -221,8 +215,9 @@ class ReviewFragment : Fragment() {
     }
 
     private fun resultEasy() {
-        currentCard?.let { card ->
+        currentDto?.let { dto ->
             lifecycleScope.launch {
+                val card = dto.toEntityCard()
                 viewModel.resultEasySuspend(card)
                 loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE

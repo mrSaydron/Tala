@@ -302,6 +302,29 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.byTypeAndCommonId(cardType, commonId)
     }
 
+    suspend fun getCardListByCommonId(commonId: String): CardListDto? {
+        return withContext(Dispatchers.IO) {
+            val group = repository.byCommonId(commonId)
+            if (group.isEmpty()) return@withContext null
+            val dtos = group.map { it.toCardDto() }
+            val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
+            val primaryInfo = (primaryDto.info as? WordCardInfo)
+            val cardsMap: Map<CardTypeEnum, com.example.tala.model.dto.info.CardInfo> = dtos.associate { dto ->
+                dto.cardType to (dto.info ?: WordCardInfo())
+            }
+            CardListDto(
+                commonId = primaryDto.commonId,
+                english = primaryInfo?.english ?: "",
+                russian = primaryInfo?.russian ?: "",
+                categoryId = primaryDto.categoryId,
+                imagePath = primaryInfo?.imagePath,
+                info = primaryInfo?.toJsonOrNull(),
+                types = dtos.map { it.cardType }.toSet(),
+                cards = cardsMap,
+            )
+        }
+    }
+
     fun getHardInterval(card: Card): String {
         return "<10 мин."
     }
