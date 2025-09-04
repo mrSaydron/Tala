@@ -7,12 +7,12 @@ import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardReverseTranslateBinding
-import com.example.tala.entity.card.Card
+import com.example.tala.model.dto.info.WordCardInfo
 
-class CardReverseTranslateFragment(private val getCard: () -> Card) : CardReviewBase() {
+class CardReverseTranslateFragment(private val getInfo: () -> WordCardInfo) : CardReviewBase() {
 
     private lateinit var binding: FragmentCardReverseTranslateBinding
-    private var card: Card? = null
+    private var info: WordCardInfo? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,35 +25,32 @@ class CardReverseTranslateFragment(private val getCard: () -> Card) : CardReview
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        card = getCard()
+        info = getInfo()
         bind()
 
         binding.playButton.setOnClickListener {
-            card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
+            info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
         }
     }
 
     override fun roll() {
         binding.wordTextView.visibility = View.VISIBLE
 
-        card?.let { MainActivity.textToSpeechHelper.speak(card!!.english) }
+        info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
         binding.playButton.visibility = View.VISIBLE
     }
 
     override fun bind() {
-        card?.let {
-            binding.wordTextView.text = it.english
-            binding.answerTextView.text = it.russian
-            val hint = try {
-                it.info?.let { info -> org.json.JSONObject(info).optString("hint", "") }
-            } catch (_: Exception) { "" }
-            if (!hint.isNullOrEmpty()) {
-                binding.hintTextView.text = hint
+        info?.let { data ->
+            binding.wordTextView.text = data.english
+            binding.answerTextView.text = data.russian
+            if (!data.hint.isNullOrEmpty()) {
+                binding.hintTextView.text = data.hint
                 binding.hintTextView.visibility = View.VISIBLE
             } else {
                 binding.hintTextView.visibility = View.GONE
             }
-            it.imagePath?.let { path ->
+            data.imagePath?.let { path ->
                 Glide.with(this)
                     .load(path)
                     .into(binding.wordImageView)

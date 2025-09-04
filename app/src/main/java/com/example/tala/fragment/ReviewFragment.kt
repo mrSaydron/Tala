@@ -16,6 +16,9 @@ import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentReviewBinding
 import com.example.tala.entity.card.CardViewModel
 import com.example.tala.entity.card.Card
+import com.example.tala.model.dto.CardDto
+import com.example.tala.model.dto.toCardDto
+import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.fragment.card.CardEnterWordFragment
 import com.example.tala.fragment.card.CardReverseTranslateFragment
 import com.example.tala.fragment.card.CardReviewBase
@@ -40,6 +43,7 @@ class ReviewFragment : Fragment() {
 
     private var isTranslationShown = false
     private var currentCard: Card? = null
+    private var currentDto: CardDto? = null
     private var currentCardFragment: CardReviewBase? = null
     private lateinit var reviewSettings: ReviewSettings
 
@@ -132,20 +136,20 @@ class ReviewFragment : Fragment() {
 
         isTranslationShown = false
         val endDayTime = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-        val card = viewModel.getNextWordToReview(selectedCategoryId, endDayTime)
+        val dto = viewModel.getNextCardDtoToReview(selectedCategoryId, endDayTime)
 
-        Log.i(TAG, "loadNextWord: card - $card")
-        if (card != null) {
+        Log.i(TAG, "loadNextWord: dto - $dto")
+        if (dto != null) {
             binding.reviewContentContainer.visibility = View.VISIBLE
             binding.showTranslationButton.visibility = View.VISIBLE
             binding.editButton.visibility = View.VISIBLE
             (binding.newChip.parent as View).visibility = View.VISIBLE
 
-            currentCard = card
-            currentCardFragment = when (card.cardType) {
-                CardTypeEnum.TRANSLATE -> CardTranslateFragment { card }
-                CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment { card }
-                CardTypeEnum.ENTER_WORD -> CardEnterWordFragment { card }
+            currentDto = dto
+            currentCardFragment = when (dto.cardType) {
+                CardTypeEnum.TRANSLATE -> CardTranslateFragment { dto.info as WordCardInfo }
+                CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment { dto.info as WordCardInfo }
+                CardTypeEnum.ENTER_WORD -> CardEnterWordFragment { dto.info as WordCardInfo }
                 CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> TODO()
                 CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> TODO()
             }

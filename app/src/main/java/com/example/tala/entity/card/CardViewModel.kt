@@ -9,7 +9,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.tala.TalaDatabase
 import com.example.tala.ReviewSettings
 import com.example.tala.model.dto.CardListDto
+import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.enums.CardTypeEnum
+import com.example.tala.model.dto.CardDto
+import com.example.tala.model.dto.toCardDto
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.card.CardTypeFactory
 import kotlinx.coroutines.Dispatchers
@@ -33,19 +36,38 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun insert(cardDto: CardListDto) = viewModelScope.launch {
-        if (cardDto.types.isEmpty()) {
-            Log.e(TAG, "insert: types is empty, nothing to insert")
+        if (cardDto.cards.isEmpty()) {
+            Log.e(TAG, "insert: cards is empty, nothing to insert")
             return@launch
         }
         val commonId = UUID.randomUUID().toString()
-        val cardDtoWithCommonId = cardDto.copy(commonId = commonId)
-        cardDto.types
-            .map { cardType ->
-                val baseCard = CardTypeFactory.getCardType(cardType).create(cardDtoWithCommonId)
-                val ef = reviewSettings.getEf(cardType)
-                baseCard.copy(ef = ef)
-            }
-            .let { repository.insertAll(it) }
+
+        val entities: List<Card> = cardDto.cards.mapNotNull { (type, info) ->
+            val wordInfo = (info as? WordCardInfo) ?: WordCardInfo(
+                english = cardDto.english,
+                russian = cardDto.russian,
+                imagePath = cardDto.imagePath,
+                hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint", null) } } catch (_: Exception) { null }
+            )
+
+            val ef = reviewSettings.getEf(type)
+            Card(
+                commonId = commonId,
+                english = wordInfo.english ?: cardDto.english,
+                russian = wordInfo.russian ?: cardDto.russian,
+                categoryId = cardDto.categoryId,
+                imagePath = wordInfo.imagePath ?: cardDto.imagePath,
+                info = wordInfo.toJsonOrNull(),
+                cardType = type,
+                ef = ef,
+            )
+        }
+
+        if (entities.isEmpty()) {
+            Log.e(TAG, "insert: built entities is empty, nothing to insert")
+            return@launch
+        }
+        repository.insertAll(entities)
     }
 
     private fun update(card: Card) = viewModelScope.launch {
@@ -59,8 +81,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     fun update(cardDto: CardListDto) = viewModelScope.launch(Dispatchers.IO) {
         try {
-            if (cardDto.types.isEmpty()) {
-                Log.e(TAG, "update: types is empty, nothing to update")
+            if (cardDto.cards.isEmpty()) {
+                Log.e(TAG, "update: cards is empty, nothing to update")
                 return@launch
             }
 
@@ -69,7 +91,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             val existingMap: Map<CardTypeEnum, Card> = existingList.associateBy { it.cardType }
 
             val existingTypes = existingMap.keys
-            val desiredTypes = cardDto.types
+            val desiredTypes = cardDto.cards.keys
 
             // 2) Типы к удалению: были раньше, но теперь не нужны
             val typesToDelete = existingTypes - desiredTypes
@@ -80,20 +102,50 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             // 3) Типы к добавлению: нужны теперь, но их не было
             val typesToAdd = desiredTypes - existingTypes
             if (typesToAdd.isNotEmpty()) {
-                val cardsToInsert = typesToAdd.map { type ->
-                    val base = CardTypeFactory.getCardType(type).create(cardDto)
+                val cardsToInsert = typesToAdd.mapNotNull { type ->
+                    val infoAny = cardDto.cards[type]
+                    val wordInfo = (infoAny as? com.example.tala.model.dto.info.WordCardInfo) ?: com.example.tala.model.dto.info.WordCardInfo(
+                        english = cardDto.english,
+                        russian = cardDto.russian,
+                        imagePath = cardDto.imagePath,
+                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint", null) } } catch (_: Exception) { null }
+                    )
                     val ef = reviewSettings.getEf(type)
-                    base.copy(ef = ef)
+                    Card(
+                        commonId = cardDto.commonId,
+                        english = wordInfo.english ?: cardDto.english,
+                        russian = wordInfo.russian ?: cardDto.russian,
+                        categoryId = cardDto.categoryId,
+                        imagePath = wordInfo.imagePath ?: cardDto.imagePath,
+                        info = wordInfo.toJsonOrNull(),
+                        cardType = type,
+                        ef = ef,
+                    )
                 }
-                repository.insertAll(cardsToInsert)
+                if (cardsToInsert.isNotEmpty()) {
+                    repository.insertAll(cardsToInsert)
+                }
             }
 
             // 4) Типы к обновлению: были и остаются — обновляем поля
             val typesToUpdate = desiredTypes intersect existingTypes
             if (typesToUpdate.isNotEmpty()) {
                 val cardsToUpdate = typesToUpdate.mapNotNull { type ->
-                    val existing = existingMap[type]
-                    existing?.let { CardTypeFactory.getCardType(type).update(cardDto, it) }
+                    val existing = existingMap[type] ?: return@mapNotNull null
+                    val infoAny = cardDto.cards[type]
+                    val wordInfo = (infoAny as? com.example.tala.model.dto.info.WordCardInfo) ?: com.example.tala.model.dto.info.WordCardInfo(
+                        english = cardDto.english,
+                        russian = cardDto.russian,
+                        imagePath = cardDto.imagePath,
+                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint", null) } } catch (_: Exception) { null }
+                    )
+                    existing.copy(
+                        english = wordInfo.english ?: existing.english,
+                        russian = wordInfo.russian ?: existing.russian,
+                        categoryId = cardDto.categoryId,
+                        imagePath = wordInfo.imagePath ?: existing.imagePath,
+                        info = wordInfo.toJsonOrNull()
+                    )
                 }
                 if (cardsToUpdate.isNotEmpty()) {
                     repository.updateAll(cardsToUpdate)
@@ -119,15 +171,23 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             cards
                 .groupBy { it.commonId ?: "__single_${'$'}{it.id}" }
                 .map { (_, group) ->
-                    val primary = group.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: group.first()
+                    val dtos = group.map { it.toCardDto() }
+                    val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
+                    val primaryInfo = primaryDto.info as? WordCardInfo
+
+                    val cardsMap: Map<CardTypeEnum, com.example.tala.model.dto.info.CardInfo> = dtos.associate { dto ->
+                        dto.cardType to (dto.info ?: WordCardInfo())
+                    }
+
                     CardListDto(
-                        commonId = primary.commonId,
-                        english = primary.english,
-                        russian = primary.russian,
-                        categoryId = primary.categoryId,
-                        imagePath = primary.imagePath,
-                        info = primary.info,
-                        types = group.map { it.cardType }.toSet(),
+                        commonId = primaryDto.commonId,
+                        english = primaryInfo?.english ?: "",
+                        russian = primaryInfo?.russian ?: "",
+                        categoryId = primaryDto.categoryId,
+                        imagePath = primaryInfo?.imagePath,
+                        info = primaryInfo?.toJsonOrNull(),
+                        types = dtos.map { it.cardType }.toSet(),
+                        cards = cardsMap,
                     )
                 }
         }
@@ -137,12 +197,26 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getAll()
     }
 
+    fun allCardDtos(): LiveData<List<CardDto>> {
+        return repository.getAll().map { cards ->
+            cards.map { it.toCardDto() }
+        }
+    }
+
     suspend fun getNextWordToReview(currentDate: Long): Card? {
         return repository.getNextToReview(currentDate)
     }
 
     suspend fun getNextWordToReview(categoryId: Int, currentDate: Long): Card? {
         return repository.getNextToReview(categoryId, currentDate)
+    }
+
+    suspend fun getNextCardDtoToReview(currentDate: Long): CardDto? {
+        return repository.getNextToReview(currentDate)?.toCardDto()
+    }
+
+    suspend fun getNextCardDtoToReview(categoryId: Int, currentDate: Long): CardDto? {
+        return repository.getNextToReview(categoryId, currentDate)?.toCardDto()
     }
 
     fun updateWord(id: Int, nextReviewDate: Long, interval: Int) = viewModelScope.launch {
@@ -187,9 +261,36 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getByCategory(categoryId)
     }
 
+    fun getCardDtosByCategory(categoryId: Int): LiveData<List<CardDto>> {
+        return repository.getByCategory(categoryId).map { cards ->
+            cards.map { it.toCardDto() }
+        }
+    }
+
     fun getCardListByCategory(categoryId: Int): LiveData<List<CardListDto>> {
-        return repository.getAllByTypeAndCategory(CardTypeEnum.TRANSLATE, categoryId).map {
-            it.map { card -> CardTypeFactory.getCardType(CardTypeEnum.TRANSLATE).toListDto(card) }
+        return repository.getByCategory(categoryId).map { cards ->
+            cards
+                .groupBy { it.commonId ?: "__single_${'$'}{it.id}" }
+                .map { (_, group) ->
+                    val dtos = group.map { it.toCardDto() }
+                    val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
+                    val primaryInfo = primaryDto.info as? WordCardInfo
+
+                    val cardsMap: Map<CardTypeEnum, com.example.tala.model.dto.info.CardInfo> = dtos.associate { dto ->
+                        dto.cardType to (dto.info ?: WordCardInfo())
+                    }
+
+                    CardListDto(
+                        commonId = primaryDto.commonId,
+                        english = primaryInfo?.english ?: "",
+                        russian = primaryInfo?.russian ?: "",
+                        categoryId = primaryDto.categoryId,
+                        imagePath = primaryInfo?.imagePath,
+                        info = primaryInfo?.toJsonOrNull(),
+                        types = dtos.map { it.cardType }.toSet(),
+                        cards = cardsMap,
+                    )
+                }
         }
     }
 

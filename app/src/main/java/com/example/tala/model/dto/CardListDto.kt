@@ -1,5 +1,6 @@
 package com.example.tala.model.dto
 
+import com.example.tala.model.dto.info.CardInfo
 import com.example.tala.model.enums.CardTypeEnum
 
 data class CardListDto(
@@ -11,4 +12,5 @@ data class CardListDto(
     val imagePath: String? = null,
     val info: String? = null,
     val types: Set<CardTypeEnum> = emptySet(),
+    val cards: Map<CardTypeEnum, CardInfo> = emptyMap(),
 )

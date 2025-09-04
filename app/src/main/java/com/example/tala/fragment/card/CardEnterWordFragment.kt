@@ -11,13 +11,13 @@ import android.text.style.BackgroundColorSpan
 import com.bumptech.glide.Glide
 import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardEnterWordBinding
-import com.example.tala.entity.card.Card
+import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.util.TextDiffHighlighter
 
-class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() {
+class CardEnterWordFragment(private val getInfo: () -> WordCardInfo) : CardReviewBase() {
 
     private lateinit var binding: FragmentCardEnterWordBinding
-    private var card: Card? = null
+    private var info: WordCardInfo? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,11 +30,11 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        card = getCard()
+        info = getInfo()
         bind()
 
         binding.playButton.setOnClickListener {
-            card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
+            info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
         }
 
         // Нажатие на кнопку Done на клавиатуре имитирует "Показать перевод"
@@ -61,25 +61,22 @@ class CardEnterWordFragment(private val getCard: () -> Card) : CardReviewBase() 
         binding.userAnswerTextView.setTextColor(Color.BLACK)
         binding.userAnswerTextView.text = coloredAnswer
 
-        card?.let { MainActivity.textToSpeechHelper.speak(it.english) }
+        info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
     }
 
     
 
     override fun bind() {
-        card?.let {
-            binding.wordTextView.text = it.english
-            binding.translationTextView.text = it.russian
-            val hint = try {
-                it.info?.let { info -> org.json.JSONObject(info).optString("hint", "") }
-            } catch (_: Exception) { "" }
-            if (!hint.isNullOrEmpty()) {
-                binding.hintTextView.text = hint
+        info?.let { data ->
+            binding.wordTextView.text = data.english
+            binding.translationTextView.text = data.russian
+            if (!data.hint.isNullOrEmpty()) {
+                binding.hintTextView.text = data.hint
                 binding.hintTextView.visibility = View.VISIBLE
             } else {
                 binding.hintTextView.visibility = View.GONE
             }
-            it.imagePath?.let { path ->
+            data.imagePath?.let { path ->
                 Glide.with(this)
                     .load(path)
                     .into(binding.wordImageView)

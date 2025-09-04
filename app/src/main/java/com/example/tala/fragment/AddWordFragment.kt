@@ -34,6 +34,8 @@ import com.example.tala.service.ApiClient
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
+import com.example.tala.model.dto.info.WordCardInfo
+import com.example.tala.model.dto.info.CardInfo
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -151,30 +153,42 @@ class AddWordFragment : Fragment() {
                     }
 
                     if (currentCard == null) {
-                        val hint = binding.hintInput.text.toString().trim()
-                        val info = if (hint.isNotEmpty()) org.json.JSONObject().put("hint", hint).toString() else null
+                        val hint = binding.hintInput.text.toString().trim().ifEmpty { null }
+                        val baseInfo = WordCardInfo(
+                            english = englishWord,
+                            russian = russianWord,
+                            imagePath = imagePath,
+                            hint = hint,
+                        )
+                        val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                         val cardDto = CardListDto(
                             english = englishWord,
                             russian = russianWord,
                             categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
-                            info = info,
-                            types = selectedTypes.toSet(),
+                            info = null,
+                            types = emptySet(),
+                            cards = cards,
                         )
                         cardViewModel.insert(cardDto)
                     } else {
-                        val hint = binding.hintInput.text.toString().trim()
-                        val info = if (hint.isNotEmpty()) {
-                            try { org.json.JSONObject().put("hint", hint).toString() } catch (_: Exception) { null }
-                        } else null
+                        val hint = binding.hintInput.text.toString().trim().ifEmpty { null }
+                        val baseInfo = WordCardInfo(
+                            english = englishWord,
+                            russian = russianWord,
+                            imagePath = imagePath,
+                            hint = hint,
+                        )
+                        val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                         val cardDto = CardListDto(
                             commonId = currentCard!!.commonId,
                             english = englishWord,
                             russian = russianWord,
                             categoryId = selectedCategory?.id ?: 0,
                             imagePath = imagePath,
-                            info = info,
-                            types = selectedTypes.toSet(),
+                            info = null,
+                            types = emptySet(),
+                            cards = cards,
                         )
                         cardViewModel.update(cardDto)
                         parentFragmentManager.popBackStack()
