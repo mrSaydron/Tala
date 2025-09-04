@@ -70,11 +70,6 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         repository.insertAll(entities)
     }
 
-    private fun update(card: Card) = viewModelScope.launch {
-        repository.update(card)
-    }
-
-    // Synchronous (suspend) update helper for deterministic flows (e.g., after-answer actions)
     private suspend fun updateSync(card: Card) {
         repository.update(card)
     }
@@ -156,10 +151,6 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun delete(card: CardListDto) = viewModelScope.launch(Dispatchers.IO) {
-        repository.delete(card.commonId!!)
-    }
-
     suspend fun deleteSync(commonId: String) {
         withContext(Dispatchers.IO) {
             repository.delete(commonId)
@@ -207,35 +198,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getNextToReview(currentDate)
     }
 
-    suspend fun getNextWordToReview(categoryId: Int, currentDate: Long): Card? {
-        return repository.getNextToReview(categoryId, currentDate)
-    }
-
-    suspend fun getNextCardDtoToReview(currentDate: Long): CardDto? {
-        return repository.getNextToReview(currentDate)?.toCardDto()
-    }
-
     suspend fun getNextCardDtoToReview(categoryId: Int, currentDate: Long): CardDto? {
         return repository.getNextToReview(categoryId, currentDate)?.toCardDto()
-    }
-
-    fun updateWord(id: Int, nextReviewDate: Long, interval: Int) = viewModelScope.launch {
-        repository.update(id, nextReviewDate, interval)
-    }
-
-    fun getNewCardsCount(): LiveData<Int> {
-        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        return repository.getCountToReview(endDate, StatusEnum.NEW)
-    }
-
-    fun getResetCardsCount(): LiveData<Int> {
-        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        return repository.getCountToReview(endDate, StatusEnum.PROGRESS_RESET)
-    }
-
-    fun getInProgressCardCount(): LiveData<Int> {
-        val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS)
     }
 
     fun getNewCardsCountByCategory(categoryId: Int): LiveData<Int> {
@@ -253,24 +217,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS, categoryId)
     }
 
-    fun updateImagePath(id: Int, imagePath: String) = viewModelScope.launch {
-        repository.updateImagePath(id, imagePath)
-    }
-
-    fun getCardsByCategory(categoryId: Int): LiveData<List<Card>> {
-        return repository.getByCategory(categoryId)
-    }
-
-    fun getCardDtosByCategory(categoryId: Int): LiveData<List<CardDto>> {
-        return repository.getByCategory(categoryId).map { cards ->
-            cards.map { it.toCardDto() }
-        }
-    }
-
     fun getCardListByCategory(categoryId: Int): LiveData<List<CardListDto>> {
         return repository.getByCategory(categoryId).map { cards ->
             cards
-                .groupBy { it.commonId ?: "__single_${'$'}{it.id}" }
+                .groupBy { it.commonId }
                 .map { (_, group) ->
                     val dtos = group.map { it.toCardDto() }
                     val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
