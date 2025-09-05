@@ -1,0 +1,74 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "gradle: clean",
+            "type": "shell",
+            "command": "${workspaceFolder}/gradlew",
+            "args": [
+                "clean"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "gradle: assembleDebug",
+            "type": "shell",
+            "command": "${workspaceFolder}/gradlew",
+            "args": [
+                "assembleDebug"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "gradle: installDebug",
+            "type": "shell",
+            "command": "${workspaceFolder}/gradlew",
+            "args": [
+                "installDebug"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: unit (./gradlew test)",
+            "type": "shell",
+            "command": "${workspaceFolder}/gradlew",
+            "args": [
+                "test"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: instrumented (connectedDebugAndroidTest)",
+            "type": "shell",
+            "command": "${workspaceFolder}/gradlew",
+            "args": [
+                "connectedDebugAndroidTest"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "adb: start app",
+            "type": "shell",
+            "command": "adb",
+            "args": [
+                "shell",
+                "am",
+                "start",
+                "-n",
+                "com.example.tala/.MainActivity"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "adb: logcat (app only)",
+            "type": "shell",
+            "command": "adb",
+            "args": [
+                "logcat",
+                "com.example.tala:*",
+                "*:S"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

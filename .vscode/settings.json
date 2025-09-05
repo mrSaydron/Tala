@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "[kotlin]": {
+        "editor.defaultFormatter": "JetBrains.kotlin"
+    },
+    "gradle.nestedProjects": "auto"
+}
