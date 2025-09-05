@@ -72,8 +72,8 @@ class CardViewModelInstrumentedTest {
         cardDao.insert(dueCard)
 
         val endToday = endOfTodayEpoch()
-        val fetched = viewModel.getNextWordToReview(endToday)!!
-        viewModel.resultMediumSuspend(fetched)
+        val fetchedDto = viewModel.getNextCardDtoToReview(1, endToday)!!
+        viewModel.resultMediumSuspend(fetchedDto)
 
         // Ждем применения update в БД
         pollUntilTrue {
@@ -87,7 +87,7 @@ class CardViewModelInstrumentedTest {
         assertTrue(updated.nextReviewDate > endToday)
 
         // Не должна появляться в выдаче сегодня
-        val nextToday = viewModel.getNextWordToReview(endToday)
+        val nextToday = viewModel.getNextCardDtoToReview(1, endToday)
         assertNull(nextToday)
     }
 
@@ -107,8 +107,8 @@ class CardViewModelInstrumentedTest {
         cardDao.insert(dueCard)
 
         val endToday = endOfTodayEpoch()
-        val fetched = viewModel.getNextWordToReview(endToday)!!
-        viewModel.resultEasySuspend(fetched)
+        val fetchedDto = viewModel.getNextCardDtoToReview(1, endToday)!!
+        viewModel.resultEasySuspend(fetchedDto)
 
         pollUntilTrue {
             val updated = cardDao.getNextToReview(Long.MAX_VALUE)
@@ -123,7 +123,7 @@ class CardViewModelInstrumentedTest {
         assertTrue(updated.nextReviewDate > endToday)
 
         // Не должна появляться в выдаче сегодня
-        val nextToday = viewModel.getNextWordToReview(endToday)
+        val nextToday = viewModel.getNextCardDtoToReview(1, endToday)
         assertNull(nextToday)
     }
 
@@ -143,8 +143,8 @@ class CardViewModelInstrumentedTest {
         cardDao.insert(dueCard)
 
         val endToday = endOfTodayEpoch()
-        val fetched = viewModel.getNextWordToReview(endToday)!!
-        viewModel.resultHardSuspend(fetched)
+        val fetchedDto = viewModel.getNextCardDtoToReview(1, endToday)!!
+        viewModel.resultHardSuspend(fetchedDto)
 
         pollUntilTrue {
             val updated = cardDao.getNextToReview(Long.MAX_VALUE)
@@ -154,7 +154,8 @@ class CardViewModelInstrumentedTest {
         val updated = cardDao.getNextToReview(Long.MAX_VALUE)!!
         assertEquals(StatusEnum.PROGRESS_RESET, updated.status)
         // После hard — 10 минут, зачастую до конца дня => попадет снова в выборку сегодня
-        val nextToday = viewModel.getNextWordToReview(endToday)
-        assertEquals("gamma", nextToday?.english)
+        val nextToday = viewModel.getNextCardDtoToReview(1, endToday)
+        val eng = (nextToday?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english
+        assertEquals("gamma", eng)
     }
 }

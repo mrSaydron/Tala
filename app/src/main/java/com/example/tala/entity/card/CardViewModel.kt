@@ -13,8 +13,11 @@ import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.dto.CardDto
 import com.example.tala.model.dto.toCardDto
+import com.example.tala.model.dto.toEntityCard
+import com.example.tala.model.dto.EnterWordCardDto
+import com.example.tala.model.dto.ReverseTranslateCardDto
+import com.example.tala.model.dto.TranslateCardDto
 import com.example.tala.model.enums.StatusEnum
-import com.example.tala.service.card.CardTypeFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,8 +73,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         repository.insertAll(entities)
     }
 
-    private suspend fun updateSync(card: Card) {
-        repository.update(card)
+    private suspend fun updateSync(cardDto: CardDto) {
+        repository.update(cardDto.toEntityCard())
     }
 
     fun update(cardDto: CardListDto) = viewModelScope.launch(Dispatchers.IO) {
@@ -184,20 +187,6 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun allCards(): LiveData<List<Card>> {
-        return repository.getAll()
-    }
-
-    fun allCardDtos(): LiveData<List<CardDto>> {
-        return repository.getAll().map { cards ->
-            cards.map { it.toCardDto() }
-        }
-    }
-
-    suspend fun getNextWordToReview(currentDate: Long): Card? {
-        return repository.getNextToReview(currentDate)
-    }
-
     suspend fun getNextCardDtoToReview(categoryId: Int, currentDate: Long): CardDto? {
         return repository.getNextToReview(categoryId, currentDate)?.toCardDto()
     }
@@ -248,8 +237,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         repository.deleteAll()
     }
 
-    suspend fun getCardByTypeAndCommonId(cardType: CardTypeEnum, commonId: String?): Card? {
-        return repository.byTypeAndCommonId(cardType, commonId)
+    suspend fun getCardByTypeAndCommonId(cardType: CardTypeEnum, commonId: String?): CardDto? {
+        return repository.byTypeAndCommonId(cardType, commonId)?.toCardDto()
     }
 
     suspend fun getCardListByCommonId(commonId: String): CardListDto? {
@@ -275,11 +264,11 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getHardInterval(card: Card): String {
+    fun getHardInterval(card: CardDto): String {
         return "<10 мин."
     }
 
-    fun getMediumInterval(card: Card): String {
+    fun getMediumInterval(card: CardDto): String {
         if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
             return "1 дн."
         } else {
@@ -288,7 +277,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getEasyInterval(card: Card): String {
+    fun getEasyInterval(card: CardDto): String {
         if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
             return "2 дн."
         } else {
@@ -297,52 +286,88 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    suspend fun resultHardSuspend(card: Card) {
+    suspend fun resultHardSuspend(cardDto: CardDto) {
         Log.i(TAG, "resultHardSuspend")
-        val ef = if (card.status == StatusEnum.IN_PROGRESS) {
-            maxOf(card.ef - 0.5, 1.3)
+        val ef = if (cardDto.status == StatusEnum.IN_PROGRESS) {
+            maxOf(cardDto.ef - 0.5, 1.3)
         } else {
-            card.ef
+            cardDto.ef
         }
-        val savingWord = card.copy(
+        val savingDto = copyWith(
+            cardDto = cardDto,
             status = StatusEnum.PROGRESS_RESET,
             nextReviewDate = calculateNextReviewDate(10, ChronoUnit.MINUTES),
             ef = ef
         )
-        updateSync(savingWord)
+        updateSync(savingDto)
     }
 
-    suspend fun resultMediumSuspend(card: Card) {
+    suspend fun resultMediumSuspend(cardDto: CardDto) {
         Log.i(TAG, "resultMediumSuspend")
-        val interval = if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
+        val interval = if (cardDto.status == StatusEnum.NEW || cardDto.status == StatusEnum.PROGRESS_RESET) {
             1
         } else {
-            Math.round(card.interval * card.ef).toInt()
+            Math.round(cardDto.interval * cardDto.ef).toInt()
         }
-        val savingWord = card.copy(
+        val savingDto = copyWith(
+            cardDto = cardDto,
             status = StatusEnum.IN_PROGRESS,
-            nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS)
+            nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS),
+            interval = interval
         )
-        updateSync(savingWord)
+        updateSync(savingDto)
     }
 
-    suspend fun resultEasySuspend(card: Card) {
+    suspend fun resultEasySuspend(cardDto: CardDto) {
         Log.i(TAG, "resultEasySuspend")
         val interval: Int
         val ef: Double
-        if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
+        if (cardDto.status == StatusEnum.NEW || cardDto.status == StatusEnum.PROGRESS_RESET) {
             interval = 2
-            ef = card.ef
+            ef = cardDto.ef
         } else {
-            interval = Math.round(card.interval * card.ef * 1.5).toInt()
-            ef = card.ef + 0.1
+            interval = Math.round(cardDto.interval * cardDto.ef * 1.5).toInt()
+            ef = cardDto.ef + 0.1
         }
-        val savingWord = card.copy(
+
+        val savingDto = copyWith(
+            cardDto = cardDto,
             status = StatusEnum.IN_PROGRESS,
             nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS),
-            ef = ef
+            ef = ef,
+            interval = interval
         )
-        updateSync(savingWord)
+        updateSync(savingDto)
+    }
+
+    private fun copyWith(
+        cardDto: CardDto,
+        nextReviewDate: Long? = null,
+        interval: Int? = null,
+        status: StatusEnum? = null,
+        ef: Double? = null,
+    ): CardDto {
+        return when (cardDto) {
+            is TranslateCardDto -> cardDto.copy(
+                nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
+                interval = interval ?: cardDto.interval,
+                status = status ?: cardDto.status,
+                ef = ef ?: cardDto.ef,
+            )
+            is ReverseTranslateCardDto -> cardDto.copy(
+                nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
+                interval = interval ?: cardDto.interval,
+                status = status ?: cardDto.status,
+                ef = ef ?: cardDto.ef,
+            )
+            is EnterWordCardDto -> cardDto.copy(
+                nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
+                interval = interval ?: cardDto.interval,
+                status = status ?: cardDto.status,
+                ef = ef ?: cardDto.ef,
+            )
+            else -> cardDto
+        }
     }
 
     private fun calculateNextReviewDate(add: Int, unit: ChronoUnit): Long {

@@ -15,9 +15,7 @@ import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentReviewBinding
 import com.example.tala.entity.card.CardViewModel
-import com.example.tala.entity.card.Card
 import com.example.tala.model.dto.CardDto
-import com.example.tala.model.dto.toCardDto
 import com.example.tala.model.dto.toEntityCard
 import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.fragment.card.CardEnterWordFragment
@@ -184,10 +182,9 @@ class ReviewFragment : Fragment() {
             isTranslationShown = true
             binding.showTranslationButton.visibility = View.GONE
 
-            val cardEntity = dto.toEntityCard()
-            binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(cardEntity)}"
-            binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(cardEntity)}"
-            binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(cardEntity)}"
+            binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(dto)}"
+            binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(dto)}"
+            binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(dto)}"
             (binding.easyButton.parent as View).visibility = View.VISIBLE
         }
     }
@@ -195,8 +192,7 @@ class ReviewFragment : Fragment() {
     private fun resultHard() {
         currentDto?.let { dto ->
             lifecycleScope.launch {
-                val card = dto.toEntityCard()
-                viewModel.resultHardSuspend(card)
+                viewModel.resultHardSuspend(dto)
                 loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
             }
@@ -206,8 +202,7 @@ class ReviewFragment : Fragment() {
     private fun resultMedium() {
         currentDto?.let { dto ->
             lifecycleScope.launch {
-                val card = dto.toEntityCard()
-                viewModel.resultMediumSuspend(card)
+                viewModel.resultMediumSuspend(dto)
                 loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
             }
@@ -217,8 +212,7 @@ class ReviewFragment : Fragment() {
     private fun resultEasy() {
         currentDto?.let { dto ->
             lifecycleScope.launch {
-                val card = dto.toEntityCard()
-                viewModel.resultEasySuspend(card)
+                viewModel.resultEasySuspend(dto)
                 loadNextWord()
                 (binding.easyButton.parent as View).visibility = View.GONE
             }
