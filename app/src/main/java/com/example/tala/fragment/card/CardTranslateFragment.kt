@@ -9,10 +9,15 @@ import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardTranslateBinding
 import com.example.tala.model.dto.info.WordCardInfo
 
-class CardTranslateFragment(private val getInfo: () -> WordCardInfo) : CardReviewBase() {
+class CardTranslateFragment : CardReviewBase() {
 
     private lateinit var binding: FragmentCardTranslateBinding
     private var info: WordCardInfo? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        info = arguments?.getSerializable(ARG_INFO) as? WordCardInfo
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,7 +30,6 @@ class CardTranslateFragment(private val getInfo: () -> WordCardInfo) : CardRevie
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        info = getInfo()
         bind()
 
         info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
@@ -61,4 +65,15 @@ class CardTranslateFragment(private val getInfo: () -> WordCardInfo) : CardRevie
         }
     }
 
+    companion object {
+        private const val ARG_INFO = "info"
+
+        fun newInstance(info: WordCardInfo): CardTranslateFragment {
+            val fragment = CardTranslateFragment()
+            val args = Bundle()
+            args.putSerializable(ARG_INFO, info)
+            fragment.arguments = args
+            return fragment
+        }
+    }
 }

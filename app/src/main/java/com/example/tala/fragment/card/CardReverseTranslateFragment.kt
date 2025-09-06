@@ -10,10 +10,15 @@ import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardReverseTranslateBinding
 import com.example.tala.model.dto.info.WordCardInfo
 
-class CardReverseTranslateFragment(private val getInfo: () -> WordCardInfo) : CardReviewBase() {
+class CardReverseTranslateFragment : CardReviewBase() {
 
     private lateinit var binding: FragmentCardReverseTranslateBinding
     private var info: WordCardInfo? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        info = arguments?.getSerializable(ARG_INFO) as? WordCardInfo
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,7 +31,6 @@ class CardReverseTranslateFragment(private val getInfo: () -> WordCardInfo) : Ca
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        info = getInfo()
         bind()
 
         binding.playButton.setOnClickListener {
@@ -66,4 +70,15 @@ class CardReverseTranslateFragment(private val getInfo: () -> WordCardInfo) : Ca
         }
     }
 
+    companion object {
+        private const val ARG_INFO = "info"
+
+        fun newInstance(info: WordCardInfo): CardReverseTranslateFragment {
+            val fragment = CardReverseTranslateFragment()
+            val args = Bundle()
+            args.putSerializable(ARG_INFO, info)
+            fragment.arguments = args
+            return fragment
+        }
+    }
 }

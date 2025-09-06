@@ -137,9 +137,9 @@ class ReviewFragment : Fragment() {
 
             currentDto = dto
             currentCardFragment = when (dto.cardType) {
-                CardTypeEnum.TRANSLATE -> CardTranslateFragment { dto.info as WordCardInfo }
-                CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment { dto.info as WordCardInfo }
-                CardTypeEnum.ENTER_WORD -> CardEnterWordFragment { dto.info as WordCardInfo }
+                CardTypeEnum.TRANSLATE -> CardTranslateFragment.newInstance(dto.info as WordCardInfo)
+                CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment.newInstance(dto.info as WordCardInfo)
+                CardTypeEnum.ENTER_WORD -> CardEnterWordFragment.newInstance(dto.info as WordCardInfo)
                 CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> TODO()
                 CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> TODO()
             }

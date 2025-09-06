@@ -1,13 +1,14 @@
 package com.example.tala.model.dto.info
 
 import org.json.JSONObject
+import java.io.Serializable
 
 data class WordCardInfo(
     val english: String? = null,
     val russian: String? = null,
     val imagePath: String? = null,
     val hint: String? = null,
-) : CardInfo {
+) : CardInfo, Serializable {
     fun toJsonOrNull(): String? {
         return try {
             val obj = JSONObject()
