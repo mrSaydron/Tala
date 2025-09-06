@@ -75,6 +75,7 @@
             app:thickness="1dp" />
 
         <LinearLayout
+            android:id="@+id/sectionEnglish"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -109,6 +110,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/sectionRussian"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -144,6 +146,7 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/sectionHint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Подсказка (необязательно)"
@@ -160,6 +163,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/sectionImage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"

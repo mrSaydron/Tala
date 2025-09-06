@@ -23,9 +23,9 @@ fun Card.toEnterWordDto(): EnterWordCardDto {
         status = this.status,
         ef = this.ef,
         info = WordCardInfo(
-            english = englishFromInfo ?: this.english,
-            russian = russianFromInfo ?: this.russian,
-            imagePath = imagePathFromInfo ?: this.imagePath,
+            english = englishFromInfo,
+            russian = russianFromInfo,
+            imagePath = imagePathFromInfo,
             hint = extractedHint,
         )
     )
@@ -37,11 +37,8 @@ fun EnterWordCardDto.toEntity(): Card {
     return Card(
         id = this.id,
         commonId = this.commonId,
-        english = (this.info as? WordCardInfo)?.english ?: "",
-        russian = (this.info as? WordCardInfo)?.russian ?: "",
         nextReviewDate = this.nextReviewDate,
         categoryId = this.categoryId,
-        imagePath = (this.info as? WordCardInfo)?.imagePath,
         info = infoJson,
         cardType = CardTypeEnum.ENTER_WORD,
         interval = this.interval,

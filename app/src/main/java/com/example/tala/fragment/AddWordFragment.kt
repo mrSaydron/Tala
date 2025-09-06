@@ -328,6 +328,9 @@ class AddWordFragment : Fragment() {
                 }
             }
         }
+
+        // Обновим видимость секций при первичной инициализации
+        updateSectionsVisibility()
     }
 
     private suspend fun showReviewStats(commonId: String?) {
@@ -553,7 +556,9 @@ class AddWordFragment : Fragment() {
                 val type = availableTypes[which]
                 if (isChecked) selectedTypes.add(type) else selectedTypes.remove(type)
             }
-            .setPositiveButton(android.R.string.ok, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                updateSectionsVisibility()
+            }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
@@ -630,6 +635,43 @@ class AddWordFragment : Fragment() {
         binding.chooseEnglishTranslationButton.isEnabled = russian.isNotEmpty()
     }
 
+    private fun updateSectionsVisibility() {
+        updateEnglishSectionVisibility()
+        updateRussianSectionVisibility()
+        updateHintSectionVisibility()
+        updateImageSectionVisibility()
+    }
+
+    private fun updateEnglishSectionVisibility() {
+        val shouldShow = shouldShowEnglishSection(selectedTypes)
+        setSectionVisibility(R.id.sectionEnglish, shouldShow)
+    }
+
+    private fun updateRussianSectionVisibility() {
+        val shouldShow = shouldShowRussianSection(selectedTypes)
+        setSectionVisibility(R.id.sectionRussian, shouldShow)
+    }
+
+    private fun updateHintSectionVisibility() {
+        val shouldShow = shouldShowHintSection(selectedTypes)
+        setSectionVisibility(R.id.sectionHint, shouldShow)
+    }
+
+    private fun updateImageSectionVisibility() {
+        val shouldShow = shouldShowImageSection(selectedTypes)
+        setSectionVisibility(R.id.sectionImage, shouldShow)
+    }
+
+    private fun shouldShowEnglishSection(types: Set<CardTypeEnum>): Boolean = true
+    private fun shouldShowRussianSection(types: Set<CardTypeEnum>): Boolean = true
+    private fun shouldShowHintSection(types: Set<CardTypeEnum>): Boolean = true
+    private fun shouldShowImageSection(types: Set<CardTypeEnum>): Boolean = true
+
+    private fun setSectionVisibility(viewId: Int, visible: Boolean) {
+        val v = binding.root.findViewById<View>(viewId)
+        v?.visibility = if (visible) View.VISIBLE else View.GONE
+    }
+
     private fun bindCurrentCard() {
         currentCard?.let {
             binding.englishWordInput.setText(it.english)
@@ -647,6 +689,9 @@ class AddWordFragment : Fragment() {
             lifecycleScope.launch {
                 showReviewStats(it.commonId)
             }
+
+            // Обновим видимость после привязки данных карточки
+            updateSectionsVisibility()
         }
     }
 

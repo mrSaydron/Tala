@@ -50,16 +50,13 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                 english = cardDto.english,
                 russian = cardDto.russian,
                 imagePath = cardDto.imagePath,
-                hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint", null) } } catch (_: Exception) { null }
+                hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint").ifEmpty { null } } } catch (_: Exception) { null }
             )
 
             val ef = reviewSettings.getEf(type)
             Card(
                 commonId = commonId,
-                english = wordInfo.english ?: cardDto.english,
-                russian = wordInfo.russian ?: cardDto.russian,
                 categoryId = cardDto.categoryId,
-                imagePath = wordInfo.imagePath ?: cardDto.imagePath,
                 info = wordInfo.toJsonOrNull(),
                 cardType = type,
                 ef = ef,
@@ -106,15 +103,12 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                         english = cardDto.english,
                         russian = cardDto.russian,
                         imagePath = cardDto.imagePath,
-                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint", null) } } catch (_: Exception) { null }
+                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint").ifEmpty { null } } } catch (_: Exception) { null }
                     )
                     val ef = reviewSettings.getEf(type)
                     Card(
                         commonId = cardDto.commonId,
-                        english = wordInfo.english ?: cardDto.english,
-                        russian = wordInfo.russian ?: cardDto.russian,
                         categoryId = cardDto.categoryId,
-                        imagePath = wordInfo.imagePath ?: cardDto.imagePath,
                         info = wordInfo.toJsonOrNull(),
                         cardType = type,
                         ef = ef,
@@ -135,13 +129,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                         english = cardDto.english,
                         russian = cardDto.russian,
                         imagePath = cardDto.imagePath,
-                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint", null) } } catch (_: Exception) { null }
+                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint").ifEmpty { null } } } catch (_: Exception) { null }
                     )
                     existing.copy(
-                        english = wordInfo.english ?: existing.english,
-                        russian = wordInfo.russian ?: existing.russian,
                         categoryId = cardDto.categoryId,
-                        imagePath = wordInfo.imagePath ?: existing.imagePath,
                         info = wordInfo.toJsonOrNull()
                     )
                 }

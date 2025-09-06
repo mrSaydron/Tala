@@ -1,6 +1,7 @@
 package com.example.tala.fragment.card
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,7 +30,12 @@ class CardReverseTranslateFragment(private val getInfo: () -> WordCardInfo) : Ca
         bind()
 
         binding.playButton.setOnClickListener {
-            info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
+            try {
+                Log.i("CardReverseTranslateFragment", "onViewCreated: ${info?.english}")
+                info?.english?.let { MainActivity.textToSpeechHelper.speak(it) }
+            } catch (e: Exception) {
+                Log.i("CardReverseTranslateFragment", "onViewCreated: $e")
+            }
         }
     }
 

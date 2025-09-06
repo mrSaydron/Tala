@@ -9,7 +9,7 @@ import com.example.tala.entity.category.Category
 import com.example.tala.entity.card.Card
 import com.example.tala.entity.card.CardDao
 
-@Database(entities = [Card::class, Category::class], version = 11, exportSchema = false)
+@Database(entities = [Card::class, Category::class], version = 12, exportSchema = false)
 abstract class TalaDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun categoryDao(): CategoryDao

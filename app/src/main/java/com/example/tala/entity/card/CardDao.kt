@@ -72,9 +72,6 @@ interface CardDao {
         categoryId: Int,
     ): LiveData<Int>
 
-    @Query("UPDATE card SET imagePath = :imagePath WHERE id = :id")
-    suspend fun updateImagePath(id: Int, imagePath: String)
-
     @Query("SELECT * FROM card WHERE categoryId = :categoryId")
     fun getByCategory(categoryId: Int): LiveData<List<Card>>
 

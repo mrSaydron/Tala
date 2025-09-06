@@ -14,12 +14,8 @@ data class Card(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val commonId: String? = null,
-
-    val english: String,
-    val russian: String,
     val nextReviewDate: Long = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond(),
     val categoryId: Int = 0,
-    val imagePath: String? = null,
     val info: String? = null,
     val cardType: CardTypeEnum,
 

@@ -60,8 +60,6 @@ class CardViewModelInstrumentedTest {
     fun resultMedium_updatesAndNotDueSameDay() = runBlocking {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
-            english = "alpha",
-            russian = "альфа",
             nextReviewDate = now - 60, // уже просрочена
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
@@ -95,8 +93,6 @@ class CardViewModelInstrumentedTest {
     fun resultEasy_updatesEfAndNotDueSameDay() = runBlocking {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
-            english = "beta",
-            russian = "бета",
             nextReviewDate = now - 60,
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
@@ -131,8 +127,6 @@ class CardViewModelInstrumentedTest {
     fun resultHard_setsShortInterval_andLikelyDueSameDay() = runBlocking {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
-            english = "gamma",
-            russian = "гамма",
             nextReviewDate = now - 60,
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,

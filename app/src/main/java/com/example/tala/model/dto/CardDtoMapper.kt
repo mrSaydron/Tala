@@ -7,9 +7,9 @@ import com.example.tala.model.enums.CardTypeEnum
 fun Card.toCardDto(): CardDto {
     val parsed = WordCardInfo.fromJson(this.info)
     val mergedInfo = WordCardInfo(
-        english = parsed.english ?: this.english,
-        russian = parsed.russian ?: this.russian,
-        imagePath = parsed.imagePath ?: this.imagePath,
+        english = parsed.english,
+        russian = parsed.russian,
+        imagePath = parsed.imagePath,
         hint = parsed.hint,
     )
 
@@ -54,11 +54,8 @@ fun CardDto.toEntityCard(): Card {
     return Card(
         id = this.id,
         commonId = this.commonId,
-        english = info?.english ?: "",
-        russian = info?.russian ?: "",
         nextReviewDate = this.nextReviewDate,
         categoryId = this.categoryId,
-        imagePath = info?.imagePath,
         info = infoJson,
         cardType = this.cardType,
         interval = this.interval,

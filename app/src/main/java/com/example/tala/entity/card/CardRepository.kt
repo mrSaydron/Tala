@@ -68,9 +68,7 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.getCountToReview(currentDate, status, categoryId)
     }
 
-    suspend fun updateImagePath(id: Int, imagePath: String) {
-        cardDao.updateImagePath(id, imagePath)
-    }
+    // imagePath теперь хранится в info; отдельный апдейт не требуется
 
     fun getByCategory(categoryId: Int): LiveData<List<Card>> {
         return cardDao.getByCategory(categoryId)
