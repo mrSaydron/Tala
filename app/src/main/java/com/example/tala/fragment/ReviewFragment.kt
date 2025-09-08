@@ -3,32 +3,29 @@ package com.example.tala.fragment
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentReviewBinding
 import com.example.tala.entity.card.CardViewModel
-import com.example.tala.model.dto.CardDto
-import com.example.tala.model.dto.toEntityCard
-import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.fragment.card.CardEnterWordFragment
 import com.example.tala.fragment.card.CardReverseTranslateFragment
 import com.example.tala.fragment.card.CardReviewBase
 import com.example.tala.fragment.card.CardTranslateFragment
-import com.example.tala.model.dto.CardListDto
 import com.example.tala.integration.mistral.MistralRequest
 import com.example.tala.integration.mistral.MistralRequestMessage
 import com.example.tala.integration.mistral.SentenceResponse
+import com.example.tala.model.dto.CardDto
+import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.service.ApiClient
-import com.example.tala.service.TextToSpeechHelper
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -38,7 +35,6 @@ class ReviewFragment : Fragment() {
 
     private lateinit var viewModel: CardViewModel
     private lateinit var binding: FragmentReviewBinding
-    private lateinit var textToSpeechHelper: TextToSpeechHelper
 
     private var isTranslationShown = false
     private var currentDto: CardDto? = null
@@ -107,17 +103,6 @@ class ReviewFragment : Fragment() {
         binding.inProgressChip.setOnClickListener {
             Toast.makeText(requireContext(), "в обучении", Toast.LENGTH_SHORT).show()
         }
-
-        textToSpeechHelper = TextToSpeechHelper(requireContext()) { isInitialized ->
-            if (!isInitialized) {
-                Toast.makeText(requireContext(), "Озвучка не поддерживается на этом устройстве", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        textToSpeechHelper.shutdown() // Освобождаем ресурсы TTS
     }
 
     // Загружает следующее слово для повторения
