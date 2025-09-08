@@ -31,6 +31,10 @@ class CollectionViewModel(application: Application) : AndroidViewModel(applicati
     suspend fun deleteAllCollections() {
         repository.deleteAllCollections()
     }
+
+    suspend fun existsCollectionByName(name: String): Boolean {
+        return repository.existsByName(name)
+    }
 }
 
 

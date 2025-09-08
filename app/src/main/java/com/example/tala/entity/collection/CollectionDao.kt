@@ -19,6 +19,12 @@ interface CollectionDao {
 
     @Query("DELETE FROM collections")
     suspend fun deleteAllCollections()
+
+    @Query("SELECT COUNT(*) FROM collections WHERE name = :name")
+    suspend fun countByName(name: String): Int
+
+    @Query("SELECT COUNT(*) FROM collections")
+    suspend fun countAll(): Int
 }
 
 

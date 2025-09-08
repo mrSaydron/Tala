@@ -19,6 +19,10 @@ class CollectionRepository(private val collectionDao: CollectionDao) {
     suspend fun deleteAllCollections() {
         collectionDao.deleteAllCollections()
     }
+
+    suspend fun existsByName(name: String): Boolean {
+        return collectionDao.countByName(name) > 0
+    }
 }
 
 

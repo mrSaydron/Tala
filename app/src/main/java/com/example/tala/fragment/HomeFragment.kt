@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tala.fragment.adapter.CollectionAdapter
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.tala.entity.card.CardViewModel
 
 class HomeFragment : Fragment() {
 
@@ -21,6 +22,10 @@ class HomeFragment : Fragment() {
 
     private lateinit var categoryAdapter: CollectionAdapter
     private val categories = mutableListOf<CardCollection>()
+    private lateinit var cardViewModel: CardViewModel
+    private var lastCollections: List<CardCollection> = emptyList()
+    private var defaultHasCards: Boolean = false
+    private var observingDefault: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,6 +67,9 @@ class HomeFragment : Fragment() {
         )
         binding.categoryRecyclerView.adapter = categoryAdapter
 
+        // ViewModel карточек
+        cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
+
         // Загрузка категорий
         loadCategories()
 
@@ -82,10 +90,24 @@ class HomeFragment : Fragment() {
     private fun loadCategories() {
         val viewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
         viewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
-            categories.clear()
-            categories.addAll(categoryList)
-            categoryAdapter.updateData(categories)
+            lastCollections = categoryList
+            // Настраиваем наблюдение за Default один раз, когда она появится
+            val defaultCollection = categoryList.firstOrNull { it.name == "Default" }
+            if (defaultCollection != null) {
+                cardViewModel.getCardCountByCategory(defaultCollection.id).observe(viewLifecycleOwner) { count ->
+                    defaultHasCards = (count ?: 0) > 0
+                    refreshDisplayedCategories()
+                }
+            }
+            refreshDisplayedCategories()
         }
+    }
+
+    private fun refreshDisplayedCategories() {
+        val filtered = lastCollections.filter { it.name != "Default" || defaultHasCards }
+        categories.clear()
+        categories.addAll(filtered)
+        categoryAdapter.updateData(categories)
     }
 
     // Замена фрагмента

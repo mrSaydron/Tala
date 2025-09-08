@@ -78,10 +78,16 @@ interface CardDao {
     @Query("SELECT * FROM card WHERE collectionId = :collectionId AND cardType = :cardType")
     fun getAllByTypeAndCollection(cardType: CardTypeEnum, collectionId: Int): LiveData<List<Card>>
 
+    @Query("SELECT COUNT(*) FROM card WHERE collectionId = :collectionId")
+    fun getCountByCollection(collectionId: Int): LiveData<Int>
+
     @Query("DELETE FROM card")
     suspend fun deleteAll()
 
     @Query("DELETE FROM card WHERE commonId = :commonId")
     suspend fun delete(commonId: String)
+
+    @Query("DELETE FROM card WHERE collectionId = :collectionId")
+    suspend fun deleteByCollection(collectionId: Int)
 
 }

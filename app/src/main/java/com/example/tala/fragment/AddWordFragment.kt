@@ -56,6 +56,12 @@ class AddWordFragment : Fragment() {
     private var imagePath: String? = null
     private val selectedTypes = mutableSetOf<CardTypeEnum>()
 
+    // Синхронизация выбора коллекции
+    private var desiredCollectionId: Int? = null
+    private var collectionsLoaded: Boolean = false
+    private var initialSelectionApplied: Boolean = false
+    private var pendingSelectCollectionName: String? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -78,6 +84,9 @@ class AddWordFragment : Fragment() {
                 currentCard = cardViewModel.getCardListByCommonId(argCommonId)
             }
             bindCurrentCard()
+            // Запомним желаемую коллекцию после загрузки карточки
+            desiredCollectionId = currentCard?.collectionId
+            applySelections()
         }
 
         // Инициализация Spinner
@@ -95,7 +104,7 @@ class AddWordFragment : Fragment() {
         }
 
         // Загрузка коллекций
-        loadCategories()
+        loadCollections()
 
         binding.deleteWordButton.setOnClickListener {
             val commonId = currentCard?.commonId
@@ -178,9 +187,19 @@ class AddWordFragment : Fragment() {
 
         binding.addCategoryButton.setOnClickListener {
             val dialog = AddCollectionDialog { collectionName ->
-                val collection = CardCollection(name = collectionName)
-                categoryViewModel.insertCollection(collection)
-                Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    val exists = categoryViewModel.existsCollectionByName(collectionName)
+                    if (exists) {
+                        Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val collection = CardCollection(name = collectionName)
+                        categoryViewModel.insertCollection(collection)
+                        Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
+                        // переключить спиннер на только что добавленную коллекцию (когда придёт через LiveData)
+                        pendingSelectCollectionName = collectionName
+                        applySelections()
+                    }
+                }
             }
             dialog.show(parentFragmentManager, "AddCollectionDialog")
         }
@@ -323,21 +342,60 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    private fun loadCategories() {
+    private fun loadCollections() {
         categoryViewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
             categories.clear()
             categories.addAll(categoryList)
             categoryAdapter.clear()
             categoryAdapter.addAll(categories.map { it.name })
             categoryAdapter.notifyDataSetChanged()
+
+            // Флаг, что коллекции загружены, пытаемся применить нужный выбор
+            collectionsLoaded = true
+            applySelections()
+        }
+    }
+
+    private fun applySelections() {
+        if (!collectionsLoaded) return
+        // 1) Если есть отложенный выбор по имени (новая коллекция) — применяем его в приоритете
+        pendingSelectCollectionName?.let { name ->
+            val idxByName = categories.indexOfFirst { it.name == name }
+            if (idxByName >= 0) {
+                binding.categorySpinner.setSelection(idxByName, false)
+                pendingSelectCollectionName = null
+                return
+            }
+        }
+        // 2) Иначе единовременно применяем исходную коллекцию слова по id
+        if (!initialSelectionApplied) {
+            val targetId = desiredCollectionId ?: return
+            val idx = categories.indexOfFirst { it.id == targetId }
+            if (idx >= 0) {
+                binding.categorySpinner.setSelection(idx, false)
+                initialSelectionApplied = true
+            }
         }
     }
 
     private fun showCategoryButtons(category: CardCollection) {
-        binding.deleteCategoryButton.visibility = View.VISIBLE
-        binding.deleteCategoryButton.setOnClickListener {
-            categoryViewModel.deleteCollection(category)
-            Toast.makeText(requireContext(), "Коллекция удалена!", Toast.LENGTH_SHORT).show()
+        val isDefault = category.name == "Default"
+        binding.deleteCategoryButton.visibility = if (isDefault) View.GONE else View.VISIBLE
+        if (!isDefault) {
+            binding.deleteCategoryButton.setOnClickListener {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Удалить коллекцию «${category.name}»?")
+                    .setMessage("При удалении коллекции «${category.name}» будут удалены все слова из этой коллекции. Продолжить?")
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        lifecycleScope.launch {
+                            cardViewModel.deleteCardsByCollection(category.id)
+                            categoryViewModel.deleteCollection(category)
+                            Toast.makeText(requireContext(), "Коллекция и связанные слова удалены", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
         }
     }
 

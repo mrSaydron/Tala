@@ -194,8 +194,16 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun getCardCountByCategory(categoryId: Int): LiveData<Int> {
+        return repository.getCountByCollection(categoryId)
+    }
+
     suspend fun deleteAllWords() {
         repository.deleteAll()
+    }
+
+    suspend fun deleteCardsByCollection(collectionId: Int) {
+        repository.deleteByCollection(collectionId)
     }
 
     suspend fun getCardByTypeAndCommonId(cardType: CardTypeEnum, commonId: String?): CardDto? {

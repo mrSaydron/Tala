@@ -74,8 +74,16 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.getByCollection(collectionId)
     }
 
+    fun getCountByCollection(collectionId: Int): LiveData<Int> {
+        return cardDao.getCountByCollection(collectionId)
+    }
+
     suspend fun deleteAll() {
         cardDao.deleteAll()
+    }
+
+    suspend fun deleteByCollection(collectionId: Int) {
+        cardDao.deleteByCollection(collectionId)
     }
 
     fun getAllByType(cardType: CardTypeEnum): LiveData<List<Card>> {
