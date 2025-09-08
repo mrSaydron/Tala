@@ -1,7 +1,5 @@
 package com.example.tala.entity.card
 
-import android.os.Parcel
-import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.tala.model.enums.CardTypeEnum
@@ -19,7 +17,7 @@ data class Card(
     val info: String? = null,
     val cardType: CardTypeEnum,
 
-    val interval: Int = 1,
+    val intervalMinutes: Int = 1440,
     val status: StatusEnum = StatusEnum.NEW,
     val ef: Double = 2.5,
 )

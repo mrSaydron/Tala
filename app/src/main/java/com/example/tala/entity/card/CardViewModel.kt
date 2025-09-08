@@ -46,18 +46,11 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         val commonId = UUID.randomUUID().toString()
 
         val entities: List<Card> = cardDto.cards.mapNotNull { (type, info) ->
-            val wordInfo = (info as? WordCardInfo) ?: WordCardInfo(
-                english = cardDto.english,
-                russian = cardDto.russian,
-                imagePath = cardDto.imagePath,
-                hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint").ifEmpty { null } } } catch (_: Exception) { null }
-            )
-
             val ef = reviewSettings.getEf(type)
             Card(
                 commonId = commonId,
                 categoryId = cardDto.categoryId,
-                info = wordInfo.toJsonOrNull(),
+                info = (info as? WordCardInfo)?.toJsonOrNull(),
                 cardType = type,
                 ef = ef,
             )
@@ -97,19 +90,13 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             // 3) Типы к добавлению: нужны теперь, но их не было
             val typesToAdd = desiredTypes - existingTypes
             if (typesToAdd.isNotEmpty()) {
-                val cardsToInsert = typesToAdd.mapNotNull { type ->
+                val cardsToInsert = typesToAdd.map { type ->
                     val infoAny = cardDto.cards[type]
-                    val wordInfo = (infoAny as? com.example.tala.model.dto.info.WordCardInfo) ?: com.example.tala.model.dto.info.WordCardInfo(
-                        english = cardDto.english,
-                        russian = cardDto.russian,
-                        imagePath = cardDto.imagePath,
-                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint").ifEmpty { null } } } catch (_: Exception) { null }
-                    )
                     val ef = reviewSettings.getEf(type)
                     Card(
                         commonId = cardDto.commonId,
                         categoryId = cardDto.categoryId,
-                        info = wordInfo.toJsonOrNull(),
+                        info = (infoAny as? WordCardInfo)?.toJsonOrNull(),
                         cardType = type,
                         ef = ef,
                     )
@@ -125,15 +112,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                 val cardsToUpdate = typesToUpdate.mapNotNull { type ->
                     val existing = existingMap[type] ?: return@mapNotNull null
                     val infoAny = cardDto.cards[type]
-                    val wordInfo = (infoAny as? com.example.tala.model.dto.info.WordCardInfo) ?: com.example.tala.model.dto.info.WordCardInfo(
-                        english = cardDto.english,
-                        russian = cardDto.russian,
-                        imagePath = cardDto.imagePath,
-                        hint = try { cardDto.info?.let { org.json.JSONObject(it).optString("hint").ifEmpty { null } } } catch (_: Exception) { null }
-                    )
+                    val wordInfo = (infoAny as? WordCardInfo)
                     existing.copy(
                         categoryId = cardDto.categoryId,
-                        info = wordInfo.toJsonOrNull()
+                        info = wordInfo?.toJsonOrNull()
                     )
                 }
                 if (cardsToUpdate.isNotEmpty()) {
@@ -154,11 +136,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     fun allCardList(): LiveData<List<CardListDto>> {
         return repository.getAll().map { cards ->
             cards
-                .groupBy { it.commonId ?: "__single_${'$'}{it.id}" }
+                .groupBy { it.commonId }
                 .map { (_, group) ->
                     val dtos = group.map { it.toCardDto() }
                     val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
-                    val primaryInfo = primaryDto.info as? WordCardInfo
 
                     val cardsMap: Map<CardTypeEnum, com.example.tala.model.dto.info.CardInfo> = dtos.associate { dto ->
                         dto.cardType to (dto.info ?: WordCardInfo())
@@ -166,12 +147,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
                     CardListDto(
                         commonId = primaryDto.commonId,
-                        english = primaryInfo?.english ?: "",
-                        russian = primaryInfo?.russian ?: "",
                         categoryId = primaryDto.categoryId,
-                        imagePath = primaryInfo?.imagePath,
-                        info = primaryInfo?.toJsonOrNull(),
-                        types = dtos.map { it.cardType }.toSet(),
                         cards = cardsMap,
                     )
                 }
@@ -204,7 +180,6 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                 .map { (_, group) ->
                     val dtos = group.map { it.toCardDto() }
                     val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
-                    val primaryInfo = primaryDto.info as? WordCardInfo
 
                     val cardsMap: Map<CardTypeEnum, com.example.tala.model.dto.info.CardInfo> = dtos.associate { dto ->
                         dto.cardType to (dto.info ?: WordCardInfo())
@@ -212,12 +187,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
                     CardListDto(
                         commonId = primaryDto.commonId,
-                        english = primaryInfo?.english ?: "",
-                        russian = primaryInfo?.russian ?: "",
                         categoryId = primaryDto.categoryId,
-                        imagePath = primaryInfo?.imagePath,
-                        info = primaryInfo?.toJsonOrNull(),
-                        types = dtos.map { it.cardType }.toSet(),
                         cards = cardsMap,
                     )
                 }
@@ -238,18 +208,12 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             if (group.isEmpty()) return@withContext null
             val dtos = group.map { it.toCardDto() }
             val primaryDto = dtos.firstOrNull { it.cardType == CardTypeEnum.TRANSLATE } ?: dtos.first()
-            val primaryInfo = (primaryDto.info as? WordCardInfo)
             val cardsMap: Map<CardTypeEnum, com.example.tala.model.dto.info.CardInfo> = dtos.associate { dto ->
                 dto.cardType to (dto.info ?: WordCardInfo())
             }
             CardListDto(
                 commonId = primaryDto.commonId,
-                english = primaryInfo?.english ?: "",
-                russian = primaryInfo?.russian ?: "",
                 categoryId = primaryDto.categoryId,
-                imagePath = primaryInfo?.imagePath,
-                info = primaryInfo?.toJsonOrNull(),
-                types = dtos.map { it.cardType }.toSet(),
                 cards = cardsMap,
             )
         }
@@ -263,7 +227,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
             return "1 дн."
         } else {
-            val interval: Int = Math.round(card.interval * card.ef).toInt()
+            val interval: Int = Math.round(card.intervalMinutes / MINUTES_IN_DAY * card.ef).toInt()
             return "$interval дн."
         }
     }
@@ -272,7 +236,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         if (card.status == StatusEnum.NEW || card.status == StatusEnum.PROGRESS_RESET) {
             return "2 дн."
         } else {
-            val interval: Int = Math.round(card.interval * card.ef * 1.5).toInt()
+            val interval: Int = Math.round(card.intervalMinutes / MINUTES_IN_DAY * card.ef * 1.5).toInt()
             return "$interval дн."
         }
     }
@@ -295,38 +259,38 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun resultMediumSuspend(cardDto: CardDto) {
         Log.i(TAG, "resultMediumSuspend")
-        val interval = if (cardDto.status == StatusEnum.NEW || cardDto.status == StatusEnum.PROGRESS_RESET) {
-            1
+        val intervalMinutes = if (cardDto.status == StatusEnum.NEW || cardDto.status == StatusEnum.PROGRESS_RESET) {
+            MINUTES_IN_DAY
         } else {
-            Math.round(cardDto.interval * cardDto.ef).toInt()
+            Math.round(cardDto.intervalMinutes * cardDto.ef).toInt()
         }
         val savingDto = copyWith(
             cardDto = cardDto,
             status = StatusEnum.IN_PROGRESS,
-            nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS),
-            interval = interval
+            nextReviewDate = calculateNextReviewDate(intervalMinutes, ChronoUnit.MINUTES),
+            intervalMinutes = intervalMinutes
         )
         updateSync(savingDto)
     }
 
     suspend fun resultEasySuspend(cardDto: CardDto) {
         Log.i(TAG, "resultEasySuspend")
-        val interval: Int
+        val intervalMinutes: Int
         val ef: Double
         if (cardDto.status == StatusEnum.NEW || cardDto.status == StatusEnum.PROGRESS_RESET) {
-            interval = 2
+            intervalMinutes = MINUTES_IN_TWO_DAYS
             ef = cardDto.ef
         } else {
-            interval = Math.round(cardDto.interval * cardDto.ef * 1.5).toInt()
+            intervalMinutes = Math.round(cardDto.intervalMinutes * cardDto.ef * 1.5).toInt()
             ef = cardDto.ef + 0.1
         }
 
         val savingDto = copyWith(
             cardDto = cardDto,
             status = StatusEnum.IN_PROGRESS,
-            nextReviewDate = calculateNextReviewDate(interval, ChronoUnit.DAYS),
+            nextReviewDate = calculateNextReviewDate(intervalMinutes, ChronoUnit.MINUTES),
             ef = ef,
-            interval = interval
+            intervalMinutes = intervalMinutes
         )
         updateSync(savingDto)
     }
@@ -334,26 +298,26 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     private fun copyWith(
         cardDto: CardDto,
         nextReviewDate: Long? = null,
-        interval: Int? = null,
+        intervalMinutes: Int? = null,
         status: StatusEnum? = null,
         ef: Double? = null,
     ): CardDto {
         return when (cardDto) {
             is TranslateCardDto -> cardDto.copy(
                 nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
-                interval = interval ?: cardDto.interval,
+                intervalMinutes = intervalMinutes ?: cardDto.intervalMinutes,
                 status = status ?: cardDto.status,
                 ef = ef ?: cardDto.ef,
             )
             is ReverseTranslateCardDto -> cardDto.copy(
                 nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
-                interval = interval ?: cardDto.interval,
+                intervalMinutes = intervalMinutes ?: cardDto.intervalMinutes,
                 status = status ?: cardDto.status,
                 ef = ef ?: cardDto.ef,
             )
             is EnterWordCardDto -> cardDto.copy(
                 nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
-                interval = interval ?: cardDto.interval,
+                intervalMinutes = intervalMinutes ?: cardDto.intervalMinutes,
                 status = status ?: cardDto.status,
                 ef = ef ?: cardDto.ef,
             )
@@ -367,6 +331,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "CardViewModel"
+        private const val MINUTES_IN_DAY = 1440
+        private const val MINUTES_IN_TWO_DAYS = 2880
 
     }
 }

@@ -54,8 +54,8 @@ interface CardDao {
         LIMIT 1""")
     suspend fun getNextToReview(categoryId: Int, endFindDate: Long): Card?
 
-    @Query("UPDATE card SET nextReviewDate = :nextReviewDate, interval = :interval WHERE id = :id")
-    suspend fun update(id: Int, nextReviewDate: Long, interval: Int)
+    @Query("UPDATE card SET nextReviewDate = :nextReviewDate, intervalMinutes = :intervalMinutes WHERE id = :id")
+    suspend fun update(id: Int, nextReviewDate: Long, intervalMinutes: Int)
 
     @Query("SELECT COUNT(*) FROM card WHERE nextReviewDate < :endFindDate AND status = :status")
     fun getCountToReview(endFindDate: Long, status: StatusEnum): LiveData<Int>

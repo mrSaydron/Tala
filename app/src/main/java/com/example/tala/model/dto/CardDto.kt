@@ -10,7 +10,7 @@ interface CardDto {
     val nextReviewDate: Long
     val categoryId: Int
     val cardType: CardTypeEnum
-    val interval: Int
+    val intervalMinutes: Int
     val status: StatusEnum
     val ef: Double
     val info: CardInfo?

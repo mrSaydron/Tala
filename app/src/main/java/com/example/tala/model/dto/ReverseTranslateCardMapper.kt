@@ -19,7 +19,7 @@ fun Card.toReverseTranslateDto(): ReverseTranslateCardDto {
         nextReviewDate = this.nextReviewDate,
         categoryId = this.categoryId,
         cardType = CardTypeEnum.REVERSE_TRANSLATE,
-        interval = this.interval,
+        intervalMinutes = this.intervalMinutes,
         status = this.status,
         ef = this.ef,
         info = WordCardInfo(
@@ -41,7 +41,7 @@ fun ReverseTranslateCardDto.toEntity(): Card {
         categoryId = this.categoryId,
         info = infoJson,
         cardType = CardTypeEnum.REVERSE_TRANSLATE,
-        interval = this.interval,
+        intervalMinutes = this.intervalMinutes,
         status = this.status,
         ef = this.ef,
     )

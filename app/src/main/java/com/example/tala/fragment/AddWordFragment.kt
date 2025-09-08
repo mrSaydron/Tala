@@ -70,38 +70,14 @@ class AddWordFragment : Fragment() {
         cardViewModel = ViewModelProvider(this)[CardViewModel::class.java]
         categoryViewModel = ViewModelProvider(this)[CategoryViewModel::class.java]
 
-        // Инициализируем выбранные типы карточек
-        if (currentCard?.types?.isNotEmpty() == true) {
-            selectedTypes.clear()
-            selectedTypes.addAll(currentCard!!.types)
-        } else if (selectedTypes.isEmpty()) {
-            selectedTypes.addAll(CardTypeEnum.entries.filter { it.use })
-        }
+        binding.deleteWordButton.visibility = View.GONE
 
-        // Если пришел commonId в аргументах — загрузим карточку
-        val argCommonId = arguments?.getString(ARG_COMMON_ID)
-        if (!argCommonId.isNullOrEmpty()) {
-            lifecycleScope.launch {
+        lifecycleScope.launch {
+            val argCommonId: String? = arguments?.getString(ARG_COMMON_ID)
+            if (!argCommonId.isNullOrEmpty()) {
                 currentCard = cardViewModel.getCardListByCommonId(argCommonId)
-                bindCurrentCard()
             }
-        } else currentCard?.let {
-            binding.englishWordInput.setText(it.english)
-            binding.russianWordInput.setText(it.russian)
-            binding.hintInput.setText(it.info?.let { info ->
-                try { org.json.JSONObject(info).optString("hint", "") } catch (_: Exception) { "" }
-            })
-
-            Glide.with(this)
-                .load(it.imagePath)
-                .into(binding.wordImageView)
-
-            imagePath = it.imagePath
-
-            // Загрузка статистики повторений по типам
-            lifecycleScope.launch {
-                showReviewStats(it.commonId)
-            }
+            bindCurrentCard()
         }
 
         // Инициализация Spinner
@@ -121,24 +97,18 @@ class AddWordFragment : Fragment() {
         // Загрузка категорий
         loadCategories()
 
-        // Кнопка удаления (только для существующих слов)
-        if (currentCard != null) {
-            binding.deleteWordButton.visibility = View.VISIBLE
-            binding.deleteWordButton.setOnClickListener {
-                val commonId = currentCard?.commonId
-                if (!commonId.isNullOrEmpty()) {
-                    lifecycleScope.launch {
-                        try {
-                            cardViewModel.deleteSync(commonId)
-                        } finally {
-                            Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
-                            parentFragmentManager.popBackStack()
-                        }
+        binding.deleteWordButton.setOnClickListener {
+            val commonId = currentCard?.commonId
+            if (!commonId.isNullOrEmpty()) {
+                lifecycleScope.launch {
+                    try {
+                        cardViewModel.deleteSync(commonId)
+                    } finally {
+                        Toast.makeText(requireContext(), "Слово удалено", Toast.LENGTH_SHORT).show()
+                        parentFragmentManager.popBackStack()
                     }
                 }
             }
-        } else {
-            binding.deleteWordButton.visibility = View.GONE
         }
 
         binding.saveButton.setOnClickListener {
@@ -169,12 +139,7 @@ class AddWordFragment : Fragment() {
                         )
                         val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                         val cardDto = CardListDto(
-                            english = englishWord,
-                            russian = russianWord,
                             categoryId = selectedCategory?.id ?: 0,
-                            imagePath = imagePath,
-                            info = null,
-                            types = emptySet(),
                             cards = cards,
                         )
                         cardViewModel.insert(cardDto)
@@ -189,12 +154,7 @@ class AddWordFragment : Fragment() {
                         val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                         val cardDto = CardListDto(
                             commonId = currentCard!!.commonId,
-                            english = englishWord,
-                            russian = russianWord,
                             categoryId = selectedCategory?.id ?: 0,
-                            imagePath = imagePath,
-                            info = null,
-                            types = emptySet(),
                             cards = cards,
                         )
                         cardViewModel.update(cardDto)
@@ -330,32 +290,36 @@ class AddWordFragment : Fragment() {
         }
 
         // Обновим видимость секций при первичной инициализации
-        updateSectionsVisibility()
+        setValueAndVisibility()
     }
 
-    private suspend fun showReviewStats(commonId: String?) {
-        if (commonId.isNullOrEmpty()) return
-        val sb = StringBuilder()
-        CardTypeEnum.entries.filter { it.use }.forEach { type ->
-            val card = cardViewModel.getCardByTypeAndCommonId(type, commonId)
-            if (card != null) {
-                val next = java.time.Instant.ofEpochSecond(card.nextReviewDate)
-                val localNext = java.time.LocalDateTime.ofInstant(next, java.time.ZoneId.systemDefault())
-                val formatted = localNext.toLocalDate().toString()
-                sb.append("${type.name}: ")
-                    .append(formatted)
-                    .append('\n')
-            }
-        }
+    private fun showReviewStats(commonId: String?) {
+        commonId?.let {
+            lifecycleScope.launch {
+                val sb = StringBuilder()
+                CardTypeEnum.entries.filter { it.use }.forEach { type ->
+                    val card = cardViewModel.getCardByTypeAndCommonId(type, commonId)
+                    if (card != null) {
+                        val next = java.time.Instant.ofEpochSecond(card.nextReviewDate)
+                        val localNext =
+                            java.time.LocalDateTime.ofInstant(next, java.time.ZoneId.systemDefault())
+                        val formatted = localNext.toLocalDate().toString()
+                        sb.append("${type.name}: ")
+                            .append(formatted)
+                            .append('\n')
+                    }
+                }
 
-        val text = sb.toString().trim()
-        if (text.isNotEmpty()) {
-            binding.reviewStatsLabel.visibility = View.VISIBLE
-            binding.reviewStatsText.visibility = View.VISIBLE
-            binding.reviewStatsText.text = text
-        } else {
-            binding.reviewStatsLabel.visibility = View.GONE
-            binding.reviewStatsText.visibility = View.GONE
+                val text = sb.toString().trim()
+                if (text.isNotEmpty()) {
+                    binding.reviewStatsLabel.visibility = View.VISIBLE
+                    binding.reviewStatsText.visibility = View.VISIBLE
+                    binding.reviewStatsText.text = text
+                } else {
+                    binding.reviewStatsLabel.visibility = View.GONE
+                    binding.reviewStatsText.visibility = View.GONE
+                }
+            }
         }
     }
 
@@ -375,12 +339,6 @@ class AddWordFragment : Fragment() {
             categoryViewModel.deleteCategory(category)
             Toast.makeText(requireContext(), "Категория удалена!", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun openImagePicker() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        startActivityForResult(intent, REQUEST_IMAGE_PICK)
     }
 
     @Deprecated("Deprecated in Java")
@@ -557,17 +515,10 @@ class AddWordFragment : Fragment() {
                 if (isChecked) selectedTypes.add(type) else selectedTypes.remove(type)
             }
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                updateSectionsVisibility()
+                setValueAndVisibility()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
-    }
-
-    private fun loadImage(imageUrl: String) {
-        Glide.with(requireContext())
-            .load(imageUrl)
-            .override(800, 600)
-            .into(binding.wordImageView)
     }
 
     private fun copyImageToInternalStorage(uri: Uri): File? {
@@ -635,29 +586,29 @@ class AddWordFragment : Fragment() {
         binding.chooseEnglishTranslationButton.isEnabled = russian.isNotEmpty()
     }
 
-    private fun updateSectionsVisibility() {
-        updateEnglishSectionVisibility()
-        updateRussianSectionVisibility()
-        updateHintSectionVisibility()
-        updateImageSectionVisibility()
+    private fun setValueAndVisibility() {
+        setValueAndVisibilityForEnglish()
+        setValueAndVisibilityForRussian()
+        setValueAndVisibilityForHint()
+        setValueAndVisibilityForImage()
     }
 
-    private fun updateEnglishSectionVisibility() {
+    private fun setValueAndVisibilityForEnglish() {
         val shouldShow = shouldShowEnglishSection(selectedTypes)
         setSectionVisibility(R.id.sectionEnglish, shouldShow)
     }
 
-    private fun updateRussianSectionVisibility() {
+    private fun setValueAndVisibilityForRussian() {
         val shouldShow = shouldShowRussianSection(selectedTypes)
         setSectionVisibility(R.id.sectionRussian, shouldShow)
     }
 
-    private fun updateHintSectionVisibility() {
+    private fun setValueAndVisibilityForHint() {
         val shouldShow = shouldShowHintSection(selectedTypes)
         setSectionVisibility(R.id.sectionHint, shouldShow)
     }
 
-    private fun updateImageSectionVisibility() {
+    private fun setValueAndVisibilityForImage() {
         val shouldShow = shouldShowImageSection(selectedTypes)
         setSectionVisibility(R.id.sectionImage, shouldShow)
     }
@@ -673,31 +624,82 @@ class AddWordFragment : Fragment() {
     }
 
     private fun bindCurrentCard() {
-        currentCard?.let {
-            binding.englishWordInput.setText(it.english)
-            binding.russianWordInput.setText(it.russian)
-            binding.hintInput.setText(it.info?.let { info ->
-                try { org.json.JSONObject(info).optString("hint", "") } catch (_: Exception) { "" }
-            })
+        if (currentCard != null) {
+            showReviewStats(currentCard?.commonId)
+            setValueAndVisibility()
+            setValues()
 
-            Glide.with(this)
-                .load(it.imagePath)
-                .into(binding.wordImageView)
-
-            imagePath = it.imagePath
-
-            lifecycleScope.launch {
-                showReviewStats(it.commonId)
+            // Инициализируем выбранные типы карточек
+            if (currentCard?.cards?.isNotEmpty() == true) {
+                selectedTypes.clear()
+                selectedTypes.addAll(currentCard!!.cards.keys)
             }
 
-            // Обновим видимость после привязки данных карточки
-            updateSectionsVisibility()
+            // Настройка кнопки удаления
+            binding.deleteWordButton.visibility = View.VISIBLE
+        } else {
+            if (selectedTypes.isEmpty()) {
+                selectedTypes.addAll(CardTypeEnum.entries.filter { type -> type.use })
+            }
+        }
+    }
+
+    private fun setValues() {
+        setEnglishValue()
+        setRussianValue()
+        setHintValue()
+        setImageValue()
+    }
+
+    private fun setEnglishValue() {
+        currentCard?.let {
+            for ((_, cardInfo) in it.cards) {
+                if (cardInfo is WordCardInfo) {
+                    binding.englishWordInput.setText(cardInfo.english)
+                    break
+                }
+            }
+        }
+    }
+
+    private fun setRussianValue() {
+        currentCard?.let {
+            for ((_, cardInfo) in it.cards) {
+                if (cardInfo is WordCardInfo) {
+                    binding.russianWordInput.setText(cardInfo.russian)
+                    break
+                }
+            }
+        }
+    }
+
+    private fun setHintValue() {
+        currentCard?.let {
+            for ((_, cardInfo) in it.cards) {
+                if (cardInfo is WordCardInfo) {
+                    binding.hintInput.setText(cardInfo.hint)
+                    break
+                }
+            }
+        }
+    }
+
+    private fun setImageValue() {
+        currentCard?.let {
+            for ((_, cardInfo) in it.cards) {
+                if (cardInfo is WordCardInfo) {
+                    Glide.with(this)
+                        .load(cardInfo.imagePath)
+                        .into(binding.wordImageView)
+
+                    imagePath = cardInfo.imagePath
+                    break
+                }
+            }
         }
     }
 
     companion object {
-        private const val REQUEST_IMAGE_PICK = 100
-
         private const val ARG_COMMON_ID = "common_id"
 
         fun newInstance(commonId: String?): AddWordFragment {

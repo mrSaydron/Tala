@@ -63,7 +63,7 @@ class CardViewModelInstrumentedTest {
             nextReviewDate = now - 60, // уже просрочена
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1440,
             status = StatusEnum.NEW,
             ef = 2.5
         )
@@ -81,7 +81,7 @@ class CardViewModelInstrumentedTest {
 
         val updated = cardDao.getNextToReview(Long.MAX_VALUE)!!
         assertEquals(StatusEnum.IN_PROGRESS, updated.status)
-        // interval для расчета = round(1 * 2.5) = 2 дня => должно быть после конца текущего дня
+        // intervalMinutes для расчета = round(1 * 2.5) = 2 дня => должно быть после конца текущего дня
         assertTrue(updated.nextReviewDate > endToday)
 
         // Не должна появляться в выдаче сегодня
@@ -96,7 +96,7 @@ class CardViewModelInstrumentedTest {
             nextReviewDate = now - 60,
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1440,
             status = StatusEnum.NEW,
             ef = 2.5
         )
@@ -115,7 +115,7 @@ class CardViewModelInstrumentedTest {
         assertEquals(StatusEnum.IN_PROGRESS, updated.status)
         // EF должен увеличиться на 0.1
         assertEquals(2.6, updated.ef, 1e-9)
-        // interval = round(1 * 2.5 * 1.5) = 4 дня => после конца текущего дня
+        // intervalMinutes = round(1 * 2.5 * 1.5) = 4 дня => после конца текущего дня
         assertTrue(updated.nextReviewDate > endToday)
 
         // Не должна появляться в выдаче сегодня
@@ -124,13 +124,13 @@ class CardViewModelInstrumentedTest {
     }
 
     @Test
-    fun resultHard_setsShortInterval_andLikelyDueSameDay() = runBlocking {
+    fun resultHard_setsShortintervalMinutes_andLikelyDueSameDay() = runBlocking {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
             nextReviewDate = now - 60,
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1440,
             status = StatusEnum.NEW,
             ef = 2.5
         )

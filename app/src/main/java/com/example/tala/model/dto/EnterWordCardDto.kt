@@ -10,7 +10,7 @@ data class EnterWordCardDto(
     override val nextReviewDate: Long,
     override val categoryId: Int,
     override val cardType: CardTypeEnum = CardTypeEnum.ENTER_WORD,
-    override val interval: Int,
+    override val intervalMinutes: Int,
     override val status: StatusEnum,
     override val ef: Double,
     override val info: WordCardInfo?

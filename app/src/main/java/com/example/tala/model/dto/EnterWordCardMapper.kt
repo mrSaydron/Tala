@@ -19,7 +19,7 @@ fun Card.toEnterWordDto(): EnterWordCardDto {
         nextReviewDate = this.nextReviewDate,
         categoryId = this.categoryId,
         cardType = CardTypeEnum.ENTER_WORD,
-        interval = this.interval,
+        intervalMinutes = this.intervalMinutes,
         status = this.status,
         ef = this.ef,
         info = WordCardInfo(
@@ -41,7 +41,7 @@ fun EnterWordCardDto.toEntity(): Card {
         categoryId = this.categoryId,
         info = infoJson,
         cardType = CardTypeEnum.ENTER_WORD,
-        interval = this.interval,
+        intervalMinutes = this.intervalMinutes,
         status = this.status,
         ef = this.ef,
     )

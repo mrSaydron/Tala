@@ -31,23 +31,12 @@ class CardAdapter(
                 russianWordTextView.text = firstInfo.russian
                 categoryTextView.text = "Категория: ${categoryIdToName[card.categoryId] ?: "—"}"
 
-                val imagePathToLoad = firstInfo.imagePath ?: card.imagePath
+                val imagePathToLoad = firstInfo.imagePath
                 if (!imagePathToLoad.isNullOrBlank()) {
                     Glide.with(itemView.context)
                         .load(imagePathToLoad)
                         .into(wordImageView)
                 } else {
-                    wordImageView.setImageDrawable(null)
-                }
-            } else {
-                englishWordTextView.text = card.english
-                russianWordTextView.text = card.russian
-                categoryTextView.text = "Категория: ${categoryIdToName[card.categoryId] ?: "—"}"
-                card.imagePath?.let { path ->
-                    Glide.with(itemView.context)
-                        .load(path)
-                        .into(wordImageView)
-                } ?: run {
                     wordImageView.setImageDrawable(null)
                 }
             }
