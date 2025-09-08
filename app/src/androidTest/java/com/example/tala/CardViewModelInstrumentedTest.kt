@@ -152,4 +152,56 @@ class CardViewModelInstrumentedTest {
         val eng = (nextToday?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english
         assertEquals("gamma", eng)
     }
+
+    @Test
+    fun resultMedium_repeatedlyIncreasesInterval() = runBlocking {
+        val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
+        val dueCard = Card(
+            nextReviewDate = now - 60,
+            categoryId = 1,
+            cardType = CardTypeEnum.TRANSLATE,
+            intervalMinutes = 1440,
+            status = StatusEnum.NEW,
+            ef = 2.5
+        )
+        cardDao.insert(dueCard)
+
+        // 1-й повтор: Medium
+        var endTime = endOfTodayEpoch()
+        var dto = viewModel.getNextCardDtoToReview(1, endTime)!!
+        viewModel.resultMediumSuspend(dto)
+
+        pollUntilTrue {
+            val updated = cardDao.getNextToReview(Long.MAX_VALUE)
+            updated != null && updated.status == StatusEnum.IN_PROGRESS
+        }
+        var updated1 = cardDao.getNextToReview(Long.MAX_VALUE)!!
+        val interval1 = updated1.intervalMinutes
+
+        // 2-й повтор: переставляем время и снова Medium
+        endTime = updated1.nextReviewDate + 1L
+        dto = viewModel.getNextCardDtoToReview(1, endTime)!!
+        viewModel.resultMediumSuspend(dto)
+
+        pollUntilTrue {
+            val c = cardDao.getNextToReview(Long.MAX_VALUE)
+            c != null && c.intervalMinutes > interval1
+        }
+        var updated2 = cardDao.getNextToReview(Long.MAX_VALUE)!!
+        val interval2 = updated2.intervalMinutes
+        assertTrue(interval2 > interval1)
+
+        // 3-й повтор: снова переставляем время и Medium
+        endTime = updated2.nextReviewDate + 1L
+        dto = viewModel.getNextCardDtoToReview(1, endTime)!!
+        viewModel.resultMediumSuspend(dto)
+
+        pollUntilTrue {
+            val c = cardDao.getNextToReview(Long.MAX_VALUE)
+            c != null && c.intervalMinutes > interval2
+        }
+        val updated3 = cardDao.getNextToReview(Long.MAX_VALUE)!!
+        val interval3 = updated3.intervalMinutes
+        assertTrue(interval3 > interval2)
+    }
 }

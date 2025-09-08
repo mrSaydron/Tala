@@ -50,21 +50,21 @@ class ReviewSpacedRepetitionTest {
             nextReviewDate = now - 300, // раньше всех
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1,
             status = StatusEnum.NEW,
         )
         val c2 = Card(
             nextReviewDate = now - 200,
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1,
             status = StatusEnum.NEW,
         )
         val c3 = Card(
             nextReviewDate = now - 100,
             categoryId = 1,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1,
             status = StatusEnum.NEW,
         )
 
@@ -75,7 +75,7 @@ class ReviewSpacedRepetitionTest {
         // 1. Первая должна быть apple (самая ранняя дата)
         val first = cardDao.getNextToReview(endFindDate)
         // Текстовая проверка английского теперь берется из info на уровне DTO, а не entity
-        assertEquals("apple", (first?.toCardDto()?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
+        assertEquals("apple", (first?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
 
         // Обновляем первую карточку в далекое будущее, чтобы исключить из отбора
         val farFuture = now + 100_000
@@ -83,14 +83,14 @@ class ReviewSpacedRepetitionTest {
 
         // 2. Теперь должна быть banana
         val second = cardDao.getNextToReview(endFindDate)
-        assertEquals("banana", (second?.toCardDto()?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
+        assertEquals("banana", (second?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
 
         // Исключаем и её
         cardDao.update(second!!.copy(nextReviewDate = farFuture, status = StatusEnum.IN_PROGRESS))
 
         // 3. Теперь должна быть cherry
         val third = cardDao.getNextToReview(endFindDate)
-        assertEquals("cherry", (third?.toCardDto()?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
+        assertEquals("cherry", (third?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
     }
 
     @Test
@@ -101,7 +101,7 @@ class ReviewSpacedRepetitionTest {
             nextReviewDate = now + 3600, // через час
             categoryId = 2,
             cardType = CardTypeEnum.TRANSLATE,
-            interval = 1,
+            intervalMinutes = 1,
             status = StatusEnum.NEW,
         )
         cardDao.insert(card)
@@ -114,6 +114,6 @@ class ReviewSpacedRepetitionTest {
         // Конечная дата больше времени повторения — карточка должна отобраться
         val endAfter = now + 7200 // через 2 часа
         val due = cardDao.getNextToReview(endAfter)
-        assertEquals("desk", (due?.toCardDto()?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
+        assertEquals("desk", (due?.info as? com.example.tala.model.dto.info.WordCardInfo)?.english)
     }
 }
