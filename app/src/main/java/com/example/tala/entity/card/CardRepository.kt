@@ -48,8 +48,8 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.getNextToReview(currentDate)
     }
 
-    suspend fun getNextToReview(categoryId: Int, currentDate: Long): Card? {
-        return cardDao.getNextToReview(categoryId, currentDate)
+    suspend fun getNextToReview(collectionId: Int, currentDate: Long): Card? {
+        return cardDao.getNextToReview(collectionId, currentDate)
     }
 
     suspend fun update(id: Int, nextReviewDate: Long, interval: Int) {
@@ -63,15 +63,15 @@ class CardRepository(private val cardDao: CardDao) {
     fun getCountToReview(
         currentDate: Long,
         status: StatusEnum,
-        categoryId: Int,
+        collectionId: Int,
     ): LiveData<Int> {
-        return cardDao.getCountToReview(currentDate, status, categoryId)
+        return cardDao.getCountToReview(currentDate, status, collectionId)
     }
 
     // imagePath теперь хранится в info; отдельный апдейт не требуется
 
-    fun getByCategory(categoryId: Int): LiveData<List<Card>> {
-        return cardDao.getByCategory(categoryId)
+    fun getByCollection(collectionId: Int): LiveData<List<Card>> {
+        return cardDao.getByCollection(collectionId)
     }
 
     suspend fun deleteAll() {
@@ -82,8 +82,8 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.getAllByType(cardType)
     }
 
-    fun getAllByTypeAndCategory(cardType: CardTypeEnum, categoryId: Int): LiveData<List<Card>> {
-        return cardDao.getAllByTypeAndCategory(cardType, categoryId)
+    fun getAllByTypeAndCollection(cardType: CardTypeEnum, collectionId: Int): LiveData<List<Card>> {
+        return cardDao.getAllByTypeAndCollection(cardType, collectionId)
     }
 
 }

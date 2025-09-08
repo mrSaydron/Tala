@@ -41,7 +41,7 @@
             app:iconTint="?attr/colorOnSecondaryContainer" />
     </LinearLayout>
 
-    <!-- Список категорий -->
+    <!-- Список коллекций -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/categoryRecyclerView"
         android:layout_width="match_parent"

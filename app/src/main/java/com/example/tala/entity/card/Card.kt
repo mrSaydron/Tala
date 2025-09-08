@@ -13,7 +13,7 @@ data class Card(
     val id: Int = 0,
     val commonId: String? = null,
     val nextReviewDate: Long = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond(),
-    val categoryId: Int = 0,
+    val collectionId: Int = 0,
     val info: String? = null,
     val cardType: CardTypeEnum,
 

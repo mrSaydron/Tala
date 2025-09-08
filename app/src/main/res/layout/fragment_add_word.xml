@@ -11,11 +11,11 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Категория: перенесено вверх -->
+        <!-- Коллекция: перенесено вверх -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Категория"
+            android:text="Коллекция"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
@@ -38,7 +38,7 @@
                 android:layout_height="40dp"
                 android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Добавить категорию"
+                android:contentDescription="Добавить коллекцию"
                 android:padding="8dp"
                 android:src="@drawable/ic_add"
                 app:tint="?attr/colorPrimary" />
@@ -49,7 +49,7 @@
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Удалить категорию"
+                android:contentDescription="Удалить коллекцию"
                 android:padding="8dp"
                 android:src="@drawable/ic_delete"
                 app:tint="?attr/colorOnSurface"

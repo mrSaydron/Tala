@@ -48,21 +48,21 @@ class ReviewSpacedRepetitionTest {
         // Вставляем три карточки с разными временами повторения в прошлом
         val c1 = Card(
             nextReviewDate = now - 300, // раньше всех
-            categoryId = 1,
+            collectionId = 1,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1,
             status = StatusEnum.NEW,
         )
         val c2 = Card(
             nextReviewDate = now - 200,
-            categoryId = 1,
+            collectionId = 1,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1,
             status = StatusEnum.NEW,
         )
         val c3 = Card(
             nextReviewDate = now - 100,
-            categoryId = 1,
+            collectionId = 1,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1,
             status = StatusEnum.NEW,
@@ -99,7 +99,7 @@ class ReviewSpacedRepetitionTest {
 
         val card = Card(
             nextReviewDate = now + 3600, // через час
-            categoryId = 2,
+            collectionId = 2,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1,
             status = StatusEnum.NEW,

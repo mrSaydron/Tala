@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import com.example.tala.R
 
-class AddCategoryDialog(private val onSave: (String) -> Unit) : DialogFragment() {
+class AddCollectionDialog(private val onSave: (String) -> Unit) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val view = requireActivity().layoutInflater.inflate(R.layout.dialog_add_category, null)
@@ -19,10 +19,9 @@ class AddCategoryDialog(private val onSave: (String) -> Unit) : DialogFragment()
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(view)
-            .setTitle("Добавить категорию")
+            .setTitle("Добавить коллекцию")
             .create()
 
-        // Обработка нажатия на кнопку "Сохранить"
         saveCategoryButton.setOnClickListener {
             val categoryName = categoryNameInput.text.toString()
 
@@ -30,7 +29,7 @@ class AddCategoryDialog(private val onSave: (String) -> Unit) : DialogFragment()
                 onSave(categoryName)
                 dialog.dismiss()
             } else {
-                Toast.makeText(requireContext(), "Введите название категории!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Введите название коллекции!", Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -9,7 +9,7 @@
         android:id="@+id/categoryNameInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Название категории" />
+        android:hint="Название коллекции" />
 
     <Button
         android:id="@+id/saveCategoryButton"

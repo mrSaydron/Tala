@@ -8,10 +8,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.tala.R
 import com.example.tala.databinding.FragmentHomeBinding
-import com.example.tala.entity.category.Category
-import com.example.tala.entity.category.CategoryViewModel
+import com.example.tala.entity.collection.CardCollection
+import com.example.tala.entity.collection.CollectionViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.tala.fragment.adapter.CategoryAdapter
+import com.example.tala.fragment.adapter.CollectionAdapter
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -19,8 +19,8 @@ class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
 
-    private lateinit var categoryAdapter: CategoryAdapter
-    private val categories = mutableListOf<Category>()
+    private lateinit var categoryAdapter: CollectionAdapter
+    private val categories = mutableListOf<CardCollection>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,10 +51,10 @@ class HomeFragment : Fragment() {
 
         // Инициализация RecyclerView категорий
         binding.categoryRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        categoryAdapter = CategoryAdapter(
+        categoryAdapter = CollectionAdapter(
             categories,
-            onCategoryClick = { category ->
-                val reviewFragment = ReviewFragment.newInstance(category.id)
+            onCollectionClick = { collection ->
+                val reviewFragment = ReviewFragment.newInstance(collection.id)
                 replaceFragment(reviewFragment)
             },
             cardViewModelProvider = { ViewModelProvider(this)[com.example.tala.entity.card.CardViewModel::class.java] },
@@ -80,8 +80,8 @@ class HomeFragment : Fragment() {
 
     // Загрузка категорий
     private fun loadCategories() {
-        val viewModel = ViewModelProvider(requireActivity())[CategoryViewModel::class.java]
-        viewModel.getAllCategories().observe(viewLifecycleOwner) { categoryList ->
+        val viewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
+        viewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
             categories.clear()
             categories.addAll(categoryList)
             categoryAdapter.updateData(categories)

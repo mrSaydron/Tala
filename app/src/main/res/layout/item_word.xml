@@ -52,12 +52,12 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
-            <!-- Категория -->
+            <!-- Коллекция -->
             <TextView
                 android:id="@+id/categoryTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Category"
+                android:text="Collection"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp"
                 android:maxLines="1"

@@ -12,8 +12,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import com.example.tala.R
 import com.example.tala.databinding.FragmentWordListBinding
-import com.example.tala.entity.category.Category
-import com.example.tala.entity.category.CategoryViewModel
+import com.example.tala.entity.collection.CardCollection
+import com.example.tala.entity.collection.CollectionViewModel
 import com.example.tala.entity.card.CardViewModel
 import com.example.tala.fragment.adapter.CardAdapter
 import com.example.tala.model.dto.CardListDto
@@ -23,10 +23,10 @@ class WordListFragment : Fragment() {
     private lateinit var binding: FragmentWordListBinding
 
     private lateinit var cardViewModel: CardViewModel
-    private lateinit var categoryViewModel: CategoryViewModel
+    private lateinit var categoryViewModel: CollectionViewModel
 
     private lateinit var categoryAdapter: ArrayAdapter<String>
-    private val categories = mutableListOf<Category>()
+    private val categories = mutableListOf<CardCollection>()
 
     // Сохранение состояния фильтра и списка при возврате к фрагменту
     private var selectedCategoryPosition: Int = 0
@@ -45,16 +45,16 @@ class WordListFragment : Fragment() {
 
         // Инициализация ViewModel
         cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
-        categoryViewModel = ViewModelProvider(requireActivity())[CategoryViewModel::class.java]
+        categoryViewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
 
         // Инициализация Spinner
         categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.categorySpinner.adapter = categoryAdapter
 
-        categoryViewModel.getAllCategories().observe(viewLifecycleOwner) { categoryList ->
+        categoryViewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
             categories.clear()
-            categories.add(Category(id = 0, name = "Все")) // Добавляем категорию "Все"
+            categories.add(CardCollection(id = 0, name = "Все"))
             categories.addAll(categoryList)
             categoryAdapter.clear()
             categoryAdapter.addAll(categories.map { it.name })

@@ -8,7 +8,7 @@ interface CardDto {
     val id: Int
     val commonId: String?
     val nextReviewDate: Long
-    val categoryId: Int
+    val collectionId: Int
     val cardType: CardTypeEnum
     val intervalMinutes: Int
     val status: StatusEnum

@@ -22,9 +22,9 @@ import com.bumptech.glide.request.transition.Transition
 import com.example.tala.R
 import com.example.tala.databinding.FragmentAddWordBinding
 import com.example.tala.entity.card.CardViewModel
-import com.example.tala.entity.category.Category
-import com.example.tala.entity.category.CategoryViewModel
-import com.example.tala.fragment.dialog.AddCategoryDialog
+import com.example.tala.entity.collection.CardCollection
+import com.example.tala.entity.collection.CollectionViewModel
+import com.example.tala.fragment.dialog.AddCollectionDialog
 import com.example.tala.fragment.dialog.ImagePickerDialog
 import com.example.tala.integration.dictionary.YandexDictionaryApi.Companion.YANDEX_API_KEY
 import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KEY
@@ -48,11 +48,11 @@ class AddWordFragment : Fragment() {
     private lateinit var binding: FragmentAddWordBinding
 
     private lateinit var cardViewModel: CardViewModel
-    private lateinit var categoryViewModel: CategoryViewModel
+    private lateinit var categoryViewModel: CollectionViewModel
 
     private var currentCard: CardListDto? = null
     private lateinit var categoryAdapter: ArrayAdapter<String>
-    private val categories = mutableListOf<Category>()
+    private val categories = mutableListOf<CardCollection>()
     private var imagePath: String? = null
     private val selectedTypes = mutableSetOf<CardTypeEnum>()
 
@@ -68,7 +68,7 @@ class AddWordFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cardViewModel = ViewModelProvider(this)[CardViewModel::class.java]
-        categoryViewModel = ViewModelProvider(this)[CategoryViewModel::class.java]
+        categoryViewModel = ViewModelProvider(this)[CollectionViewModel::class.java]
 
         binding.deleteWordButton.visibility = View.GONE
 
@@ -94,7 +94,7 @@ class AddWordFragment : Fragment() {
             binding.chooseEnglishTranslationButton.isEnabled = !text.isNullOrBlank()
         }
 
-        // Загрузка категорий
+        // Загрузка коллекций
         loadCategories()
 
         binding.deleteWordButton.setOnClickListener {
@@ -139,7 +139,7 @@ class AddWordFragment : Fragment() {
                         )
                         val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                         val cardDto = CardListDto(
-                            categoryId = selectedCategory?.id ?: 0,
+                            collectionId = selectedCategory?.id ?: 0,
                             cards = cards,
                         )
                         cardViewModel.insert(cardDto)
@@ -154,7 +154,7 @@ class AddWordFragment : Fragment() {
                         val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                         val cardDto = CardListDto(
                             commonId = currentCard!!.commonId,
-                            categoryId = selectedCategory?.id ?: 0,
+                            collectionId = selectedCategory?.id ?: 0,
                             cards = cards,
                         )
                         cardViewModel.update(cardDto)
@@ -177,12 +177,12 @@ class AddWordFragment : Fragment() {
         }
 
         binding.addCategoryButton.setOnClickListener {
-            val dialog = AddCategoryDialog { categoryName ->
-                val category = Category(name = categoryName)
-                categoryViewModel.insertCategory(category)
-                Toast.makeText(requireContext(), "Категория добавлена!", Toast.LENGTH_SHORT).show()
+            val dialog = AddCollectionDialog { collectionName ->
+                val collection = CardCollection(name = collectionName)
+                categoryViewModel.insertCollection(collection)
+                Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
             }
-            dialog.show(parentFragmentManager, "AddCategoryDialog")
+            dialog.show(parentFragmentManager, "AddCollectionDialog")
         }
 
         binding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -324,7 +324,7 @@ class AddWordFragment : Fragment() {
     }
 
     private fun loadCategories() {
-        categoryViewModel.getAllCategories().observe(viewLifecycleOwner) { categoryList ->
+        categoryViewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
             categories.clear()
             categories.addAll(categoryList)
             categoryAdapter.clear()
@@ -333,11 +333,11 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    private fun showCategoryButtons(category: Category) {
+    private fun showCategoryButtons(category: CardCollection) {
         binding.deleteCategoryButton.visibility = View.VISIBLE
         binding.deleteCategoryButton.setOnClickListener {
-            categoryViewModel.deleteCategory(category)
-            Toast.makeText(requireContext(), "Категория удалена!", Toast.LENGTH_SHORT).show()
+            categoryViewModel.deleteCollection(category)
+            Toast.makeText(requireContext(), "Коллекция удалена!", Toast.LENGTH_SHORT).show()
         }
     }
 

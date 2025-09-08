@@ -49,10 +49,10 @@ interface CardDao {
     @Query("""
         SELECT * 
         FROM card 
-        WHERE categoryId = :categoryId AND nextReviewDate < :endFindDate 
+        WHERE collectionId = :collectionId AND nextReviewDate < :endFindDate 
         ORDER BY nextReviewDate ASC 
         LIMIT 1""")
-    suspend fun getNextToReview(categoryId: Int, endFindDate: Long): Card?
+    suspend fun getNextToReview(collectionId: Int, endFindDate: Long): Card?
 
     @Query("UPDATE card SET nextReviewDate = :nextReviewDate, intervalMinutes = :intervalMinutes WHERE id = :id")
     suspend fun update(id: Int, nextReviewDate: Long, intervalMinutes: Int)
@@ -65,18 +65,18 @@ interface CardDao {
         FROM card 
         WHERE nextReviewDate < :endFindDate 
         AND status = :status 
-        AND categoryId = :categoryId""")
+        AND collectionId = :collectionId""")
     fun getCountToReview(
         endFindDate: Long,
         status: StatusEnum,
-        categoryId: Int,
+        collectionId: Int,
     ): LiveData<Int>
 
-    @Query("SELECT * FROM card WHERE categoryId = :categoryId")
-    fun getByCategory(categoryId: Int): LiveData<List<Card>>
+    @Query("SELECT * FROM card WHERE collectionId = :collectionId")
+    fun getByCollection(collectionId: Int): LiveData<List<Card>>
 
-    @Query("SELECT * FROM card WHERE categoryId = :categoryId AND cardType = :cardType")
-    fun getAllByTypeAndCategory(cardType: CardTypeEnum, categoryId: Int): LiveData<List<Card>>
+    @Query("SELECT * FROM card WHERE collectionId = :collectionId AND cardType = :cardType")
+    fun getAllByTypeAndCollection(cardType: CardTypeEnum, collectionId: Int): LiveData<List<Card>>
 
     @Query("DELETE FROM card")
     suspend fun deleteAll()

@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentSettingsBinding
-import com.example.tala.entity.category.CategoryViewModel
+import com.example.tala.entity.collection.CollectionViewModel
 import com.example.tala.entity.card.CardViewModel
 import com.example.tala.model.enums.CardTypeEnum
 import kotlinx.coroutines.launch
@@ -89,9 +89,9 @@ class SettingsFragment : Fragment() {
     private fun clearDatabase() {
         lifecycleScope.launch {
             val cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
-            val categoryViewModel = ViewModelProvider(requireActivity())[CategoryViewModel::class.java]
+            val categoryViewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
             cardViewModel.deleteAllWords()
-            categoryViewModel.deleteAllCategories()
+            categoryViewModel.deleteAllCollections()
             Toast.makeText(requireContext(), "Данные очищены", Toast.LENGTH_SHORT).show()
         }
     }

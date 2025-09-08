@@ -45,11 +45,11 @@ class ReviewFragment : Fragment() {
     private var currentCardFragment: CardReviewBase? = null
     private lateinit var reviewSettings: ReviewSettings
 
-    private var selectedCategoryId: Int = 0 // ID выбранной категории
+    private var selectedCategoryId: Int = 0 // ID выбранной коллекции
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        selectedCategoryId = arguments?.getInt("categoryId") ?: 0
+        selectedCategoryId = arguments?.getInt("collectionId") ?: 0
     }
 
     override fun onCreateView(
@@ -286,7 +286,7 @@ class ReviewFragment : Fragment() {
         fun newInstance(categoryId: Int): ReviewFragment {
             val fragment = ReviewFragment()
             val args = Bundle()
-            args.putInt("categoryId", categoryId)
+            args.putInt("collectionId", categoryId)
             fragment.arguments = args
             return fragment
         }

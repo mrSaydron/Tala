@@ -49,7 +49,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             val ef = reviewSettings.getEf(type)
             Card(
                 commonId = commonId,
-                categoryId = cardDto.categoryId,
+                collectionId = cardDto.collectionId,
                 info = (info as? WordCardInfo)?.toJsonOrNull(),
                 cardType = type,
                 ef = ef,
@@ -95,7 +95,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                     val ef = reviewSettings.getEf(type)
                     Card(
                         commonId = cardDto.commonId,
-                        categoryId = cardDto.categoryId,
+                        collectionId = cardDto.collectionId,
                         info = (infoAny as? WordCardInfo)?.toJsonOrNull(),
                         cardType = type,
                         ef = ef,
@@ -114,7 +114,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                     val infoAny = cardDto.cards[type]
                     val wordInfo = (infoAny as? WordCardInfo)
                     existing.copy(
-                        categoryId = cardDto.categoryId,
+                        collectionId = cardDto.collectionId,
                         info = wordInfo?.toJsonOrNull()
                     )
                 }
@@ -147,7 +147,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
                     CardListDto(
                         commonId = primaryDto.commonId,
-                        categoryId = primaryDto.categoryId,
+                        collectionId = primaryDto.collectionId,
                         cards = cardsMap,
                     )
                 }
@@ -174,7 +174,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getCardListByCategory(categoryId: Int): LiveData<List<CardListDto>> {
-        return repository.getByCategory(categoryId).map { cards ->
+        return repository.getByCollection(categoryId).map { cards ->
             cards
                 .groupBy { it.commonId }
                 .map { (_, group) ->
@@ -187,7 +187,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
 
                     CardListDto(
                         commonId = primaryDto.commonId,
-                        categoryId = primaryDto.categoryId,
+                        collectionId = primaryDto.collectionId,
                         cards = cardsMap,
                     )
                 }
@@ -213,7 +213,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             }
             CardListDto(
                 commonId = primaryDto.commonId,
-                categoryId = primaryDto.categoryId,
+                collectionId = primaryDto.collectionId,
                 cards = cardsMap,
             )
         }

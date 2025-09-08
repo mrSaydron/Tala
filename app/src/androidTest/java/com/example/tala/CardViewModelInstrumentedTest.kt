@@ -61,7 +61,7 @@ class CardViewModelInstrumentedTest {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
             nextReviewDate = now - 60, // уже просрочена
-            categoryId = 1,
+            collectionId = 1,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1440,
             status = StatusEnum.NEW,
@@ -94,7 +94,7 @@ class CardViewModelInstrumentedTest {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
             nextReviewDate = now - 60,
-            categoryId = 1,
+            collectionId = 1,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1440,
             status = StatusEnum.NEW,
@@ -128,7 +128,7 @@ class CardViewModelInstrumentedTest {
         val now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond()
         val dueCard = Card(
             nextReviewDate = now - 60,
-            categoryId = 1,
+            collectionId = 1,
             cardType = CardTypeEnum.TRANSLATE,
             intervalMinutes = 1440,
             status = StatusEnum.NEW,

@@ -8,7 +8,7 @@ data class ReverseTranslateCardDto(
     override val id: Int,
     override val commonId: String?,
     override val nextReviewDate: Long,
-    override val categoryId: Int,
+    override val collectionId: Int,
     override val cardType: CardTypeEnum = CardTypeEnum.REVERSE_TRANSLATE,
     override val intervalMinutes: Int,
     override val status: StatusEnum,

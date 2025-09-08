@@ -29,7 +29,7 @@ class CardAdapter(
             if (firstInfo is WordCardInfo) {
                 englishWordTextView.text = firstInfo.english
                 russianWordTextView.text = firstInfo.russian
-                categoryTextView.text = "Категория: ${categoryIdToName[card.categoryId] ?: "—"}"
+                categoryTextView.text = "Коллекция: ${categoryIdToName[card.collectionId] ?: "—"}"
 
                 val imagePathToLoad = firstInfo.imagePath
                 if (!imagePathToLoad.isNullOrBlank()) {
