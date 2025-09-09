@@ -127,6 +127,14 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun saveCard(cardDto: CardListDto) = viewModelScope.launch {
+        if (cardDto.commonId.isNullOrBlank()) {
+            insert(cardDto)
+        } else {
+            update(cardDto)
+        }
+    }
+
     suspend fun deleteSync(commonId: String) {
         withContext(Dispatchers.IO) {
             repository.delete(commonId)

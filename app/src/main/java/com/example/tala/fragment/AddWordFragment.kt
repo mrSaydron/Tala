@@ -12,10 +12,11 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import android.graphics.BitmapFactory
+import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.activity.result.contract.ActivityResultContracts
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -26,8 +27,8 @@ import com.example.tala.entity.collection.CardCollection
 import com.example.tala.entity.collection.CollectionViewModel
 import com.example.tala.fragment.dialog.AddCollectionDialog
 import com.example.tala.fragment.dialog.ImagePickerDialog
-import com.example.tala.integration.dictionary.YandexDictionaryApi.Companion.YANDEX_API_KEY
-import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KEY
+import com.example.tala.integration.translation.TranslationRepository
+import com.example.tala.integration.picture.ImageRepository
 import com.example.tala.model.dto.CardListDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.service.ApiClient
@@ -37,11 +38,9 @@ import kotlinx.coroutines.launch
 import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.dto.info.CardInfo
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import android.webkit.MimeTypeMap
 import kotlin.math.max
 import androidx.core.widget.addTextChangedListener
+import com.example.tala.util.ImageStorage
 
 class AddWordFragment : Fragment() {
 
@@ -55,6 +54,20 @@ class AddWordFragment : Fragment() {
     private val categories = mutableListOf<CardCollection>()
     private var imagePath: String? = null
     private val selectedTypes = mutableSetOf<CardTypeEnum>()
+
+    private val translationRepo by lazy { TranslationRepository() }
+    private val imageRepo by lazy { ImageRepository() }
+
+    private val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data = result.data
+            val croppedUri = UCrop.getOutput(data!!)
+            croppedUri?.let {
+                binding.wordImageView.setImageURI(it)
+                imagePath = it.toString()
+            }
+        }
+    }
 
     // Синхронизация выбора коллекции
     private var desiredCollectionId: Int? = null
@@ -96,16 +109,42 @@ class AddWordFragment : Fragment() {
 
         // Переводные иконки: состояние доступности
         setupTranslationButtonsState()
+        setupTranslationInputsListeners()
+
+        // Загрузка коллекций
+        loadCollections()
+
+        setupDeleteWordButton()
+
+        setupSaveButton()
+
+        setupAddCategoryButton()
+
+        setupCategorySpinnerListener()
+
+        setupAutoFillOnFocusLoss(binding.englishWordInput, binding.russianWordInput, "en", "ru")
+        setupAutoFillOnFocusLoss(binding.russianWordInput, binding.englishWordInput, "ru", "en")
+
+        setupImagePicker()
+
+        setupCardTypesButton()
+
+        setupTranslationButtons()
+
+        // Обновим видимость секций при первичной инициализации
+        setValueAndVisibility()
+    }
+
+    private fun setupTranslationInputsListeners() {
         binding.englishWordInput.addTextChangedListener { text ->
             binding.chooseRussianTranslationButton.isEnabled = !text.isNullOrBlank()
         }
         binding.russianWordInput.addTextChangedListener { text ->
             binding.chooseEnglishTranslationButton.isEnabled = !text.isNullOrBlank()
         }
+    }
 
-        // Загрузка коллекций
-        loadCollections()
-
+    private fun setupDeleteWordButton() {
         binding.deleteWordButton.setOnClickListener {
             val commonId = currentCard?.commonId
             if (!commonId.isNullOrEmpty()) {
@@ -119,7 +158,9 @@ class AddWordFragment : Fragment() {
                 }
             }
         }
+    }
 
+    private fun setupSaveButton() {
         binding.saveButton.setOnClickListener {
             try {
                 val englishWord = binding.englishWordInput.text.toString()
@@ -130,61 +171,46 @@ class AddWordFragment : Fragment() {
                         0
                     )]
                     else null
-                Log.i("AddWordFragment", "onViewCreated: selectCategory")
-
-                if (englishWord.isNotEmpty() && russianWord.isNotEmpty()) {
-                    if (selectedTypes.isEmpty()) {
-                        Toast.makeText(requireContext(), "Выберите хотя бы один тип карточек", Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-
-                    if (currentCard == null) {
-                        val hint = binding.hintInput.text.toString().trim().ifEmpty { null }
-                        val baseInfo = WordCardInfo(
-                            english = englishWord,
-                            russian = russianWord,
-                            imagePath = imagePath,
-                            hint = hint,
-                        )
-                        val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
-                        val cardDto = CardListDto(
-                            collectionId = selectedCategory?.id ?: 0,
-                            cards = cards,
-                        )
-                        cardViewModel.insert(cardDto)
-                    } else {
-                        val hint = binding.hintInput.text.toString().trim().ifEmpty { null }
-                        val baseInfo = WordCardInfo(
-                            english = englishWord,
-                            russian = russianWord,
-                            imagePath = imagePath,
-                            hint = hint,
-                        )
-                        val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
-                        val cardDto = CardListDto(
-                            commonId = currentCard!!.commonId,
-                            collectionId = selectedCategory?.id ?: 0,
-                            cards = cards,
-                        )
-                        cardViewModel.update(cardDto)
-                        parentFragmentManager.popBackStack()
-                    }
-                    binding.englishWordInput.text?.clear()
-                    binding.russianWordInput.text?.clear()
-                    binding.hintInput.text?.clear()
-                    binding.wordImageView.setImageDrawable(null)
-                    imagePath = null
-                    setupTranslationButtonsState()
-                    Toast.makeText(requireContext(), "Слово сохранено!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), "Заполните оба поля!", Toast.LENGTH_SHORT)
-                        .show()
+                if (englishWord.isEmpty() || russianWord.isEmpty()) {
+                    Toast.makeText(requireContext(), "Заполните оба поля!", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
                 }
+                if (selectedTypes.isEmpty()) {
+                    Toast.makeText(requireContext(), "Выберите хотя бы один тип карточек", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val hint = binding.hintInput.text.toString().trim().ifEmpty { null }
+                val baseInfo = WordCardInfo(
+                    english = englishWord,
+                    russian = russianWord,
+                    imagePath = imagePath,
+                    hint = hint,
+                )
+                val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
+                val cardDto = if (currentCard == null) {
+                    CardListDto(
+                        collectionId = selectedCategory?.id ?: 0,
+                        cards = cards,
+                    )
+                } else {
+                    CardListDto(
+                        commonId = currentCard!!.commonId,
+                        collectionId = selectedCategory?.id ?: 0,
+                        cards = cards,
+                    )
+                }
+                cardViewModel.saveCard(cardDto)
+                if (currentCard != null) parentFragmentManager.popBackStack()
+                resetForm()
+                Toast.makeText(requireContext(), "Слово сохранено!", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 println("---> ${e.message}")
             }
         }
+    }
 
+    private fun setupAddCategoryButton() {
         binding.addCategoryButton.setOnClickListener {
             val dialog = AddCollectionDialog { collectionName ->
                 lifecycleScope.launch {
@@ -195,7 +221,6 @@ class AddWordFragment : Fragment() {
                         val collection = CardCollection(name = collectionName)
                         categoryViewModel.insertCollection(collection)
                         Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
-                        // переключить спиннер на только что добавленную коллекцию (когда придёт через LiveData)
                         pendingSelectCollectionName = collectionName
                         applySelections()
                     }
@@ -203,7 +228,9 @@ class AddWordFragment : Fragment() {
             }
             dialog.show(parentFragmentManager, "AddCollectionDialog")
         }
+    }
 
+    private fun setupCategorySpinnerListener() {
         binding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedCategory = categories[position]
@@ -214,122 +241,62 @@ class AddWordFragment : Fragment() {
                 binding.deleteCategoryButton.visibility = View.GONE
             }
         }
+    }
 
-        setupEnglishWordFocus()
-        setupRussianWordFocus()
-
-        // Обработка нажатия на изображение
+    private fun setupImagePicker() {
         binding.wordImageView.setOnClickListener {
             val dialog = ImagePickerDialog(
                 initialQuery = binding.englishWordInput.text.toString(),
                 onImageSelected = { imageUrl ->
-                    if (imageUrl.startsWith("http", true)) {
-                        loadImageFromUrl(imageUrl) { file ->
-                            file?.let {
-                                val localFile = copyFileToInternalImages(it)
-                                val localUri = Uri.fromFile(localFile ?: it)
-                                if (shouldCrop(localUri)) {
-                                    startCropping(localUri)
-                                } else {
-                                    binding.wordImageView.setImageURI(localUri)
-                                    imagePath = localUri.toString()
-                                }
-                            }
-                        }
-                    } else {
-                        val contentUri = Uri.parse(imageUrl)
-                        val localFile = copyImageToInternalStorage(contentUri)
-                        if (localFile != null) {
-                            val localUri = Uri.fromFile(localFile)
-                            if (shouldCrop(localUri)) {
-                                startCropping(localUri)
-                            } else {
-                                binding.wordImageView.setImageURI(localUri)
-                                imagePath = localUri.toString() // Сохраняем путь к локальной копии
-                            }
-                        } else {
-                            // fallback: если копирование не удалось — пробуем кадрировать напрямую или ставим как есть
-                            if (shouldCrop(contentUri)) {
-                                startCropping(contentUri)
-                            } else {
-                                binding.wordImageView.setImageURI(contentUri)
-                                imagePath = contentUri.toString()
-                            }
-                        }
-                    }
+                    handleSelectedImage(imageUrl)
                 }
             )
             dialog.show(parentFragmentManager, "ImagePickerDialog")
         }
+    }
 
-        // Кнопка настроек типов карточек
+    private fun setupCardTypesButton() {
         binding.cardTypesSettingsButton.setOnClickListener {
             showCardTypesDialog()
         }
+    }
 
-        // Кнопка для выбора перевода
+    private fun setupTranslationButtons() {
         binding.chooseRussianTranslationButton.setOnClickListener {
-            lifecycleScope.launch {
-                val englishWord = binding.englishWordInput.text.toString()
-                val translations = fetchTranslationEnRu(englishWord)
-                if (translations.isNotEmpty()) {
-                    val items = translations.toTypedArray()
-                    MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Русский перевод")
-                        .setItems(items) { _, which ->
-                            binding.russianWordInput.setText(items[which])
-                        }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show()
-                } else {
-                    Toast.makeText(requireContext(), "Нет доступных переводов", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
+            val englishWord = binding.englishWordInput.text.toString()
+            chooseTranslation(
+                word = englishWord,
+                from = "en",
+                to = "ru",
+                title = "Русский перевод",
+            ) { chosen -> binding.russianWordInput.setText(chosen) }
         }
 
         binding.chooseEnglishTranslationButton.setOnClickListener {
-            lifecycleScope.launch {
-                val russianWord = binding.russianWordInput.text.toString()
-                val translations = fetchTranslationRuEn(russianWord)
-                if (translations.isNotEmpty()) {
-                    val items = translations.toTypedArray()
-                    MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Английский перевод")
-                        .setItems(items) { _, which ->
-                            binding.englishWordInput.setText(items[which])
-                        }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show()
-                } else {
-                    Toast.makeText(requireContext(), "Нет доступных переводов", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
+            val russianWord = binding.russianWordInput.text.toString()
+            chooseTranslation(
+                word = russianWord,
+                from = "ru",
+                to = "en",
+                title = "Английский перевод",
+            ) { chosen -> binding.englishWordInput.setText(chosen) }
         }
-
-        // Обновим видимость секций при первичной инициализации
-        setValueAndVisibility()
     }
 
     private fun showReviewStats(commonId: String?) {
         commonId?.let {
             lifecycleScope.launch {
-                val sb = StringBuilder()
-                CardTypeEnum.entries.filter { it.use }.forEach { type ->
-                    val card = cardViewModel.getCardByTypeAndCommonId(type, commonId)
-                    if (card != null) {
-                        val next = java.time.Instant.ofEpochSecond(card.nextReviewDate)
-                        val localNext =
-                            java.time.LocalDateTime.ofInstant(next, java.time.ZoneId.systemDefault())
-                        val formatted = localNext.toLocalDate().toString()
-                        sb.append("${type.name}: ")
-                            .append(formatted)
-                            .append('\n')
+                val entries = CardTypeEnum.entries
+                    .filter { it.use }
+                    .mapNotNull { type ->
+                        val card = cardViewModel.getCardByTypeAndCommonId(type, commonId)
+                        card?.let { c ->
+                            val next = java.time.Instant.ofEpochSecond(c.nextReviewDate)
+                            val localNext = java.time.LocalDateTime.ofInstant(next, java.time.ZoneId.systemDefault())
+                            "${type.name}: ${localNext.toLocalDate()}"
+                        }
                     }
-                }
-
-                val text = sb.toString().trim()
+                val text = entries.joinToString("\n")
                 if (text.isNotEmpty()) {
                     binding.reviewStatsLabel.visibility = View.VISIBLE
                     binding.reviewStatsText.visibility = View.VISIBLE
@@ -379,7 +346,7 @@ class AddWordFragment : Fragment() {
     }
 
     private fun showCategoryButtons(category: CardCollection) {
-        val isDefault = category.name == "Default"
+        val isDefault = category.name == DEFAULT_COLLECTION_NAME
         binding.deleteCategoryButton.visibility = if (isDefault) View.GONE else View.VISIBLE
         if (!isDefault) {
             binding.deleteCategoryButton.setOnClickListener {
@@ -399,161 +366,80 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == UCrop.REQUEST_CROP && resultCode == RESULT_OK) {
-            val croppedUri = UCrop.getOutput(data!!)
-            croppedUri?.let {
-                binding.wordImageView.setImageURI(it)
-                imagePath = it.toString() // Сохраняем путь к кадрированному изображению
+    // onActivityResult удалён, используем Activity Result API
+
+    private fun chooseTranslation(word: String, from: String, to: String, title: String, onChosen: (String) -> Unit) {
+        lifecycleScope.launch {
+            val items = translationRepo.getTranslations(word, from, to)
+            if (items.isNotEmpty()) {
+                val arr = items.toTypedArray()
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(title)
+                    .setItems(arr) { _, which -> onChosen(arr[which]) }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            } else {
+                Toast.makeText(requireContext(), "Нет доступных переводов", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private suspend fun fetchTranslationEnRu(word: String): List<String> {
-        return try {
-            val response = ApiClient.yandexDictionaryApi.getTranslation(
-                text = word,
-                lang = "en-ru",
-                apiKey = YANDEX_API_KEY
-            )
-            response.def.flatMap { definition ->
-                definition.tr.map { it.text }
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private suspend fun fetchTranslationRuEn(word: String): List<String> {
-        return try {
-            val response = ApiClient.yandexDictionaryApi.getTranslation(
-                text = word,
-                lang = "ru-en",
-                apiKey = YANDEX_API_KEY
-            )
-            response.def.flatMap { definition ->
-                definition.tr.map { it.text }
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private suspend fun fetchImages(query: String): List<String> {
-        return try {
-            val response = ApiClient.unsplashApi.searchImages(
-                query = query,
-                apiKey = USPLASH_API_KEY
-            )
-            response.results.map { it.urls.regular }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
+    private suspend fun fetchImages(query: String): List<String> = imageRepo.searchImages(query)
 
     private fun startCropping(imageUri: Uri) {
-        val destinationUri = Uri.fromFile(File(getAppImagesDir(), "cropped_${System.currentTimeMillis()}.jpg"))
-        UCrop.of(imageUri, destinationUri)
+        val destinationUri = Uri.fromFile(File(ImageStorage.getAppImagesDir(requireContext()), "cropped_${System.currentTimeMillis()}.jpg"))
+        val uCrop = UCrop.of(imageUri, destinationUri)
             .withAspectRatio(1f, 1f)
             .withMaxResultSize(1280, 1280)
-            .start(requireContext(), this)
+        cropLauncher.launch(uCrop.getIntent(requireContext()))
     }
 
-    private fun shouldCrop(uri: Uri): Boolean {
-        val (width, height) = getImageDimensions(uri) ?: return false
-        val maxSide = max(width, height)
-        return maxSide > 2048
-    }
-
-    private fun getImageDimensions(uri: Uri): Pair<Int, Int>? {
-        return try {
-            val inputStream = when (uri.scheme?.lowercase()) {
-                "file" -> FileInputStream(File(uri.path ?: return null))
-                else -> requireContext().contentResolver.openInputStream(uri)
-            } ?: return null
-            inputStream.use { stream ->
-                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeStream(stream, null, options)
-                val width = options.outWidth
-                val height = options.outHeight
-                if (width > 0 && height > 0) Pair(width, height) else null
+    private fun handleSelectedImage(urlOrUri: String) {
+        if (urlOrUri.startsWith("http", true)) {
+            loadImageFromUrl(urlOrUri) { file ->
+                file?.let {
+                    val localFile = ImageStorage.copyFileToInternal(requireContext(), it)
+                    val localUri = Uri.fromFile(localFile ?: it)
+                    setImageWithOptionalCrop(localUri)
+                }
             }
-        } catch (_: Exception) {
-            null
+        } else {
+            val contentUri = Uri.parse(urlOrUri)
+            val localFile = ImageStorage.copyUriToInternal(requireContext(), contentUri)
+            val chosenUri = if (localFile != null) Uri.fromFile(localFile) else contentUri
+            setImageWithOptionalCrop(chosenUri)
         }
     }
 
-    private fun setupEnglishWordFocus() {
-        binding.englishWordInput.setOnFocusChangeListener { _, hasFocus ->
+    private fun setImageWithOptionalCrop(uri: Uri) {
+        if (ImageStorage.shouldCrop(requireContext(), uri)) {
+            startCropping(uri)
+        } else {
+            binding.wordImageView.setImageURI(uri)
+            imagePath = uri.toString()
+        }
+    }
+
+    private fun setupAutoFillOnFocusLoss(sourceField: EditText, targetField: EditText, from: String, to: String) {
+        sourceField.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
-                val englishWord = binding.englishWordInput.text.toString()
-                val russianWord = binding.russianWordInput.text.toString()
-                if (englishWord.isNotEmpty() && russianWord.isEmpty()) {
+                val source = sourceField.text.toString()
+                val target = targetField.text.toString()
+                if (source.isNotEmpty() && target.isEmpty()) {
                     lifecycleScope.launch {
-                        val images = fetchImages(englishWord)
-                        if (images.isNotEmpty()) {
-                            val imageUrl = images.first()
-                            loadImageFromUrl(imageUrl) { file ->
+                        translationRepo.getTranslations(source, from, to).firstOrNull()?.let {
+                            targetField.setText(it)
+                        }
+                        val images = fetchImages(source)
+                        images.firstOrNull()?.let { url ->
+                            loadImageFromUrl(url) { file ->
                                 file?.let {
-                                    val localFile = copyFileToInternalImages(it)
-                                    val localUri = Uri.fromFile(localFile ?: it)
+                                    val local = ImageStorage.copyFileToInternal(requireContext(), it)
+                                    val localUri = Uri.fromFile(local ?: it)
                                     binding.wordImageView.setImageURI(localUri)
                                     imagePath = localUri.toString()
                                 }
                             }
-                        } else {
-                            Toast.makeText(requireContext(), "Изображение не найдено", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-
-                if (englishWord.isNotEmpty() && russianWord.isEmpty()) {
-                    lifecycleScope.launch {
-                        val translations = fetchTranslationEnRu(englishWord)
-                        if (translations.isNotEmpty()) {
-                            binding.russianWordInput.setText(translations.first()) // Выбираем первый перевод
-                        } else {
-                            Toast.makeText(requireContext(), "Перевод не найден", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun setupRussianWordFocus() {
-        binding.russianWordInput.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                val englishWord = binding.englishWordInput.text.toString()
-                val russianWord = binding.russianWordInput.text.toString()
-                if (russianWord.isNotEmpty() && englishWord.isEmpty()) {
-                    lifecycleScope.launch {
-                        val images = fetchImages(russianWord)
-                        if (images.isNotEmpty()) {
-                            val imageUrl = images.first()
-                            loadImageFromUrl(imageUrl) { file ->
-                                file?.let {
-                                    val localFile = copyFileToInternalImages(it)
-                                    val localUri = Uri.fromFile(localFile ?: it)
-                                    binding.wordImageView.setImageURI(localUri)
-                                    imagePath = localUri.toString()
-                                }
-                            }
-                        } else {
-                            Toast.makeText(requireContext(), "Изображение не найдено", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-
-                if (russianWord.isNotEmpty() && englishWord.isEmpty()) {
-                    lifecycleScope.launch {
-                        val translations = fetchTranslationRuEn(russianWord)
-                        if (translations.isNotEmpty()) {
-                            binding.englishWordInput.setText(translations.first()) // Выбираем первый перевод
-                        } else {
-                            Toast.makeText(requireContext(), "Перевод не найден", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -579,63 +465,10 @@ class AddWordFragment : Fragment() {
             .show()
     }
 
-    private fun copyImageToInternalStorage(uri: Uri): File? {
-        return try {
-            val resolver = requireContext().contentResolver
-            val mimeType = resolver.getType(uri)
-            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
+    // Удалены локальные копирующие методы: используем ImageStorage
 
-            val imagesDir = getAppImagesDir()
-
-            val fileName = "img_${System.currentTimeMillis()}.$extension"
-            val outFile = File(imagesDir, fileName)
-
-            resolver.openInputStream(uri)?.use { input ->
-                FileOutputStream(outFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            outFile
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun getAppImagesDir(): File {
-        val imagesDir = File(requireContext().filesDir, "images")
-        if (!imagesDir.exists()) imagesDir.mkdirs()
-        return imagesDir
-    }
-
-    private fun copyFileToInternalImages(sourceFile: File, suggestedExtension: String? = null): File? {
-        return try {
-            val extension = suggestedExtension ?: sourceFile.extension.ifBlank { "jpg" }
-            val destFile = File(getAppImagesDir(), "img_${System.currentTimeMillis()}.$extension")
-            FileInputStream(sourceFile).use { input ->
-                FileOutputStream(destFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            destFile
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun loadImageFromUrl(imageUrl: String, callback: (File?) -> Unit) {
-        Glide.with(requireContext())
-            .asFile()
-            .load(imageUrl)
-            .into(object : CustomTarget<File>() {
-                override fun onResourceReady(resource: File, transition: Transition<in File>?) {
-                    callback(resource)
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {
-                    callback(null)
-                }
-            })
-    }
+    private fun loadImageFromUrl(imageUrl: String, callback: (File?) -> Unit) =
+        imageRepo.downloadToFile(requireContext(), imageUrl, callback)
 
     private fun setupTranslationButtonsState() {
         val english = binding.englishWordInput.text?.toString()?.trim().orEmpty()
@@ -652,29 +485,29 @@ class AddWordFragment : Fragment() {
     }
 
     private fun setValueAndVisibilityForEnglish() {
-        val shouldShow = shouldShowEnglishSection(selectedTypes)
+        val shouldShow = shouldShowEnglishSection()
         setSectionVisibility(R.id.sectionEnglish, shouldShow)
     }
 
     private fun setValueAndVisibilityForRussian() {
-        val shouldShow = shouldShowRussianSection(selectedTypes)
+        val shouldShow = shouldShowRussianSection()
         setSectionVisibility(R.id.sectionRussian, shouldShow)
     }
 
     private fun setValueAndVisibilityForHint() {
-        val shouldShow = shouldShowHintSection(selectedTypes)
+        val shouldShow = shouldShowHintSection()
         setSectionVisibility(R.id.sectionHint, shouldShow)
     }
 
     private fun setValueAndVisibilityForImage() {
-        val shouldShow = shouldShowImageSection(selectedTypes)
+        val shouldShow = shouldShowImageSection()
         setSectionVisibility(R.id.sectionImage, shouldShow)
     }
 
-    private fun shouldShowEnglishSection(types: Set<CardTypeEnum>): Boolean = true
-    private fun shouldShowRussianSection(types: Set<CardTypeEnum>): Boolean = true
-    private fun shouldShowHintSection(types: Set<CardTypeEnum>): Boolean = true
-    private fun shouldShowImageSection(types: Set<CardTypeEnum>): Boolean = true
+    private fun shouldShowEnglishSection(): Boolean = true
+    private fun shouldShowRussianSection(): Boolean = true
+    private fun shouldShowHintSection(): Boolean = true
+    private fun shouldShowImageSection(): Boolean = true
 
     private fun setSectionVisibility(viewId: Int, visible: Boolean) {
         val v = binding.root.findViewById<View>(viewId)
@@ -703,62 +536,23 @@ class AddWordFragment : Fragment() {
     }
 
     private fun setValues() {
-        setEnglishValue()
-        setRussianValue()
-        setHintValue()
-        setImageValue()
-    }
-
-    private fun setEnglishValue() {
-        currentCard?.let {
-            for ((_, cardInfo) in it.cards) {
-                if (cardInfo is WordCardInfo) {
-                    binding.englishWordInput.setText(cardInfo.english)
-                    break
-                }
-            }
+        currentWordInfo()?.let { info ->
+            binding.englishWordInput.setText(info.english)
+            binding.russianWordInput.setText(info.russian)
+            binding.hintInput.setText(info.hint)
+            Glide.with(this)
+                .load(info.imagePath)
+                .into(binding.wordImageView)
+            imagePath = info.imagePath
         }
     }
 
-    private fun setRussianValue() {
-        currentCard?.let {
-            for ((_, cardInfo) in it.cards) {
-                if (cardInfo is WordCardInfo) {
-                    binding.russianWordInput.setText(cardInfo.russian)
-                    break
-                }
-            }
-        }
-    }
-
-    private fun setHintValue() {
-        currentCard?.let {
-            for ((_, cardInfo) in it.cards) {
-                if (cardInfo is WordCardInfo) {
-                    binding.hintInput.setText(cardInfo.hint)
-                    break
-                }
-            }
-        }
-    }
-
-    private fun setImageValue() {
-        currentCard?.let {
-            for ((_, cardInfo) in it.cards) {
-                if (cardInfo is WordCardInfo) {
-                    Glide.with(this)
-                        .load(cardInfo.imagePath)
-                        .into(binding.wordImageView)
-
-                    imagePath = cardInfo.imagePath
-                    break
-                }
-            }
-        }
-    }
+    private fun currentWordInfo(): WordCardInfo? =
+        currentCard?.cards?.values?.filterIsInstance<WordCardInfo>()?.firstOrNull()
 
     companion object {
         private const val ARG_COMMON_ID = "common_id"
+        private const val DEFAULT_COLLECTION_NAME = "Default"
 
         fun newInstance(commonId: String?): AddWordFragment {
             val fragment = AddWordFragment()
@@ -773,5 +567,14 @@ class AddWordFragment : Fragment() {
             fragment.currentCard = card
             return fragment
         }
+    }
+
+    private fun resetForm() {
+        binding.englishWordInput.text?.clear()
+        binding.russianWordInput.text?.clear()
+        binding.hintInput.text?.clear()
+        binding.wordImageView.setImageDrawable(null)
+        imagePath = null
+        setupTranslationButtonsState()
     }
 }
