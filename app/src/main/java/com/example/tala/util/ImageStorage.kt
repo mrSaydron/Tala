@@ -32,19 +32,21 @@ object ImageStorage {
         destFile
     } catch (_: Exception) { null }
 
-    fun getImageDimensions(context: Context, uri: Uri): Pair<Int, Int>? = try {
-        val inputStream = when (uri.scheme?.lowercase()) {
-            "file" -> FileInputStream(File(uri.path ?: return null))
-            else -> context.contentResolver.openInputStream(uri)
-        } ?: return null
-        inputStream.use { stream ->
-            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeStream(stream, null, options)
-            val width = options.outWidth
-            val height = options.outHeight
-            if (width > 0 && height > 0) Pair(width, height) else null
-        }
-    } catch (_: Exception) { null }
+    private fun getImageDimensions(context: Context, uri: Uri): Pair<Int, Int>? {
+        return try {
+            val inputStream = when (uri.scheme?.lowercase()) {
+                "file" -> FileInputStream(File(uri.path ?: return null))
+                else -> context.contentResolver.openInputStream(uri)
+            } ?: return null
+            inputStream.use { stream ->
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(stream, null, options)
+                val width = options.outWidth
+                val height = options.outHeight
+                if (width > 0 && height > 0) Pair(width, height) else null
+            }
+        } catch (_: Exception) { null }
+    }
 
     fun shouldCrop(context: Context, uri: Uri, maxSide: Int = 2048): Boolean {
         val dims = getImageDimensions(context, uri) ?: return false
