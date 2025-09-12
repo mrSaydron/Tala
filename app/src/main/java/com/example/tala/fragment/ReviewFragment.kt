@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import android.widget.EditText
+import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -23,15 +25,22 @@ import com.example.tala.integration.mistral.MistralRequest
 import com.example.tala.integration.mistral.MistralRequestMessage
 import com.example.tala.integration.mistral.SentenceResponse
 import com.example.tala.model.dto.CardDto
+import com.example.tala.model.dto.copy
 import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.enums.CardTypeEnum
+import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.ApiClient
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
 
 class ReviewFragment : Fragment() {
+
+    private enum class StudyMode {
+        SCHEDULED, FREE_RANDOM, FREE_HARD, FREE_SOON, NONE
+    }
 
     private lateinit var viewModel: CardViewModel
     private lateinit var binding: FragmentReviewBinding
@@ -42,6 +51,8 @@ class ReviewFragment : Fragment() {
     private lateinit var reviewSettings: ReviewSettings
 
     private var selectedCollectionId: Int = 0 // ID выбранной коллекции
+    private val queue = ArrayDeque<CardDto>()
+    private var mode: StudyMode = StudyMode.NONE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,10 +73,8 @@ class ReviewFragment : Fragment() {
         // Инициализация ViewModel
         viewModel = ViewModelProvider(this)[CardViewModel::class.java]
 
-        // Загружаем следующее слово для повторения
-        lifecycleScope.launch {
-            loadNextWord()
-        }
+        // Загружаем очередь планового обучения
+        lifecycleScope.launch { loadScheduledQueue() }
 
         // Обработка нажатия на кнопку "Показать перевод"
         binding.showTranslationButton.setOnClickListener {
@@ -103,45 +112,108 @@ class ReviewFragment : Fragment() {
         binding.inProgressChip.setOnClickListener {
             Toast.makeText(requireContext(), "в обучении", Toast.LENGTH_SHORT).show()
         }
+
+        // Кнопки свободного обучения
+        binding.freeRandomButton.setOnClickListener {
+            promptCount { count ->
+                lifecycleScope.launch { startFreeMode(StudyMode.FREE_RANDOM, count) }
+            }
+        }
+        binding.freeHardButton.setOnClickListener {
+            promptCount { count ->
+                lifecycleScope.launch { startFreeMode(StudyMode.FREE_HARD, count) }
+            }
+        }
+        binding.freeSoonButton.setOnClickListener {
+            promptCount { count ->
+                lifecycleScope.launch { startFreeMode(StudyMode.FREE_SOON, count) }
+            }
+        }
     }
 
-    // Загружает следующее слово для повторения
-    private suspend fun loadNextWord() {
-        Log.i(TAG, "loadNextWord")
-
+    // Запуск свободного режима с заданным количеством карточек
+    private suspend fun startFreeMode(targetMode: StudyMode, count: Int) {
+        Log.i(TAG, "startFreeMode: $targetMode, count=$count")
         isTranslationShown = false
-        val endDayTime = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-        val dto = viewModel.getNextCardDtoToReview(selectedCollectionId, endDayTime)
+        queue.clear()
 
-        Log.i(TAG, "loadNextWord: dto - $dto")
-        if (dto != null) {
+        val list = when (targetMode) {
+            StudyMode.FREE_RANDOM -> viewModel.getRandomCardsForFreeStudy(selectedCollectionId, count)
+            StudyMode.FREE_HARD -> viewModel.getHardCardsForFreeStudy(selectedCollectionId, count)
+            StudyMode.FREE_SOON -> viewModel.getSoonCardsForFreeStudy(selectedCollectionId, count)
+            else -> emptyList()
+        }
+
+        if (list.isEmpty()) {
+            Toast.makeText(requireContext(), "Нет карточек для выбранного режима", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        mode = targetMode
+        queue.addAll(list)
+
+        binding.reviewContentContainer.visibility = View.VISIBLE
+        binding.showTranslationButton.visibility = View.VISIBLE
+        binding.editButton.visibility = View.VISIBLE
+        binding.freeStudyGroup.visibility = View.GONE
+        (binding.newChip.parent as View).visibility = View.VISIBLE
+
+        showNextFromQueue()
+        setupProgress()
+    }
+
+    private fun promptCount(onChosen: (Int) -> Unit) {
+        val input = EditText(requireContext())
+        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        input.hint = "Количество (например, 10)"
+        input.setText("10")
+
+        // Контейнер с горизонтальными отступами
+        val container = FrameLayout(requireContext())
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        container.setPadding(padding, 0, padding, 0)
+        container.addView(
+            input,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Сколько карточек взять?")
+            .setView(container)
+            .setPositiveButton("OK") { dialog, _ ->
+                val num = input.text?.toString()?.toIntOrNull() ?: 10
+                dialog.dismiss()
+                onChosen(num.coerceIn(1, 200))
+            }
+            .setNegativeButton("Отмена") { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    // Загружает очередь карточек для планового обучения
+    private suspend fun loadScheduledQueue() {
+        Log.i(TAG, "loadScheduledQueue")
+        isTranslationShown = false
+        queue.clear()
+
+        val endDayTime = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
+        val list = viewModel.getDueCardsListByCollection(selectedCollectionId, endDayTime)
+
+        if (list.isNotEmpty()) {
+            mode = StudyMode.SCHEDULED
+            queue.addAll(list)
+            (binding.newChip.parent as View).visibility = View.VISIBLE
+            binding.editButton.visibility = View.VISIBLE
             binding.reviewContentContainer.visibility = View.VISIBLE
             binding.showTranslationButton.visibility = View.VISIBLE
-            binding.editButton.visibility = View.VISIBLE
-            (binding.newChip.parent as View).visibility = View.VISIBLE
-
-            currentDto = dto
-            currentCardFragment = when (dto.cardType) {
-                CardTypeEnum.TRANSLATE -> CardTranslateFragment.newInstance(dto.info as WordCardInfo)
-                CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment.newInstance(dto.info as WordCardInfo)
-                CardTypeEnum.ENTER_WORD -> CardEnterWordFragment.newInstance(dto.info as WordCardInfo)
-                CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> TODO()
-                CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> TODO()
-            }
-
-            Log.i(TAG, "loadNextWord: currentCardFragment - $currentCardFragment")
-            currentCardFragment?.let {
-                childFragmentManager.beginTransaction()
-                    .replace(R.id.reviewContentContainer, it)
-                    .commit()
-            }
-
-            binding.showTranslationButton.visibility = View.VISIBLE
-            (binding.easyButton.parent as View).visibility = View.GONE
+            binding.messageTextView.visibility = View.GONE
+            binding.freeStudyGroup.visibility = View.GONE
+            showNextFromQueue()
         } else {
-            Log.i(TAG, "loadNextWord: there is no next word")
-            binding.messageTextView.visibility = View.VISIBLE
-
+            mode = StudyMode.NONE
+            binding.messageTextView.visibility = View.GONE
+            binding.freeStudyGroup.visibility = View.VISIBLE
             binding.reviewContentContainer.visibility = View.GONE
             binding.showTranslationButton.visibility = View.GONE
             binding.editButton.visibility = View.GONE
@@ -151,12 +223,41 @@ class ReviewFragment : Fragment() {
         setupProgress()
     }
 
-    override fun onResume() {
-        super.onResume()
-        // После возврата из AddWordFragment перезагружаем текущее слово/интерфейс
-        lifecycleScope.launch {
-            loadNextWord()
+    private fun showNextFromQueue() {
+        currentDto = queue.firstOrNull()
+        if (currentDto == null) {
+            mode = StudyMode.NONE
+            binding.reviewContentContainer.visibility = View.GONE
+            binding.showTranslationButton.visibility = View.GONE
+            binding.editButton.visibility = View.GONE
+            (binding.easyButton.parent as View).visibility = View.GONE
+            (binding.newChip.parent as View).visibility = View.GONE
+
+            binding.messageTextView.visibility = View.GONE
+            binding.freeStudyGroup.visibility = View.VISIBLE
+            setupProgress()
+            return
         }
+
+        val dto = currentDto!!
+        currentCardFragment = when (dto.cardType) {
+            CardTypeEnum.TRANSLATE -> CardTranslateFragment.newInstance(dto.info as WordCardInfo)
+            CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment.newInstance(dto.info as WordCardInfo)
+            CardTypeEnum.ENTER_WORD -> CardEnterWordFragment.newInstance(dto.info as WordCardInfo)
+            CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> TODO()
+            CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> TODO()
+        }
+
+        currentCardFragment?.let {
+            childFragmentManager.beginTransaction()
+                .replace(R.id.reviewContentContainer, it)
+                .commit()
+        }
+
+        binding.showTranslationButton.visibility = View.VISIBLE
+        (binding.easyButton.parent as View).visibility = View.GONE
+        isTranslationShown = false
+        setupProgress()
     }
 
     // Показывает перевод слова
@@ -167,53 +268,64 @@ class ReviewFragment : Fragment() {
             isTranslationShown = true
             binding.showTranslationButton.visibility = View.GONE
 
-            binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(dto)}"
-            binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(dto)}"
-            binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(dto)}"
+            if (mode == StudyMode.SCHEDULED) {
+                binding.hardButton.text = "Сложно\n${viewModel.getHardInterval(dto)}"
+                binding.mediumButton.text = "Средне\n${viewModel.getMediumInterval(dto)}"
+                binding.easyButton.text = "Легко\n${viewModel.getEasyInterval(dto)}"
+            } else {
+                binding.hardButton.text = "Сложно"
+                binding.mediumButton.text = "Средне"
+                binding.easyButton.text = "Легко"
+            }
             (binding.easyButton.parent as View).visibility = View.VISIBLE
         }
     }
 
     private fun resultHard() {
-        currentDto?.let { dto ->
-            lifecycleScope.launch {
+        val dto = currentDto ?: return
+        lifecycleScope.launch {
+            if (mode == StudyMode.SCHEDULED) {
                 viewModel.resultHardSuspend(dto)
-                loadNextWord()
-                (binding.easyButton.parent as View).visibility = View.GONE
             }
+            queue.removeFirstOrNull()
+            queue.addLast(dto.copy(status = StatusEnum.PROGRESS_RESET))
+            (binding.easyButton.parent as View).visibility = View.GONE
+            showNextFromQueue()
         }
     }
 
     private fun resultMedium() {
-        currentDto?.let { dto ->
-            lifecycleScope.launch {
+        val dto = currentDto ?: return
+        lifecycleScope.launch {
+            if (mode == StudyMode.SCHEDULED) {
                 viewModel.resultMediumSuspend(dto)
-                loadNextWord()
-                (binding.easyButton.parent as View).visibility = View.GONE
             }
+            queue.removeFirstOrNull()
+            (binding.easyButton.parent as View).visibility = View.GONE
+            showNextFromQueue()
         }
     }
 
     private fun resultEasy() {
-        currentDto?.let { dto ->
-            lifecycleScope.launch {
+        val dto = currentDto ?: return
+        lifecycleScope.launch {
+            if (mode == StudyMode.SCHEDULED) {
                 viewModel.resultEasySuspend(dto)
-                loadNextWord()
-                (binding.easyButton.parent as View).visibility = View.GONE
             }
+            queue.removeFirstOrNull()
+            (binding.easyButton.parent as View).visibility = View.GONE
+            showNextFromQueue()
         }
     }
 
     private fun setupProgress() {
-        viewModel.getNewCardsCountByCollection(selectedCollectionId).observe(viewLifecycleOwner) { count ->
-            binding.newChip.text = "$count"
-        }
-        viewModel.getResetCardsCountByCollection(selectedCollectionId).observe(viewLifecycleOwner) { count ->
-            binding.resetChip.text = "$count"
-        }
-        viewModel.getInProgressCardCountByCollection(selectedCollectionId).observe(viewLifecycleOwner) { count ->
-            binding.inProgressChip.text = "$count"
-        }
+        val newCount = queue.count { it.status == StatusEnum.NEW }
+        val resetCount = queue.count { it.status == StatusEnum.PROGRESS_RESET }
+        val inProgressCount = queue.count { it.status == StatusEnum.IN_PROGRESS }
+
+        binding.newChip.text = "$newCount"
+        binding.resetChip.text = "$resetCount"
+        binding.inProgressChip.text = "$inProgressCount"
     }
 
     private suspend fun getSentence(eng: String, rus: String): SentenceResponse {

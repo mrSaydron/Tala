@@ -94,4 +94,21 @@ class CardRepository(private val cardDao: CardDao) {
         return cardDao.getAllByTypeAndCollection(cardType, collectionId)
     }
 
+    // Новые обёртки для выборок свободного/планового обучения
+    suspend fun getAllDue(collectionId: Int, endFindDate: Long): List<Card> {
+        return cardDao.getAllDue(collectionId, endFindDate)
+    }
+
+    suspend fun getRandom(collectionId: Int, limit: Int): List<Card> {
+        return cardDao.getRandom(collectionId, limit)
+    }
+
+    suspend fun getHard(collectionId: Int, limit: Int): List<Card> {
+        return cardDao.getHard(collectionId, limit)
+    }
+
+    suspend fun getSoon(collectionId: Int, limit: Int): List<Card> {
+        return cardDao.getSoon(collectionId, limit)
+    }
+
 }

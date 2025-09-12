@@ -17,6 +17,7 @@ import com.example.tala.model.dto.toEntityCard
 import com.example.tala.model.dto.EnterWordCardDto
 import com.example.tala.model.dto.ReverseTranslateCardDto
 import com.example.tala.model.dto.TranslateCardDto
+import com.example.tala.model.dto.copy
 import com.example.tala.model.enums.StatusEnum
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -166,6 +167,30 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getNextToReview(collectionId, currentDate)?.toCardDto()
     }
 
+    // Новые методы для получения списков карточек (плановое и свободное обучение)
+    suspend fun getDueCardsListByCollection(collectionId: Int, endDate: Long): List<CardDto> {
+        return withContext(Dispatchers.IO) {
+            repository.getAllDue(collectionId, endDate).map { it.toCardDto() }
+        }
+    }
+
+    suspend fun getRandomCardsForFreeStudy(collectionId: Int, limit: Int): List<CardDto> {
+        return withContext(Dispatchers.IO) {
+            repository.getRandom(collectionId, limit).map { it.toCardDto() }
+        }
+    }
+
+    suspend fun getHardCardsForFreeStudy(collectionId: Int, limit: Int): List<CardDto> {
+        return withContext(Dispatchers.IO) {
+            repository.getHard(collectionId, limit).map { it.toCardDto() }
+        }
+    }
+
+    suspend fun getSoonCardsForFreeStudy(collectionId: Int, limit: Int): List<CardDto> {
+        return withContext(Dispatchers.IO) {
+            repository.getSoon(collectionId, limit).map { it.toCardDto() }
+        }
+    }
     fun getNewCardsCountByCollection(collectionId: Int): LiveData<Int> {
         val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
         return repository.getCountToReview(endDate, StatusEnum.NEW, collectionId)
@@ -264,8 +289,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             cardDto.ef
         }
-        val savingDto = copyWith(
-            cardDto = cardDto,
+        val savingDto = cardDto.copy(
             status = StatusEnum.PROGRESS_RESET,
             nextReviewDate = calculateNextReviewDate(10, ChronoUnit.MINUTES),
             ef = ef
@@ -280,8 +304,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             Math.round(cardDto.intervalMinutes * cardDto.ef).toInt()
         }
-        val savingDto = copyWith(
-            cardDto = cardDto,
+        val savingDto = cardDto.copy(
             status = StatusEnum.IN_PROGRESS,
             nextReviewDate = calculateNextReviewDate(intervalMinutes, ChronoUnit.MINUTES),
             intervalMinutes = intervalMinutes
@@ -301,44 +324,13 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             ef = cardDto.ef + 0.1
         }
 
-        val savingDto = copyWith(
-            cardDto = cardDto,
+        val savingDto = cardDto.copy(
             status = StatusEnum.IN_PROGRESS,
             nextReviewDate = calculateNextReviewDate(intervalMinutes, ChronoUnit.MINUTES),
             ef = ef,
             intervalMinutes = intervalMinutes
         )
         updateSync(savingDto)
-    }
-
-    private fun copyWith(
-        cardDto: CardDto,
-        nextReviewDate: Long? = null,
-        intervalMinutes: Int? = null,
-        status: StatusEnum? = null,
-        ef: Double? = null,
-    ): CardDto {
-        return when (cardDto) {
-            is TranslateCardDto -> cardDto.copy(
-                nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
-                intervalMinutes = intervalMinutes ?: cardDto.intervalMinutes,
-                status = status ?: cardDto.status,
-                ef = ef ?: cardDto.ef,
-            )
-            is ReverseTranslateCardDto -> cardDto.copy(
-                nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
-                intervalMinutes = intervalMinutes ?: cardDto.intervalMinutes,
-                status = status ?: cardDto.status,
-                ef = ef ?: cardDto.ef,
-            )
-            is EnterWordCardDto -> cardDto.copy(
-                nextReviewDate = nextReviewDate ?: cardDto.nextReviewDate,
-                intervalMinutes = intervalMinutes ?: cardDto.intervalMinutes,
-                status = status ?: cardDto.status,
-                ef = ef ?: cardDto.ef,
-            )
-            else -> cardDto
-        }
     }
 
     private fun calculateNextReviewDate(add: Int, unit: ChronoUnit): Long {

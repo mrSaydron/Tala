@@ -61,6 +61,51 @@
                 android:padding="8dp"
                 android:visibility="gone" />
 
+            <!-- Новая группа для свободного обучения -->
+            <LinearLayout
+                android:id="@+id/freeStudyGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone"
+                tools:visibility="visible"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Выберите режим свободного обучения:"
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/freeRandomButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Случайные карточки"
+                    app:backgroundTint="?attr/colorSecondaryContainer"
+                    android:textColor="?attr/colorOnSecondaryContainer" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/freeHardButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Наиболее сложные"
+                    android:layout_marginTop="8dp"
+                    app:backgroundTint="?attr/colorErrorContainer"
+                    android:textColor="?attr/colorOnErrorContainer" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/freeSoonButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Скоро к повторению"
+                    android:layout_marginTop="8dp"
+                    app:backgroundTint="?attr/colorPrimaryContainer"
+                    android:textColor="?attr/colorOnPrimaryContainer" />
+            </LinearLayout>
+
             <FrameLayout
                 android:id="@+id/reviewContentContainer"
                 android:layout_width="match_parent"
