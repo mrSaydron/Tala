@@ -23,6 +23,10 @@ class CollectionRepository(private val collectionDao: CollectionDao) {
     suspend fun existsByName(name: String): Boolean {
         return collectionDao.countByName(name) > 0
     }
+
+    suspend fun rename(id: Int, newName: String) {
+        collectionDao.renameById(id, newName)
+    }
 }
 
 

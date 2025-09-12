@@ -44,6 +44,18 @@
                 app:tint="?attr/colorPrimary" />
 
             <ImageButton
+                android:id="@+id/rename_collection_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Переименовать коллекцию"
+                android:padding="8dp"
+                android:src="@drawable/ic_edit"
+                app:tint="?attr/colorOnSurface"
+                android:visibility="gone" />
+
+            <ImageButton
                 android:id="@+id/delete_collection_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"

@@ -35,6 +35,10 @@ class CollectionViewModel(application: Application) : AndroidViewModel(applicati
     suspend fun existsCollectionByName(name: String): Boolean {
         return repository.existsByName(name)
     }
+
+    fun renameCollection(id: Int, newName: String) = viewModelScope.launch {
+        repository.rename(id, newName)
+    }
 }
 
 

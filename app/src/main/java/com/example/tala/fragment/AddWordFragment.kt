@@ -21,6 +21,7 @@ import com.example.tala.entity.card.CardViewModel
 import com.example.tala.entity.collection.CardCollection
 import com.example.tala.entity.collection.CollectionViewModel
 import com.example.tala.fragment.dialog.AddCollectionDialog
+import com.example.tala.fragment.dialog.RenameCollectionDialog
 import com.example.tala.fragment.dialog.ImagePickerDialog
 import com.example.tala.integration.translation.TranslationRepository
 import com.example.tala.integration.picture.ImageRepository
@@ -224,6 +225,7 @@ class AddWordFragment : Fragment() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 binding.deleteCollectionButton.visibility = View.GONE
+                binding.renameCollectionButton.visibility = View.GONE
             }
         }
     }
@@ -333,6 +335,7 @@ class AddWordFragment : Fragment() {
     private fun showCollectionButtons(collection: CardCollection) {
         val isDefault = collection.name == DEFAULT_COLLECTION_NAME
         binding.deleteCollectionButton.visibility = if (isDefault) View.GONE else View.VISIBLE
+        binding.renameCollectionButton.visibility = if (isDefault) View.GONE else View.VISIBLE
         if (!isDefault) {
             binding.deleteCollectionButton.setOnClickListener {
                 MaterialAlertDialogBuilder(requireContext())
@@ -343,10 +346,37 @@ class AddWordFragment : Fragment() {
                             cardViewModel.deleteCardsByCollection(collection.id)
                             collectionViewModel.deleteCollection(collection)
                             Toast.makeText(requireContext(), "Коллекция и связанные слова удалены", Toast.LENGTH_SHORT).show()
+                            parentFragmentManager.popBackStack()
                         }
                     }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
+            }
+
+            binding.renameCollectionButton.setOnClickListener {
+                val dialog = RenameCollectionDialog(initialName = collection.name) { newName ->
+                    val trimmed = newName.trim()
+                    lifecycleScope.launch {
+                        when {
+                            trimmed.isEmpty() -> {
+                                Toast.makeText(requireContext(), "Имя не может быть пустым", Toast.LENGTH_SHORT).show()
+                            }
+                            trimmed == collection.name -> {
+                                // без изменений
+                            }
+                            collectionViewModel.existsCollectionByName(trimmed) -> {
+                                Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                collectionViewModel.renameCollection(collection.id, trimmed)
+                                pendingSelectCollectionName = trimmed
+                                applySelections()
+                                Toast.makeText(requireContext(), "Коллекция переименована", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+                dialog.show(parentFragmentManager, "RenameCollectionDialog")
             }
         }
     }

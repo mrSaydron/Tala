@@ -25,6 +25,9 @@ interface CollectionDao {
 
     @Query("SELECT COUNT(*) FROM collections")
     suspend fun countAll(): Int
+
+    @Query("UPDATE collections SET name = :newName WHERE id = :id")
+    suspend fun renameById(id: Int, newName: String)
 }
 
 
