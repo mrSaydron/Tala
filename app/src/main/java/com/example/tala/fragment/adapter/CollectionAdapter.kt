@@ -18,7 +18,7 @@ class CollectionAdapter(
 ) : RecyclerView.Adapter<CollectionAdapter.CollectionViewHolder>() {
 
     inner class CollectionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val nameTextView: TextView = itemView.findViewById(R.id.categoryNameTextView)
+        private val nameTextView: TextView = itemView.findViewById(R.id.collectionNameTextView)
         private val newTextView: TextView = itemView.findViewById(R.id.newCountTextView)
         private val resetTextView: TextView = itemView.findViewById(R.id.resetCountTextView)
         private val inProgressTextView: TextView = itemView.findViewById(R.id.inProgressCountTextView)
@@ -27,13 +27,13 @@ class CollectionAdapter(
             nameTextView.text = collection.name
 
             val vm = cardViewModelProvider()
-            vm.getNewCardsCountByCategory(collection.id).observe(lifecycleOwner) { count ->
+            vm.getNewCardsCountByCollection(collection.id).observe(lifecycleOwner) { count ->
                 newTextView.text = "$count"
             }
-            vm.getResetCardsCountByCategory(collection.id).observe(lifecycleOwner) { count ->
+            vm.getResetCardsCountByCollection(collection.id).observe(lifecycleOwner) { count ->
                 resetTextView.text = "$count"
             }
-            vm.getInProgressCardCountByCategory(collection.id).observe(lifecycleOwner) { count ->
+            vm.getInProgressCardCountByCollection(collection.id).observe(lifecycleOwner) { count ->
                 inProgressTextView.text = "$count"
             }
 
@@ -42,7 +42,7 @@ class CollectionAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CollectionViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_category, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_collection, parent, false)
         return CollectionViewHolder(view)
     }
 

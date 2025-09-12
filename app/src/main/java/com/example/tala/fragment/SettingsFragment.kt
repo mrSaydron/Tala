@@ -89,9 +89,9 @@ class SettingsFragment : Fragment() {
     private fun clearDatabase() {
         lifecycleScope.launch {
             val cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
-            val categoryViewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
+            val collectionViewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
             cardViewModel.deleteAllWords()
-            categoryViewModel.deleteAllCollections()
+            collectionViewModel.deleteAllCollections()
             Toast.makeText(requireContext(), "Данные очищены", Toast.LENGTH_SHORT).show()
         }
     }

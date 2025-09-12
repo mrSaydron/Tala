@@ -41,11 +41,11 @@ class ReviewFragment : Fragment() {
     private var currentCardFragment: CardReviewBase? = null
     private lateinit var reviewSettings: ReviewSettings
 
-    private var selectedCategoryId: Int = 0 // ID выбранной коллекции
+    private var selectedCollectionId: Int = 0 // ID выбранной коллекции
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        selectedCategoryId = arguments?.getInt("collectionId") ?: 0
+        selectedCollectionId = arguments?.getInt("collectionId") ?: 0
     }
 
     override fun onCreateView(
@@ -111,7 +111,7 @@ class ReviewFragment : Fragment() {
 
         isTranslationShown = false
         val endDayTime = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-        val dto = viewModel.getNextCardDtoToReview(selectedCategoryId, endDayTime)
+        val dto = viewModel.getNextCardDtoToReview(selectedCollectionId, endDayTime)
 
         Log.i(TAG, "loadNextWord: dto - $dto")
         if (dto != null) {
@@ -205,13 +205,13 @@ class ReviewFragment : Fragment() {
     }
 
     private fun setupProgress() {
-        viewModel.getNewCardsCountByCategory(selectedCategoryId).observe(viewLifecycleOwner) { count ->
+        viewModel.getNewCardsCountByCollection(selectedCollectionId).observe(viewLifecycleOwner) { count ->
             binding.newChip.text = "$count"
         }
-        viewModel.getResetCardsCountByCategory(selectedCategoryId).observe(viewLifecycleOwner) { count ->
+        viewModel.getResetCardsCountByCollection(selectedCollectionId).observe(viewLifecycleOwner) { count ->
             binding.resetChip.text = "$count"
         }
-        viewModel.getInProgressCardCountByCategory(selectedCategoryId).observe(viewLifecycleOwner) { count ->
+        viewModel.getInProgressCardCountByCollection(selectedCollectionId).observe(viewLifecycleOwner) { count ->
             binding.inProgressChip.text = "$count"
         }
     }
@@ -268,10 +268,10 @@ class ReviewFragment : Fragment() {
     companion object {
         private const val TAG = "ReviewFragment"
 
-        fun newInstance(categoryId: Int): ReviewFragment {
+        fun newInstance(collectionId: Int): ReviewFragment {
             val fragment = ReviewFragment()
             val args = Bundle()
-            args.putInt("collectionId", categoryId)
+            args.putInt("collectionId", collectionId)
             fragment.arguments = args
             return fragment
         }

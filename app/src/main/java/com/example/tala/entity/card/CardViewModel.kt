@@ -162,27 +162,27 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    suspend fun getNextCardDtoToReview(categoryId: Int, currentDate: Long): CardDto? {
-        return repository.getNextToReview(categoryId, currentDate)?.toCardDto()
+    suspend fun getNextCardDtoToReview(collectionId: Int, currentDate: Long): CardDto? {
+        return repository.getNextToReview(collectionId, currentDate)?.toCardDto()
     }
 
-    fun getNewCardsCountByCategory(categoryId: Int): LiveData<Int> {
+    fun getNewCardsCountByCollection(collectionId: Int): LiveData<Int> {
         val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        return repository.getCountToReview(endDate, StatusEnum.NEW, categoryId)
+        return repository.getCountToReview(endDate, StatusEnum.NEW, collectionId)
     }
 
-    fun getResetCardsCountByCategory(categoryId: Int): LiveData<Int> {
+    fun getResetCardsCountByCollection(collectionId: Int): LiveData<Int> {
         val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        return repository.getCountToReview(endDate, StatusEnum.PROGRESS_RESET, categoryId)
+        return repository.getCountToReview(endDate, StatusEnum.PROGRESS_RESET, collectionId)
     }
 
-    fun getInProgressCardCountByCategory(categoryId: Int): LiveData<Int> {
+    fun getInProgressCardCountByCollection(collectionId: Int): LiveData<Int> {
         val endDate = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond()
-        return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS, categoryId)
+        return repository.getCountToReview(endDate, StatusEnum.IN_PROGRESS, collectionId)
     }
 
-    fun getCardListByCategory(categoryId: Int): LiveData<List<CardListDto>> {
-        return repository.getByCollection(categoryId).map { cards ->
+    fun getCardListByCollection(collectionId: Int): LiveData<List<CardListDto>> {
+        return repository.getByCollection(collectionId).map { cards ->
             cards
                 .groupBy { it.commonId }
                 .map { (_, group) ->
@@ -202,8 +202,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getCardCountByCategory(categoryId: Int): LiveData<Int> {
-        return repository.getCountByCollection(categoryId)
+    fun getCardCountByCollection(collectionId: Int): LiveData<Int> {
+        return repository.getCountByCollection(collectionId)
     }
 
     suspend fun deleteAllWords() {

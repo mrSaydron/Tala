@@ -12,21 +12,21 @@ import com.example.tala.R
 class AddCollectionDialog(private val onSave: (String) -> Unit) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val view = requireActivity().layoutInflater.inflate(R.layout.dialog_add_category, null)
+        val view = requireActivity().layoutInflater.inflate(R.layout.dialog_add_collection, null)
 
-        val saveCategoryButton: Button = view.findViewById(R.id.saveCategoryButton)
-        val categoryNameInput: EditText = view.findViewById(R.id.categoryNameInput)
+        val saveCollectionButton: Button = view.findViewById(R.id.saveCollectionButton)
+        val collectionNameInput: EditText = view.findViewById(R.id.collectionNameInput)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(view)
             .setTitle("Добавить коллекцию")
             .create()
 
-        saveCategoryButton.setOnClickListener {
-            val categoryName = categoryNameInput.text.toString()
+        saveCollectionButton.setOnClickListener {
+            val collectionName = collectionNameInput.text.toString()
 
-            if (categoryName.isNotEmpty()) {
-                onSave(categoryName)
+            if (collectionName.isNotEmpty()) {
+                onSave(collectionName)
                 dialog.dismiss()
             } else {
                 Toast.makeText(requireContext(), "Введите название коллекции!", Toast.LENGTH_SHORT).show()

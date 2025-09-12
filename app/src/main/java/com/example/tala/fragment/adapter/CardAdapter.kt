@@ -14,13 +14,13 @@ import com.example.tala.model.dto.info.WordCardInfo
 class CardAdapter(
     private val cards: List<CardListDto>,
     private val onItemClick: (CardListDto) -> Unit,
-    private val categoryIdToName: Map<Int, String>
+    private val collectionIdToName: Map<Int, String>
 ) : RecyclerView.Adapter<CardAdapter.CardViewHolder>() {
 
     inner class CardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val englishWordTextView: TextView = itemView.findViewById(R.id.englishWordTextView)
         private val russianWordTextView: TextView = itemView.findViewById(R.id.russianWordTextView)
-        private val categoryTextView: TextView = itemView.findViewById(R.id.categoryTextView)
+        private val collectionTextView: TextView = itemView.findViewById(R.id.collectionTextView)
         private val wordImageView: ImageView = itemView.findViewById(R.id.wordImageView)
 
         fun bind(card: CardListDto) {
@@ -29,7 +29,7 @@ class CardAdapter(
             if (firstInfo is WordCardInfo) {
                 englishWordTextView.text = firstInfo.english
                 russianWordTextView.text = firstInfo.russian
-                categoryTextView.text = "Коллекция: ${categoryIdToName[card.collectionId] ?: "—"}"
+                collectionTextView.text = "Коллекция: ${collectionIdToName[card.collectionId] ?: "—"}"
 
                 val imagePathToLoad = firstInfo.imagePath
                 if (!imagePathToLoad.isNullOrBlank()) {

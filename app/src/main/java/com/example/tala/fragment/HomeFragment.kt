@@ -20,12 +20,11 @@ class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
 
-    private lateinit var categoryAdapter: CollectionAdapter
+    private lateinit var collectionAdapter: CollectionAdapter
     private val categories = mutableListOf<CardCollection>()
     private lateinit var cardViewModel: CardViewModel
     private var lastCollections: List<CardCollection> = emptyList()
     private var defaultHasCards: Boolean = false
-    private var observingDefault: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,8 +54,8 @@ class HomeFragment : Fragment() {
         }
 
         // Инициализация RecyclerView категорий
-        binding.categoryRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        categoryAdapter = CollectionAdapter(
+        binding.collectionRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        collectionAdapter = CollectionAdapter(
             categories,
             onCollectionClick = { collection ->
                 val reviewFragment = ReviewFragment.newInstance(collection.id)
@@ -65,7 +64,7 @@ class HomeFragment : Fragment() {
             cardViewModelProvider = { ViewModelProvider(this)[com.example.tala.entity.card.CardViewModel::class.java] },
             lifecycleOwner = viewLifecycleOwner
         )
-        binding.categoryRecyclerView.adapter = categoryAdapter
+        binding.collectionRecyclerView.adapter = collectionAdapter
 
         // ViewModel карточек
         cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
@@ -89,12 +88,12 @@ class HomeFragment : Fragment() {
     // Загрузка категорий
     private fun loadCategories() {
         val viewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
-        viewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
-            lastCollections = categoryList
+        viewModel.getAllCollections().observe(viewLifecycleOwner) { collectionList ->
+            lastCollections = collectionList
             // Настраиваем наблюдение за Default один раз, когда она появится
-            val defaultCollection = categoryList.firstOrNull { it.name == "Default" }
+            val defaultCollection = collectionList.firstOrNull { it.name == "Default" }
             if (defaultCollection != null) {
-                cardViewModel.getCardCountByCategory(defaultCollection.id).observe(viewLifecycleOwner) { count ->
+                cardViewModel.getCardCountByCollection(defaultCollection.id).observe(viewLifecycleOwner) { count ->
                     defaultHasCards = (count ?: 0) > 0
                     refreshDisplayedCategories()
                 }
@@ -107,7 +106,7 @@ class HomeFragment : Fragment() {
         val filtered = lastCollections.filter { it.name != "Default" || defaultHasCards }
         categories.clear()
         categories.addAll(filtered)
-        categoryAdapter.updateData(categories)
+        collectionAdapter.updateData(categories)
     }
 
     // Замена фрагмента

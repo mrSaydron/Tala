@@ -26,14 +26,14 @@
             android:gravity="center_vertical">
 
             <Spinner
-                android:id="@+id/categorySpinner"
+                android:id="@+id/collection_spinner"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:spinnerMode="dropdown" />
 
             <ImageButton
-                android:id="@+id/addCategoryButton"
+                android:id="@+id/add_collection_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="8dp"
@@ -44,7 +44,7 @@
                 app:tint="?attr/colorPrimary" />
 
             <ImageButton
-                android:id="@+id/deleteCategoryButton"
+                android:id="@+id/delete_collection_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"

@@ -1,11 +1,8 @@
 package com.example.tala.fragment
 
 import android.app.Activity.RESULT_OK
-import android.content.Intent
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,8 +15,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.activity.result.contract.ActivityResultContracts
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
 import com.example.tala.R
 import com.example.tala.databinding.FragmentAddWordBinding
 import com.example.tala.entity.card.CardViewModel
@@ -31,7 +26,6 @@ import com.example.tala.integration.translation.TranslationRepository
 import com.example.tala.integration.picture.ImageRepository
 import com.example.tala.model.dto.CardListDto
 import com.example.tala.model.enums.CardTypeEnum
-import com.example.tala.service.ApiClient
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
@@ -47,11 +41,11 @@ class AddWordFragment : Fragment() {
     private lateinit var binding: FragmentAddWordBinding
 
     private lateinit var cardViewModel: CardViewModel
-    private lateinit var categoryViewModel: CollectionViewModel
+    private lateinit var collectionViewModel: CollectionViewModel
 
     private var currentCard: CardListDto? = null
-    private lateinit var categoryAdapter: ArrayAdapter<String>
-    private val categories = mutableListOf<CardCollection>()
+    private lateinit var collectionAdapter: ArrayAdapter<String>
+    private val collections = mutableListOf<CardCollection>()
     private var imagePath: String? = null
     private val selectedTypes = mutableSetOf<CardTypeEnum>()
 
@@ -87,7 +81,7 @@ class AddWordFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cardViewModel = ViewModelProvider(this)[CardViewModel::class.java]
-        categoryViewModel = ViewModelProvider(this)[CollectionViewModel::class.java]
+        collectionViewModel = ViewModelProvider(this)[CollectionViewModel::class.java]
 
         binding.deleteWordButton.visibility = View.GONE
 
@@ -103,9 +97,9 @@ class AddWordFragment : Fragment() {
         }
 
         // Инициализация Spinner
-        categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.categorySpinner.adapter = categoryAdapter
+        collectionAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())
+        collectionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.collectionSpinner.adapter = collectionAdapter
 
         // Переводные иконки: состояние доступности
         setupTranslationButtonsState()
@@ -115,23 +109,14 @@ class AddWordFragment : Fragment() {
         loadCollections()
 
         setupDeleteWordButton()
-
         setupSaveButton()
-
-        setupAddCategoryButton()
-
-        setupCategorySpinnerListener()
-
+        setupAddCollectionButton()
+        setupCollectionSpinnerListener()
         setupAutoFillOnFocusLoss(binding.englishWordInput, binding.russianWordInput, "en", "ru")
         setupAutoFillOnFocusLoss(binding.russianWordInput, binding.englishWordInput, "ru", "en")
-
         setupImagePicker()
-
         setupCardTypesButton()
-
         setupTranslationButtons()
-
-        // Обновим видимость секций при первичной инициализации
         setValueAndVisibility()
     }
 
@@ -165,9 +150,9 @@ class AddWordFragment : Fragment() {
             try {
                 val englishWord = binding.englishWordInput.text.toString()
                 val russianWord = binding.russianWordInput.text.toString()
-                val selectedCategory =
-                    if (categories.size > 0) categories[max(
-                        binding.categorySpinner.selectedItemPosition,
+                val selectedCollection =
+                    if (collections.size > 0) collections[max(
+                        binding.collectionSpinner.selectedItemPosition,
                         0
                     )]
                     else null
@@ -190,13 +175,13 @@ class AddWordFragment : Fragment() {
                 val cards: Map<CardTypeEnum, CardInfo> = selectedTypes.associateWith { baseInfo }
                 val cardDto = if (currentCard == null) {
                     CardListDto(
-                        collectionId = selectedCategory?.id ?: 0,
+                        collectionId = selectedCollection?.id ?: 0,
                         cards = cards,
                     )
                 } else {
                     CardListDto(
                         commonId = currentCard!!.commonId,
-                        collectionId = selectedCategory?.id ?: 0,
+                        collectionId = selectedCollection?.id ?: 0,
                         cards = cards,
                     )
                 }
@@ -210,16 +195,16 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    private fun setupAddCategoryButton() {
-        binding.addCategoryButton.setOnClickListener {
+    private fun setupAddCollectionButton() {
+        binding.addCollectionButton.setOnClickListener {
             val dialog = AddCollectionDialog { collectionName ->
                 lifecycleScope.launch {
-                    val exists = categoryViewModel.existsCollectionByName(collectionName)
+                    val exists = collectionViewModel.existsCollectionByName(collectionName)
                     if (exists) {
                         Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
                     } else {
                         val collection = CardCollection(name = collectionName)
-                        categoryViewModel.insertCollection(collection)
+                        collectionViewModel.insertCollection(collection)
                         Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
                         pendingSelectCollectionName = collectionName
                         applySelections()
@@ -230,15 +215,15 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    private fun setupCategorySpinnerListener() {
-        binding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+    private fun setupCollectionSpinnerListener() {
+        binding.collectionSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedCategory = categories[position]
-                showCategoryButtons(selectedCategory)
+                val selectedCollection = collections[position]
+                showCollectionButtons(selectedCollection)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                binding.deleteCategoryButton.visibility = View.GONE
+                binding.deleteCollectionButton.visibility = View.GONE
             }
         }
     }
@@ -310,12 +295,12 @@ class AddWordFragment : Fragment() {
     }
 
     private fun loadCollections() {
-        categoryViewModel.getAllCollections().observe(viewLifecycleOwner) { categoryList ->
-            categories.clear()
-            categories.addAll(categoryList)
-            categoryAdapter.clear()
-            categoryAdapter.addAll(categories.map { it.name })
-            categoryAdapter.notifyDataSetChanged()
+        collectionViewModel.getAllCollections().observe(viewLifecycleOwner) { collectionList ->
+            collections.clear()
+            collections.addAll(collectionList)
+            collectionAdapter.clear()
+            collectionAdapter.addAll(collections.map { it.name })
+            collectionAdapter.notifyDataSetChanged()
 
             // Флаг, что коллекции загружены, пытаемся применить нужный выбор
             collectionsLoaded = true
@@ -327,9 +312,9 @@ class AddWordFragment : Fragment() {
         if (!collectionsLoaded) return
         // 1) Если есть отложенный выбор по имени (новая коллекция) — применяем его в приоритете
         pendingSelectCollectionName?.let { name ->
-            val idxByName = categories.indexOfFirst { it.name == name }
+            val idxByName = collections.indexOfFirst { it.name == name }
             if (idxByName >= 0) {
-                binding.categorySpinner.setSelection(idxByName, false)
+                binding.collectionSpinner.setSelection(idxByName, false)
                 pendingSelectCollectionName = null
                 return
             }
@@ -337,26 +322,26 @@ class AddWordFragment : Fragment() {
         // 2) Иначе единовременно применяем исходную коллекцию слова по id
         if (!initialSelectionApplied) {
             val targetId = desiredCollectionId ?: return
-            val idx = categories.indexOfFirst { it.id == targetId }
+            val idx = collections.indexOfFirst { it.id == targetId }
             if (idx >= 0) {
-                binding.categorySpinner.setSelection(idx, false)
+                binding.collectionSpinner.setSelection(idx, false)
                 initialSelectionApplied = true
             }
         }
     }
 
-    private fun showCategoryButtons(category: CardCollection) {
-        val isDefault = category.name == DEFAULT_COLLECTION_NAME
-        binding.deleteCategoryButton.visibility = if (isDefault) View.GONE else View.VISIBLE
+    private fun showCollectionButtons(collection: CardCollection) {
+        val isDefault = collection.name == DEFAULT_COLLECTION_NAME
+        binding.deleteCollectionButton.visibility = if (isDefault) View.GONE else View.VISIBLE
         if (!isDefault) {
-            binding.deleteCategoryButton.setOnClickListener {
+            binding.deleteCollectionButton.setOnClickListener {
                 MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Удалить коллекцию «${category.name}»?")
-                    .setMessage("При удалении коллекции «${category.name}» будут удалены все слова из этой коллекции. Продолжить?")
+                    .setTitle("Удалить коллекцию «${collection.name}»?")
+                    .setMessage("При удалении коллекции «${collection.name}» будут удалены все слова из этой коллекции. Продолжить?")
                     .setPositiveButton(android.R.string.ok) { _, _ ->
                         lifecycleScope.launch {
-                            cardViewModel.deleteCardsByCollection(category.id)
-                            categoryViewModel.deleteCollection(category)
+                            cardViewModel.deleteCardsByCollection(collection.id)
+                            collectionViewModel.deleteCollection(collection)
                             Toast.makeText(requireContext(), "Коллекция и связанные слова удалены", Toast.LENGTH_SHORT).show()
                         }
                     }

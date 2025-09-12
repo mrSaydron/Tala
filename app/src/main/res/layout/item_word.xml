@@ -54,7 +54,7 @@
 
             <!-- Коллекция -->
             <TextView
-                android:id="@+id/categoryTextView"
+                android:id="@+id/collectionTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Collection"
