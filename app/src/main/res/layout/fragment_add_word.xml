@@ -11,14 +11,6 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Коллекция: перенесено вверх -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Коллекция"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,39 +25,54 @@
                 android:spinnerMode="dropdown" />
 
             <ImageButton
-                android:id="@+id/add_collection_button"
+                android:id="@+id/collectionMenuButton"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Добавить коллекцию"
+                android:contentDescription="Меню коллекции"
                 android:padding="8dp"
-                android:src="@drawable/ic_add"
+                android:src="@drawable/ic_more_vert"
+                app:tint="?attr/colorOnSurface" />
+        </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            app:thickness="1dp" />
+
+        <!-- Панель действий для слова: сохранить, удалить, типы карточек -->
+        <LinearLayout
+            android:id="@+id/actionsRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginBottom="8dp">
+
+            <ImageButton
+                android:id="@+id/saveButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Сохранить слово"
+                android:padding="8dp"
+                android:src="@drawable/ic_save"
                 app:tint="?attr/colorPrimary" />
 
             <ImageButton
-                android:id="@+id/rename_collection_button"
+                android:id="@+id/deleteWordButton"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Переименовать коллекцию"
-                android:padding="8dp"
-                android:src="@drawable/ic_edit"
-                app:tint="?attr/colorOnSurface"
-                android:visibility="gone" />
-
-            <ImageButton
-                android:id="@+id/delete_collection_button"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Удалить коллекцию"
+                android:contentDescription="Удалить слово"
                 android:padding="8dp"
                 android:src="@drawable/ic_delete"
-                app:tint="?attr/colorOnSurface"
-                android:visibility="gone" />
+                android:visibility="gone"
+                app:tint="?attr/colorOnSurface" />
 
             <ImageButton
                 android:id="@+id/cardTypesSettingsButton"
@@ -78,13 +85,6 @@
                 android:src="@drawable/ic_settings"
                 app:tint="?attr/colorOnSurface" />
         </LinearLayout>
-
-        <com.google.android.material.divider.MaterialDivider
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="12dp"
-            app:thickness="1dp" />
 
         <LinearLayout
             android:id="@+id/sectionEnglish"
@@ -224,28 +224,7 @@
             android:textColor="@android:color/black"
             android:visibility="gone" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/saveButton"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Сохранить"
-            android:layout_marginTop="16dp"
-            app:icon="@drawable/ic_check"
-            app:iconPadding="8dp"
-            app:iconGravity="textStart"
-            app:backgroundTint="?attr/colorSecondaryContainer"
-            android:textColor="?attr/colorOnSecondaryContainer"
-            app:iconTint="?attr/colorOnSecondaryContainer" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/deleteWordButton"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Удалить слово"
-            android:layout_marginTop="8dp"
-            android:visibility="gone" />
+        
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/cropImageButton"

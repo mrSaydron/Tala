@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.graphics.drawable.DrawableCompat
+import com.google.android.material.color.MaterialColors
 import android.widget.Toast
 import android.widget.EditText
 import androidx.fragment.app.Fragment
@@ -111,8 +113,7 @@ class AddWordFragment : Fragment() {
 
         setupDeleteWordButton()
         setupSaveButton()
-        setupAddCollectionButton()
-        setupCollectionSpinnerListener()
+        setupCollectionMenuButton()
         setupAutoFillOnFocusLoss(binding.englishWordInput, binding.russianWordInput, "en", "ru")
         setupAutoFillOnFocusLoss(binding.russianWordInput, binding.englishWordInput, "ru", "en")
         setupImagePicker()
@@ -196,39 +197,115 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    private fun setupAddCollectionButton() {
-        binding.addCollectionButton.setOnClickListener {
-            val dialog = AddCollectionDialog { collectionName ->
-                lifecycleScope.launch {
-                    val exists = collectionViewModel.existsCollectionByName(collectionName)
-                    if (exists) {
-                        Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
-                    } else {
-                        val collection = CardCollection(name = collectionName)
-                        collectionViewModel.insertCollection(collection)
-                        Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
-                        pendingSelectCollectionName = collectionName
-                        applySelections()
-                    }
+    private fun setupCollectionMenuButton() {
+        binding.collectionMenuButton.setOnClickListener { anchor ->
+            val popup = PopupMenu(requireContext(), anchor)
+            popup.menuInflater.inflate(R.menu.menu_collection, popup.menu)
+
+            // Принудительно показываем иконки в PopupMenu
+            try {
+                val fields = PopupMenu::class.java.getDeclaredField("mPopup")
+                fields.isAccessible = true
+                val menuPopupHelper = fields.get(popup)
+                val classPopupHelper = menuPopupHelper.javaClass
+                val setForceIcons = classPopupHelper.getDeclaredMethod("setForceShowIcon", Boolean::class.javaPrimitiveType)
+                setForceIcons.invoke(menuPopupHelper, true)
+            } catch (_: Exception) { /* игнорируем, если не поддерживается */ }
+
+            // Тонирование иконок в цвет поверхности, чтобы были видимы на белом фоне
+            val iconColor = MaterialColors.getColor(anchor, com.google.android.material.R.attr.colorOnSurface)
+            for (i in 0 until popup.menu.size()) {
+                val item = popup.menu.getItem(i)
+                val icon = item.icon
+                if (icon != null) {
+                    val wrapped = DrawableCompat.wrap(icon.mutate())
+                    DrawableCompat.setTint(wrapped, iconColor)
+                    item.icon = wrapped
                 }
             }
-            dialog.show(parentFragmentManager, "AddCollectionDialog")
+
+            val position = binding.collectionSpinner.selectedItemPosition
+            val selectedCollection = collections.getOrNull(position)
+            val isDefault = selectedCollection?.name == DEFAULT_COLLECTION_NAME
+
+            // Скрываем/показываем пункты для дефолтной коллекции
+            popup.menu.findItem(R.id.action_rename_collection).isVisible = !isDefault
+            popup.menu.findItem(R.id.action_delete_collection).isVisible = !isDefault
+
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.action_add_collection -> {
+                        val dialog = AddCollectionDialog { collectionName ->
+                            lifecycleScope.launch {
+                                val exists = collectionViewModel.existsCollectionByName(collectionName)
+                                if (exists) {
+                                    Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    val collection = CardCollection(name = collectionName)
+                                    collectionViewModel.insertCollection(collection)
+                                    Toast.makeText(requireContext(), "Коллекция добавлена!", Toast.LENGTH_SHORT).show()
+                                    pendingSelectCollectionName = collectionName
+                                    applySelections()
+                                }
+                            }
+                        }
+                        dialog.show(parentFragmentManager, "AddCollectionDialog")
+                        true
+                    }
+                    R.id.action_rename_collection -> {
+                        selectedCollection?.let { collection ->
+                            val dialog = RenameCollectionDialog(initialName = collection.name) { newName ->
+                                val trimmed = newName.trim()
+                                lifecycleScope.launch {
+                                    when {
+                                        trimmed.isEmpty() -> {
+                                            Toast.makeText(requireContext(), "Имя не может быть пустым", Toast.LENGTH_SHORT).show()
+                                        }
+                                        trimmed == collection.name -> {
+                                            // без изменений
+                                        }
+                                        collectionViewModel.existsCollectionByName(trimmed) -> {
+                                            Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
+                                        }
+                                        else -> {
+                                            collectionViewModel.renameCollection(collection.id, trimmed)
+                                            pendingSelectCollectionName = trimmed
+                                            applySelections()
+                                            Toast.makeText(requireContext(), "Коллекция переименована", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            }
+                            dialog.show(parentFragmentManager, "RenameCollectionDialog")
+                        }
+                        true
+                    }
+                    R.id.action_delete_collection -> {
+                        selectedCollection?.let { collection ->
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle("Удалить коллекцию «${collection.name}»?")
+                                .setMessage("При удалении коллекции «${collection.name}» будут удалены все слова из этой коллекции. Продолжить?")
+                                .setPositiveButton(android.R.string.ok) { _, _ ->
+                                    lifecycleScope.launch {
+                                        cardViewModel.deleteCardsByCollection(collection.id)
+                                        collectionViewModel.deleteCollection(collection)
+                                        Toast.makeText(requireContext(), "Коллекция и связанные слова удалены", Toast.LENGTH_SHORT).show()
+                                        parentFragmentManager.popBackStack()
+                                    }
+                                }
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .show()
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
     }
 
-    private fun setupCollectionSpinnerListener() {
-        binding.collectionSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedCollection = collections[position]
-                showCollectionButtons(selectedCollection)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                binding.deleteCollectionButton.visibility = View.GONE
-                binding.renameCollectionButton.visibility = View.GONE
-            }
-        }
-    }
+    // От обработчика выбора коллекции логика показа кнопок больше не нужна
 
     private fun setupImagePicker() {
         binding.wordImageView.setOnClickListener {
@@ -332,54 +409,7 @@ class AddWordFragment : Fragment() {
         }
     }
 
-    private fun showCollectionButtons(collection: CardCollection) {
-        val isDefault = collection.name == DEFAULT_COLLECTION_NAME
-        binding.deleteCollectionButton.visibility = if (isDefault) View.GONE else View.VISIBLE
-        binding.renameCollectionButton.visibility = if (isDefault) View.GONE else View.VISIBLE
-        if (!isDefault) {
-            binding.deleteCollectionButton.setOnClickListener {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Удалить коллекцию «${collection.name}»?")
-                    .setMessage("При удалении коллекции «${collection.name}» будут удалены все слова из этой коллекции. Продолжить?")
-                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                        lifecycleScope.launch {
-                            cardViewModel.deleteCardsByCollection(collection.id)
-                            collectionViewModel.deleteCollection(collection)
-                            Toast.makeText(requireContext(), "Коллекция и связанные слова удалены", Toast.LENGTH_SHORT).show()
-                            parentFragmentManager.popBackStack()
-                        }
-                    }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
-            }
-
-            binding.renameCollectionButton.setOnClickListener {
-                val dialog = RenameCollectionDialog(initialName = collection.name) { newName ->
-                    val trimmed = newName.trim()
-                    lifecycleScope.launch {
-                        when {
-                            trimmed.isEmpty() -> {
-                                Toast.makeText(requireContext(), "Имя не может быть пустым", Toast.LENGTH_SHORT).show()
-                            }
-                            trimmed == collection.name -> {
-                                // без изменений
-                            }
-                            collectionViewModel.existsCollectionByName(trimmed) -> {
-                                Toast.makeText(requireContext(), "Коллекция с таким именем уже существует", Toast.LENGTH_SHORT).show()
-                            }
-                            else -> {
-                                collectionViewModel.renameCollection(collection.id, trimmed)
-                                pendingSelectCollectionName = trimmed
-                                applySelections()
-                                Toast.makeText(requireContext(), "Коллекция переименована", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-                }
-                dialog.show(parentFragmentManager, "RenameCollectionDialog")
-            }
-        }
-    }
+    // Логика управления коллекциями перенесена в выпадающее меню у кнопки рядом со спиннером
 
     // onActivityResult удалён, используем Activity Result API
 
