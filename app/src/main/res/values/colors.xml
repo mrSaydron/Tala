@@ -2,4 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Light, non-bright backgrounds for status chips -->
+    <color name="status_new_bg">#E6F6EA</color>
+    <color name="status_reset_bg">#FBE8E7</color>
+    <color name="status_in_progress_bg">#E7F0FF</color>
 </resources>

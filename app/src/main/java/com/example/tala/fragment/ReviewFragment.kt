@@ -1,6 +1,7 @@
 package com.example.tala.fragment
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -53,6 +54,11 @@ class ReviewFragment : Fragment() {
     private var selectedCollectionId: Int = 0 // ID выбранной коллекции
     private val queue = ArrayDeque<CardDto>()
     private var mode: StudyMode = StudyMode.NONE
+
+    // Defaults to restore chip backgrounds when status changes
+    private var defaultNewChipBg: ColorStateList? = null
+    private var defaultResetChipBg: ColorStateList? = null
+    private var defaultInProgressChipBg: ColorStateList? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,6 +118,11 @@ class ReviewFragment : Fragment() {
         binding.inProgressChip.setOnClickListener {
             Toast.makeText(requireContext(), "в обучении", Toast.LENGTH_SHORT).show()
         }
+
+        // Save default backgrounds to restore later
+        defaultNewChipBg = binding.newChip.chipBackgroundColor
+        defaultResetChipBg = binding.resetChip.chipBackgroundColor
+        defaultInProgressChipBg = binding.inProgressChip.chipBackgroundColor
 
         // Кнопки свободного обучения
         binding.freeRandomButton.setOnClickListener {
@@ -235,6 +246,7 @@ class ReviewFragment : Fragment() {
 
             binding.messageTextView.visibility = View.GONE
             binding.freeStudyGroup.visibility = View.VISIBLE
+            highlightStatusChips(null)
             setupProgress()
             return
         }
@@ -257,6 +269,7 @@ class ReviewFragment : Fragment() {
         binding.showTranslationButton.visibility = View.VISIBLE
         (binding.easyButton.parent as View).visibility = View.GONE
         isTranslationShown = false
+        highlightStatusChips(dto.status)
         setupProgress()
     }
 
@@ -326,6 +339,20 @@ class ReviewFragment : Fragment() {
         binding.newChip.text = "$newCount"
         binding.resetChip.text = "$resetCount"
         binding.inProgressChip.text = "$inProgressCount"
+    }
+
+    private fun highlightStatusChips(status: StatusEnum?) {
+        // Restore defaults first
+        defaultNewChipBg?.let { binding.newChip.chipBackgroundColor = it }
+        defaultResetChipBg?.let { binding.resetChip.chipBackgroundColor = it }
+        defaultInProgressChipBg?.let { binding.inProgressChip.chipBackgroundColor = it }
+
+        when (status) {
+            StatusEnum.NEW -> binding.newChip.setChipBackgroundColorResource(R.color.status_new_bg)
+            StatusEnum.PROGRESS_RESET -> binding.resetChip.setChipBackgroundColorResource(R.color.status_reset_bg)
+            StatusEnum.IN_PROGRESS -> binding.inProgressChip.setChipBackgroundColorResource(R.color.status_in_progress_bg)
+            else -> { /* no-op */ }
+        }
     }
 
     private suspend fun getSentence(eng: String, rus: String): SentenceResponse {
