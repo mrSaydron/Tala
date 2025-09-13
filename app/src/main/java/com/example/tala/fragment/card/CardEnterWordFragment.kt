@@ -5,9 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.graphics.Color
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.BackgroundColorSpan
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 import com.bumptech.glide.Glide
 import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardEnterWordBinding
@@ -48,6 +47,8 @@ class CardEnterWordFragment : CardReviewBase() {
                 true
             } else false
         }
+
+        focusAndShowKeyboard()
     }
 
     override fun roll() {
@@ -91,6 +92,14 @@ class CardEnterWordFragment : CardReviewBase() {
         binding.translationInput.visibility = View.VISIBLE
         binding.translationInput.setText("")
         binding.userAnswerTextView.visibility = View.GONE
+    }
+
+    private fun focusAndShowKeyboard() {
+        binding.translationInput.requestFocus()
+        binding.translationInput.post {
+            val imm = context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.showSoftInput(binding.translationInput, InputMethodManager.SHOW_IMPLICIT)
+        }
     }
 
     companion object {
