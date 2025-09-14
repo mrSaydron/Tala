@@ -8,6 +8,7 @@ import com.bumptech.glide.Glide
 import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentCardTranslateBinding
 import com.example.tala.model.dto.info.WordCardInfo
+import jp.wasabeef.glide.transformations.BlurTransformation
 
 class CardTranslateFragment : CardReviewBase() {
 
@@ -41,7 +42,13 @@ class CardTranslateFragment : CardReviewBase() {
 
     override fun roll() {
         binding.answerTextView.visibility = View.VISIBLE
-        binding.wordImageView.visibility = View.VISIBLE
+        // Снимаем блюр: перезагружаем исходное изображение
+        info?.imagePath?.let { path ->
+            Glide.with(this)
+                .load(path)
+                .centerCrop()
+                .into(binding.wordImageView)
+        }
     }
 
     override fun bind() {
@@ -55,12 +62,17 @@ class CardTranslateFragment : CardReviewBase() {
                 binding.hintTextView.visibility = View.GONE
             }
             data.imagePath?.let { path ->
+                // Показываем изображение с блюром до переворота
                 Glide.with(this)
                     .load(path)
+                    .centerCrop()
+                    .transform(BlurTransformation(25, 6))
                     .into(binding.wordImageView)
+                binding.wordImageView.visibility = View.VISIBLE
+            } ?: run {
+                binding.wordImageView.visibility = View.GONE
             }
             binding.answerTextView.visibility = View.GONE
-            binding.wordImageView.visibility = View.GONE
             binding.playButton.visibility = View.VISIBLE
         }
     }

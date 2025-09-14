@@ -8,13 +8,39 @@
     android:orientation="vertical"
     tools:context=".fragment.card.CardTranslateFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="8dp"
-        android:text="Прямой перевод"
-        android:textSize="8sp" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp">
+
+        <ImageView
+            android:id="@+id/wordImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"/>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:src="@drawable/gradient_top"
+            android:scaleType="fitXY"
+            android:layout_gravity="top" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:src="@drawable/gradient_bottom"
+            android:scaleType="fitXY"
+            android:layout_gravity="bottom" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="8dp"
+            android:padding="8dp"
+            android:text="Прямой перевод"
+            android:textSize="8sp" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -57,13 +83,7 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/wordImageView"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_marginTop="16dp"
-        android:background="@android:color/darker_gray"
-        android:scaleType="centerCrop" />
+    
 
     <TextView
         android:id="@+id/answerTextView"

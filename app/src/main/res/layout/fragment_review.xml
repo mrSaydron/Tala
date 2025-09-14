@@ -5,41 +5,14 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Top bar with edit button on the right -->
-    <LinearLayout
-        android:id="@+id/topBar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <ImageButton
-            android:id="@+id/editButton"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Редактировать"
-            android:padding="2dp"
-            android:src="@drawable/ic_edit"
-            app:tint="?attr/colorPrimary"
-            android:visibility="gone"
-            tools:visibility="visible"/>
-    </LinearLayout>
+    
 
     <!-- Scrollable content area between top bar and bottom bar -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollArea"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -48,18 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
             android:gravity="center_horizontal">
-
-            <TextView
-                android:id="@+id/messageTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:text="Слова закончились"
-                android:gravity="center"
-                android:padding="8dp"
-                android:visibility="gone" />
 
             <!-- Новая группа для свободного обучения -->
             <LinearLayout
@@ -71,6 +33,15 @@
                 android:visibility="gone"
                 tools:visibility="visible"
                 android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/messageTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:text="Слова закончились"
+                    android:gravity="center"
+                    android:padding="8dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -183,38 +154,64 @@
                 android:textColor="?attr/colorOnPrimaryContainer" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="12dp"
-            android:gravity="center"
-            android:visibility="gone"
-            tools:visibility="visible">
+            android:layout_marginTop="12dp">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/newChip"
+            <LinearLayout
+                android:id="@+id/chipsContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:text="Новых" />
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:visibility="visible">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/resetChip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:text="Возвращенных"
-                android:layout_marginStart="8dp" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/newChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:text="Новых" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/inProgressChip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:text="Изучаемых"
-                android:layout_marginStart="8dp" />
-        </LinearLayout>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/resetChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:text="Возвращенных"
+                    android:layout_marginStart="8dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/inProgressChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:text="Изучаемых"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/editButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Редактировать"
+                android:padding="2dp"
+                android:src="@drawable/ic_edit"
+                app:tint="?attr/colorPrimary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>
 

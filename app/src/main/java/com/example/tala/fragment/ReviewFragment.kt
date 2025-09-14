@@ -14,6 +14,8 @@ import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentReviewBinding
@@ -54,6 +56,8 @@ class ReviewFragment : Fragment() {
     private var selectedCollectionId: Int = 0 // ID выбранной коллекции
     private val queue = ArrayDeque<CardDto>()
     private var mode: StudyMode = StudyMode.NONE
+
+    private var systemBarsTopInset: Int = 0
 
     // Defaults to restore chip backgrounds when status changes
     private var defaultNewChipBg: ColorStateList? = null
@@ -140,6 +144,14 @@ class ReviewFragment : Fragment() {
                 lifecycleScope.launch { startFreeMode(StudyMode.FREE_SOON, count) }
             }
         }
+
+        // Обработка системных отступов: когда нет изображения, контент должен быть ниже статус-бара
+        ViewCompat.setOnApplyWindowInsetsListener(binding.scrollArea) { v, insets ->
+            val top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+            systemBarsTopInset = top
+            applyTopInsetPadding()
+            insets
+        }
     }
 
     // Запуск свободного режима с заданным количеством карточек
@@ -218,12 +230,10 @@ class ReviewFragment : Fragment() {
             binding.editButton.visibility = View.VISIBLE
             binding.reviewContentContainer.visibility = View.VISIBLE
             binding.showTranslationButton.visibility = View.VISIBLE
-            binding.messageTextView.visibility = View.GONE
             binding.freeStudyGroup.visibility = View.GONE
             showNextFromQueue()
         } else {
             mode = StudyMode.NONE
-            binding.messageTextView.visibility = View.GONE
             binding.freeStudyGroup.visibility = View.VISIBLE
             binding.reviewContentContainer.visibility = View.GONE
             binding.showTranslationButton.visibility = View.GONE
@@ -232,6 +242,7 @@ class ReviewFragment : Fragment() {
             (binding.newChip.parent as View).visibility = View.GONE
         }
         setupProgress()
+        applyTopInsetPadding()
     }
 
     private fun showNextFromQueue() {
@@ -244,10 +255,10 @@ class ReviewFragment : Fragment() {
             (binding.easyButton.parent as View).visibility = View.GONE
             (binding.newChip.parent as View).visibility = View.GONE
 
-            binding.messageTextView.visibility = View.GONE
             binding.freeStudyGroup.visibility = View.VISIBLE
             highlightStatusChips(null)
             setupProgress()
+            applyTopInsetPadding()
             return
         }
 
@@ -271,6 +282,18 @@ class ReviewFragment : Fragment() {
         isTranslationShown = false
         highlightStatusChips(dto.status)
         setupProgress()
+        applyTopInsetPadding()
+    }
+
+    private fun applyTopInsetPadding() {
+        val reviewVisible = binding.reviewContentContainer.visibility == View.VISIBLE
+        val topPadding = if (reviewVisible) 0 else systemBarsTopInset
+        binding.scrollArea.setPadding(
+            binding.scrollArea.paddingLeft,
+            topPadding,
+            binding.scrollArea.paddingRight,
+            binding.scrollArea.paddingBottom
+        )
     }
 
     // Показывает перевод слова

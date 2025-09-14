@@ -9,13 +9,39 @@
     android:gravity="center_horizontal"
     tools:context=".fragment.card.CardReverseTranslateFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="8sp"
-        android:text="Обратный перевод"
-        android:gravity="center"
-        android:padding="8dp" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp">
+
+        <ImageView
+            android:id="@+id/wordImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"/>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:src="@drawable/gradient_top"
+            android:scaleType="fitXY"
+            android:layout_gravity="top" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:src="@drawable/gradient_bottom"
+            android:scaleType="fitXY"
+            android:layout_gravity="bottom" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="8dp"
+            android:padding="8dp"
+            android:text="Обратный перевод"
+            android:textSize="8sp" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/answerTextView"
@@ -39,13 +65,7 @@
         android:padding="2dp"
         android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/wordImageView"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_marginTop="16dp"
-        android:scaleType="centerCrop"
-        android:background="@android:color/darker_gray" />
+    
 
     <LinearLayout
         android:layout_width="wrap_content"

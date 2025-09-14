@@ -19,13 +19,13 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge() // Для красивого отображения на edge-to-edge экранах
         setContentView(R.layout.activity_main)
 
-        // Добавляем системные отступы, чтобы контент не уходил под статус/навигационную панель
+        // Добавляем системные отступы снизу и по бокам; сверху оставляем 0, чтобы контент мог заходить под статус-бар
         val container = findViewById<android.view.View>(R.id.fragmentContainer)
         ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
             val bottomInset = max(systemBars.bottom, imeInsets.bottom)
-            view.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomInset)
+            view.setPadding(systemBars.left, 0, systemBars.right, bottomInset)
             insets
         }
 
