@@ -1,38 +1,43 @@
 package com.example.tala.fragment.dialog
 
-import android.app.AlertDialog
-import android.app.Dialog
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
-import androidx.fragment.app.DialogFragment
+import androidx.core.os.bundleOf
 import com.example.tala.R
+import com.example.tala.ui.dialog.BaseMaterialDialogFragment
 
-class AddCollectionDialog(private val onSave: (String) -> Unit) : DialogFragment() {
+class AddCollectionDialog : BaseMaterialDialogFragment() {
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val view = requireActivity().layoutInflater.inflate(R.layout.dialog_add_collection, null)
+    override fun provideTitle() = "Добавить коллекцию"
 
+    override fun createContentView(): View {
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_collection, null)
         val saveCollectionButton: Button = view.findViewById(R.id.saveCollectionButton)
         val collectionNameInput: EditText = view.findViewById(R.id.collectionNameInput)
 
-        val dialog = AlertDialog.Builder(requireContext())
-            .setView(view)
-            .setTitle("Добавить коллекцию")
-            .create()
-
         saveCollectionButton.setOnClickListener {
-            val collectionName = collectionNameInput.text.toString()
-
+            val collectionName = collectionNameInput.text.toString().trim()
             if (collectionName.isNotEmpty()) {
-                onSave(collectionName)
-                dialog.dismiss()
+                parentFragmentManager.setFragmentResult(
+                    RESULT_KEY,
+                    bundleOf(KEY_NAME to collectionName)
+                )
+                dismiss()
             } else {
-                Toast.makeText(requireContext(), "Введите название коллекции!", Toast.LENGTH_SHORT).show()
+                collectionNameInput.error = "Введите название"
             }
         }
 
-        return dialog
+        return view
+    }
+
+    companion object {
+        const val RESULT_KEY = "add_collection_result"
+        const val KEY_NAME = "name"
+
+        fun newInstance() = AddCollectionDialog()
     }
 }

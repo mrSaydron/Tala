@@ -1,57 +1,74 @@
 package com.example.tala.fragment.dialog
 
-import android.app.AlertDialog
-import android.app.Dialog
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
-import androidx.fragment.app.DialogFragment
+import androidx.core.os.bundleOf
 import com.example.tala.R
-import com.example.tala.entity.card.Card
 import com.example.tala.model.dto.info.WordCardInfo
+import com.example.tala.ui.dialog.BaseMaterialDialogFragment
 
-class EditWordDialog(private val card: Card, private val onSave: (Card) -> Unit) : DialogFragment() {
+class EditWordDialog : BaseMaterialDialogFragment() {
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val view = requireActivity().layoutInflater.inflate(R.layout.dialog_edit_word, null)
+    override fun provideTitle() = "Редактировать слово"
+
+    override fun createContentView(): View {
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_word, null)
         val editEnglishWord: EditText = view.findViewById(R.id.editEnglishWord)
         val editRussianWord: EditText = view.findViewById(R.id.editRussianWord)
         val editHint: EditText = view.findViewById(R.id.editHint)
         val saveEditButton: Button = view.findViewById(R.id.saveEditButton)
 
-        val dialog = AlertDialog.Builder(requireContext())
-            .setView(view)
-            .setTitle("Редактировать слово")
-            .create()
+        val commonId = requireArguments().getString(ARG_COMMON_ID).orEmpty()
+        val infoJson = requireArguments().getString(ARG_INFO_JSON).orEmpty()
 
-        // Заполняем поля текущими значениями из info
-        val parsedInfo = WordCardInfo.fromJson(card.info)
+        val parsedInfo = WordCardInfo.fromJson(infoJson)
         parsedInfo.english?.let { editEnglishWord.setText(it) }
         parsedInfo.russian?.let { editRussianWord.setText(it) }
         parsedInfo.hint?.let { if (it.isNotEmpty()) editHint.setText(it) }
 
-        // Обработка нажатия на кнопку "Сохранить"
         saveEditButton.setOnClickListener {
-            val englishWord = editEnglishWord.text.toString()
-            val russianWord = editRussianWord.text.toString()
-
+            val englishWord = editEnglishWord.text.toString().trim()
+            val russianWord = editRussianWord.text.toString().trim()
             if (englishWord.isNotEmpty() && russianWord.isNotEmpty()) {
                 val hint = editHint.text.toString().trim().ifEmpty { null }
-                val updatedInfo = WordCardInfo.fromJson(card.info).copy(
+                val updatedInfoJson = parsedInfo.copy(
                     english = englishWord,
                     russian = russianWord,
                     hint = hint
                 ).toJsonOrNull()
-
-                val updatedWord = card.copy(info = updatedInfo)
-                onSave(updatedWord)
-                dialog.dismiss()
+                parentFragmentManager.setFragmentResult(
+                    RESULT_KEY,
+                    bundleOf(
+                        KEY_COMMON_ID to commonId,
+                        KEY_INFO_JSON to updatedInfoJson
+                    )
+                )
+                dismiss()
             } else {
-                Toast.makeText(requireContext(), "Заполните оба поля!", Toast.LENGTH_SHORT).show()
+                editEnglishWord.error = if (englishWord.isEmpty()) "Обязательное поле" else null
+                editRussianWord.error = if (russianWord.isEmpty()) "Обязательное поле" else null
             }
         }
 
-        return dialog
+        return view
+    }
+
+    companion object {
+        private const val ARG_COMMON_ID = "common_id"
+        private const val ARG_INFO_JSON = "info_json"
+
+        const val RESULT_KEY = "edit_word_result"
+        const val KEY_COMMON_ID = "common_id"
+        const val KEY_INFO_JSON = "info_json"
+
+        fun newInstance(commonId: String, infoJson: String) = EditWordDialog().apply {
+            arguments = bundleOf(
+                ARG_COMMON_ID to commonId,
+                ARG_INFO_JSON to infoJson
+            )
+        }
     }
 }

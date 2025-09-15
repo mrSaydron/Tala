@@ -38,6 +38,7 @@ import java.io.File
 import kotlin.math.max
 import androidx.core.widget.addTextChangedListener
 import com.example.tala.util.ImageStorage
+import com.example.tala.ui.dialog.Dialogs
 
 class AddWordFragment : Fragment() {
 
@@ -235,7 +236,12 @@ class AddWordFragment : Fragment() {
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.action_add_collection -> {
-                        val dialog = AddCollectionDialog { collectionName ->
+                        // Слушатель результата (одноразовый) и показ диалога
+                        parentFragmentManager.setFragmentResultListener(
+                            AddCollectionDialog.RESULT_KEY,
+                            viewLifecycleOwner
+                        ) { _, bundle ->
+                            val collectionName = bundle.getString(AddCollectionDialog.KEY_NAME).orEmpty()
                             lifecycleScope.launch {
                                 val exists = collectionViewModel.existsCollectionByName(collectionName)
                                 if (exists) {
@@ -249,12 +255,16 @@ class AddWordFragment : Fragment() {
                                 }
                             }
                         }
-                        dialog.show(parentFragmentManager, "AddCollectionDialog")
+                        AddCollectionDialog.newInstance().show(parentFragmentManager, "AddCollectionDialog")
                         true
                     }
                     R.id.action_rename_collection -> {
                         selectedCollection?.let { collection ->
-                            val dialog = RenameCollectionDialog(initialName = collection.name) { newName ->
+                            parentFragmentManager.setFragmentResultListener(
+                                RenameCollectionDialog.RESULT_KEY,
+                                viewLifecycleOwner
+                            ) { _, bundle ->
+                                val newName = bundle.getString(RenameCollectionDialog.KEY_NAME).orEmpty()
                                 val trimmed = newName.trim()
                                 lifecycleScope.launch {
                                     when {
@@ -276,25 +286,27 @@ class AddWordFragment : Fragment() {
                                     }
                                 }
                             }
-                            dialog.show(parentFragmentManager, "RenameCollectionDialog")
+                            RenameCollectionDialog.newInstance(collection.id, collection.name)
+                                .show(parentFragmentManager, "RenameCollectionDialog")
                         }
                         true
                     }
                     R.id.action_delete_collection -> {
                         selectedCollection?.let { collection ->
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Удалить коллекцию «${collection.name}»?")
-                                .setMessage("При удалении коллекции «${collection.name}» будут удалены все слова из этой коллекции. Продолжить?")
-                                .setPositiveButton(android.R.string.ok) { _, _ ->
+                            Dialogs.confirm(
+                                context = requireContext(),
+                                title = "Удалить коллекцию «${collection.name}»?",
+                                message = "При удалении коллекции «${collection.name}» будут удалены все слова из этой коллекции. Продолжить?",
+                                onOk = {
                                     lifecycleScope.launch {
                                         cardViewModel.deleteCardsByCollection(collection.id)
                                         collectionViewModel.deleteCollection(collection)
                                         Toast.makeText(requireContext(), "Коллекция и связанные слова удалены", Toast.LENGTH_SHORT).show()
                                         parentFragmentManager.popBackStack()
                                     }
-                                }
-                                .setNegativeButton(android.R.string.cancel, null)
-                                .show()
+                                },
+                                onCancel = null
+                            )
                         }
                         true
                     }
@@ -309,13 +321,15 @@ class AddWordFragment : Fragment() {
 
     private fun setupImagePicker() {
         binding.wordImageView.setOnClickListener {
-            val dialog = ImagePickerDialog(
-                initialQuery = binding.englishWordInput.text.toString(),
-                onImageSelected = { imageUrl ->
-                    handleSelectedImage(imageUrl)
-                }
-            )
-            dialog.show(parentFragmentManager, "ImagePickerDialog")
+            parentFragmentManager.setFragmentResultListener(
+                ImagePickerDialog.RESULT_KEY,
+                viewLifecycleOwner
+            ) { _, bundle ->
+                val urlOrUri = bundle.getString(ImagePickerDialog.KEY_URL_OR_URI)
+                if (!urlOrUri.isNullOrEmpty()) handleSelectedImage(urlOrUri)
+            }
+            ImagePickerDialog.newInstance(binding.englishWordInput.text.toString())
+                .show(parentFragmentManager, "ImagePickerDialog")
         }
     }
 
@@ -417,12 +431,12 @@ class AddWordFragment : Fragment() {
         lifecycleScope.launch {
             val items = translationRepo.getTranslations(word, from, to)
             if (items.isNotEmpty()) {
-                val arr = items.toTypedArray()
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(title)
-                    .setItems(arr) { _, which -> onChosen(arr[which]) }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
+                Dialogs.chooseFrom(
+                    context = requireContext(),
+                    title = title,
+                    items = items,
+                    onChosen = onChosen,
+                )
             } else {
                 Toast.makeText(requireContext(), "Нет доступных переводов", Toast.LENGTH_SHORT).show()
             }

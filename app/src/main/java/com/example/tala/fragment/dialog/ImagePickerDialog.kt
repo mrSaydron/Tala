@@ -1,28 +1,35 @@
 package com.example.tala.fragment.dialog
 
-import android.app.Activity.RESULT_OK
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
-import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.lifecycleScope
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import com.example.tala.databinding.DialogImagePickerBinding
 import com.example.tala.fragment.adapter.ImageAdapter
 import com.example.tala.integration.picture.UnsplashApi.Companion.USPLASH_API_KEY
 import com.example.tala.service.ApiClient
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
-class ImagePickerDialog(
-    private val initialQuery: String,
-    private val onImageSelected: (String) -> Unit
-) : DialogFragment() {
+class ImagePickerDialog : BottomSheetDialogFragment() {
 
     private lateinit var binding: DialogImagePickerBinding
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            parentFragmentManager.setFragmentResult(
+                RESULT_KEY,
+                bundleOf(KEY_URL_OR_URI to it.toString())
+            )
+            dismiss()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,15 +42,14 @@ class ImagePickerDialog(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Инициализация поля ввода
+        val initialQuery = requireArguments().getString(ARG_INITIAL_QUERY).orEmpty()
+
         binding.searchQueryInput.setText(initialQuery)
-        // Начальное состояние иконки-лупы: показываем только если есть текст
         binding.searchInputLayout.isEndIconVisible = !binding.searchQueryInput.text.isNullOrBlank()
         binding.searchQueryInput.addTextChangedListener { text ->
             binding.searchInputLayout.isEndIconVisible = !text.isNullOrBlank()
         }
 
-        // Обработка нажатия на кнопку поиска
         binding.searchQueryInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 performSearch()
@@ -53,16 +59,12 @@ class ImagePickerDialog(
             }
         }
 
-        // Клик по иконке-лупе справа от поля
-        binding.searchInputLayout.setEndIconOnClickListener {
-            performSearch()
-        }
+        binding.searchInputLayout.setEndIconOnClickListener { performSearch() }
 
-        // Выполняем поиск при открытии диалога
         performSearch()
 
         binding.addImageButton.setOnClickListener {
-            openImagePicker()
+            pickImageLauncher.launch("image/*")
         }
     }
 
@@ -78,7 +80,10 @@ class ImagePickerDialog(
             try {
                 val images = fetchImages(query)
                 val adapter = ImageAdapter(images) { imageUrl ->
-                    onImageSelected(imageUrl)
+                    parentFragmentManager.setFragmentResult(
+                        RESULT_KEY,
+                        bundleOf(KEY_URL_OR_URI to imageUrl)
+                    )
                     dismiss()
                 }
                 binding.imageRecyclerView.adapter = adapter
@@ -96,26 +101,14 @@ class ImagePickerDialog(
         return response.results.map { it.urls.regular }
     }
 
-    private fun openImagePicker() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        startActivityForResult(intent, REQUEST_IMAGE_PICK)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK && data != null) {
-            val imageUri = data.data
-            imageUri?.let {
-                onImageSelected(it.toString())
-                dismiss()
-            }
-        }
-    }
-
     companion object {
-        private const val REQUEST_IMAGE_PICK = 100
+        private const val ARG_INITIAL_QUERY = "initial_query"
+
+        const val RESULT_KEY = "image_picker_result"
+        const val KEY_URL_OR_URI = "url_or_uri"
+
+        fun newInstance(initialQuery: String) = ImagePickerDialog().apply {
+            arguments = bundleOf(ARG_INITIAL_QUERY to initialQuery)
+        }
     }
 }
