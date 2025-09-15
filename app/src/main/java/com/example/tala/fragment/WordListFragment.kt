@@ -10,6 +10,8 @@ import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.tala.R
 import com.example.tala.databinding.FragmentWordListBinding
 import com.example.tala.entity.collection.CardCollection
@@ -46,6 +48,13 @@ class WordListFragment : Fragment() {
         // Инициализация ViewModel
         cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
         collectionViewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
+
+        // Обеспечиваем отступ под статус-бар для корневого контейнера
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+            v.setPadding(v.paddingLeft, top, v.paddingRight, v.paddingBottom)
+            insets
+        }
 
         // Инициализация Spinner
         collectionAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())

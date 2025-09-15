@@ -37,6 +37,8 @@ import com.example.tala.model.dto.info.CardInfo
 import java.io.File
 import kotlin.math.max
 import androidx.core.widget.addTextChangedListener
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.tala.util.ImageStorage
 import com.example.tala.ui.dialog.Dialogs
 
@@ -86,6 +88,13 @@ class AddWordFragment : Fragment() {
 
         cardViewModel = ViewModelProvider(this)[CardViewModel::class.java]
         collectionViewModel = ViewModelProvider(this)[CollectionViewModel::class.java]
+
+        // Обеспечиваем отступ под статус-бар
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+            v.setPadding(v.paddingLeft, top, v.paddingRight, v.paddingBottom)
+            insets
+        }
 
         binding.deleteWordButton.visibility = View.GONE
 
