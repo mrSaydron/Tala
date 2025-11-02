@@ -1,5 +1,14 @@
 <resources>
     <string name="app_name">Tala</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="dictionary_list_title">Словарь</string>
+    <string name="dictionary_empty_state">В словаре пока нет записей</string>
+    <string name="dictionary_part_of_speech_template">Часть речи: %1$s</string>
+    <string name="dictionary_ipa_template">IPA: %1$s</string>
+    <string name="dictionary_level_template">Уровень: %1$s</string>
+    <string name="dictionary_frequency_template">Частота: %1$.2f</string>
+    <string name="dictionary_tags_template">Теги: %1$s</string>
+    <string name="dictionary_base_word_template">ID базового слова: %1$d</string>
+    <string name="dictionary_hint_template">Подсказка: %1$s</string>
+    <string name="dictionary_error_state">Не удалось загрузить словарь</string>
 </resources>

@@ -74,14 +74,19 @@ class HomeFragment : Fragment() {
 
         // Переход к обучению по нажатию выполняется через адаптер
 
-        binding.settingsButton.setOnClickListener {
-            val settingsFragment = SettingsFragment()
-            replaceFragment(settingsFragment)
-        }
-
         binding.wordListButton.setOnClickListener {
             val wordListFragment = WordListFragment()
             replaceFragment(wordListFragment)
+        }
+
+        binding.dictionaryButton.setOnClickListener {
+            val dictionaryFragment = DictionaryListFragment()
+            replaceFragment(dictionaryFragment)
+        }
+
+        binding.settingsButton.setOnClickListener {
+            val settingsFragment = SettingsFragment()
+            replaceFragment(settingsFragment)
         }
     }
 

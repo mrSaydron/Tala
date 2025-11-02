@@ -4,16 +4,23 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.tala.entity.collection.CollectionDao
 import com.example.tala.entity.collection.CardCollection
 import com.example.tala.entity.card.Card
 import com.example.tala.entity.card.CardDao
+import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.dictionary.DictionaryDao
+import com.example.tala.entity.dictionary.DictionaryTypeConverters
 
-@Database(entities = [Card::class, CardCollection::class], version = 15, exportSchema = false)
+@Database(entities = [Card::class, CardCollection::class, Dictionary::class], version = 16, exportSchema = false)
+@TypeConverters(DictionaryTypeConverters::class)
 abstract class TalaDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun collectionsDao(): CollectionDao
+    abstract fun dictionaryDao(): DictionaryDao
 
     companion object {
         @Volatile
@@ -25,7 +32,8 @@ abstract class TalaDatabase : RoomDatabase() {
                     context.applicationContext,
                     TalaDatabase::class.java,
                     "tala_database"
-                ).fallbackToDestructiveMigration()
+                )
+                    .addMigrations(MIGRATION_15_16)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
@@ -52,5 +60,28 @@ abstract class TalaDatabase : RoomDatabase() {
                 instance
             }
         }
+
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `dictionary` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `word` TEXT NOT NULL,
+                        `translation` TEXT NOT NULL,
+                        `part_of_speech` TEXT NOT NULL,
+                        `ipa` TEXT,
+                        `hint` TEXT,
+                        `base_word_id` INTEGER,
+                        `frequency` REAL,
+                        `level` TEXT,
+                        `tags` TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_dictionary_word` ON `dictionary` (`word`)")
+            }
+        }
     }
+
 }

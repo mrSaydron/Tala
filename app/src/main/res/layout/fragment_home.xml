@@ -27,6 +27,20 @@
             app:iconTint="?attr/colorOnSecondaryContainer" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/dictionaryButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="Словарь"
+            app:icon="@drawable/ic_translate"
+            app:iconPadding="8dp"
+            app:iconGravity="textStart"
+            app:backgroundTint="?attr/colorSecondaryContainer"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            app:iconTint="?attr/colorOnSecondaryContainer" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/settingsButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

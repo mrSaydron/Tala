@@ -1,8 +1,8 @@
 package com.example.tala.integration.dictionary.dto
 
-data class Definition(
+data class Synonym(
     val text: String,
     val pos: String,
-    val ts: String?,
-    val tr: List<Translation>
+    val tr: String?,
+    val fr: Int?,
 )
