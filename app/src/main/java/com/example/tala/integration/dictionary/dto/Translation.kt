@@ -6,6 +6,6 @@ data class Translation(
     val gen: String?,
     val asp: String?,
     val fr: Int?,
-    val syn: List<Synonym> = emptyList(),
-    val mean: List<Mean> = emptyList(),
+    val syn: List<Synonym>?,
+    val mean: List<Mean>?,
 )

@@ -18,12 +18,32 @@ class DictionaryViewModel(application: Application) : AndroidViewModel(applicati
         repository.insert(entry)
     }
 
+    suspend fun insertSync(entry: Dictionary): Long = withContext(Dispatchers.IO) {
+        repository.insert(entry)
+    }
+
+    fun update(entry: Dictionary) = viewModelScope.launch(Dispatchers.IO) {
+        repository.update(entry)
+    }
+
+    suspend fun updateSync(entry: Dictionary) = withContext(Dispatchers.IO) {
+        repository.update(entry)
+    }
+
     fun delete(entry: Dictionary) = viewModelScope.launch(Dispatchers.IO) {
         repository.delete(entry)
     }
 
     suspend fun getAll(): List<Dictionary> = withContext(Dispatchers.IO) {
         repository.getAll()
+    }
+
+    suspend fun getById(id: Int): Dictionary? = withContext(Dispatchers.IO) {
+        repository.getById(id)
+    }
+
+    suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> = withContext(Dispatchers.IO) {
+        repository.getGroupByBaseId(baseWordId)
     }
 
     suspend fun getByWord(word: String): List<Dictionary> = withContext(Dispatchers.IO) {

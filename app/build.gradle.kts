@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -90,4 +91,11 @@ dependencies {
 
     // Robolectric for JVM tests using Android SDK
     testImplementation("org.robolectric:robolectric:4.12.2")
+
+    // Gemini
+//    implementation("com.google.genai:google-genai:1.0.0")
+
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-ai")
 }

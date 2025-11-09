@@ -23,7 +23,7 @@ class DictionaryListFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var dictionaryViewModel: DictionaryViewModel
-    private val dictionaryAdapter = DictionaryAdapter()
+    private lateinit var dictionaryAdapter: DictionaryAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,8 +39,16 @@ class DictionaryListFragment : Fragment() {
 
         dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
 
+        dictionaryAdapter = DictionaryAdapter { entry ->
+            openDictionaryEntry(entry.id)
+        }
+
         binding.dictionaryRecyclerView.adapter = dictionaryAdapter
         binding.dictionaryRecyclerView.itemAnimator = null
+
+        binding.dictionaryAddButton.setOnClickListener {
+            openDictionaryEntry(null)
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
@@ -62,7 +70,10 @@ class DictionaryListFragment : Fragment() {
             runCatching {
                 dictionaryViewModel.getAll()
             }.onSuccess { entries ->
-                val sortedEntries = entries.sortedWith(compareBy({ it.word.lowercase() }, { it.translation.lowercase() }))
+                val baseEntries = entries.filter { entry ->
+                    entry.baseWordId == null || entry.baseWordId == entry.id
+                }
+                val sortedEntries = baseEntries.sortedWith(compareBy({ it.word.lowercase() }, { it.translation.lowercase() }))
                 dictionaryAdapter.submitList(sortedEntries)
                 binding.dictionaryRecyclerView.isVisible = sortedEntries.isNotEmpty()
                 binding.dictionaryEmptyStateTextView.isVisible = sortedEntries.isEmpty()
@@ -79,6 +90,14 @@ class DictionaryListFragment : Fragment() {
 
             binding.dictionaryProgressBar.isVisible = false
         }
+    }
+
+    private fun openDictionaryEntry(entryId: Int?) {
+        val fragment = DictionaryAddFragment.newInstance(entryId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onDestroyView() {

@@ -24,15 +24,17 @@ object DictionaryTypeConverters {
 
     @TypeConverter
     @JvmStatic
-    fun fromTags(tags: Set<TagType>?): String? = tags
+    fun fromTags(tags: Set<TagType>?): String = tags
         ?.takeIf { it.isNotEmpty() }
         ?.map { it.value }
         ?.sorted()
         ?.joinToString(",")
+        ?: ""
 
     @TypeConverter
     @JvmStatic
     fun toTags(value: String?): Set<TagType> = value
+        ?.takeIf { it.isNotBlank() }
         ?.split(',')
         ?.mapNotNull { tag ->
             val normalized = tag.trim().lowercase()
@@ -40,5 +42,21 @@ object DictionaryTypeConverters {
         }
         ?.toSet()
         ?: emptySet()
+
+    @TypeConverter
+    @JvmStatic
+    fun fromDictionaryIds(ids: List<Int>?): String = ids
+        ?.takeIf { it.isNotEmpty() }
+        ?.joinToString(",")
+        ?: ""
+
+    @TypeConverter
+    @JvmStatic
+    fun toDictionaryIds(value: String?): List<Int> = value
+        ?.takeIf { it.isNotBlank() }
+        ?.split(',')
+        ?.mapNotNull { it.trim().toIntOrNull() }
+        ?.filter { it >= 0 }
+        ?: emptyList()
 }
 

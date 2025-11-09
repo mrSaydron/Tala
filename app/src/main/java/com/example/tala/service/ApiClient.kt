@@ -12,6 +12,7 @@ object ApiClient {
     private const val BASE_URL = "https://dictionary.yandex.net/api/v1/dicservice.json/"
     private const val UNSPLASH_BASE_URL = "https://api.unsplash.com/"
     private const val MISTRAL_BASE_URL = "https://api.mistral.ai/v1/chat/"
+    private const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/"
 
     val yandexDictionaryApi: YandexDictionaryApi by lazy {
         Retrofit.Builder()
@@ -45,4 +46,5 @@ object ApiClient {
             .build()
             .create(MistralApi::class.java)
     }
+
 }

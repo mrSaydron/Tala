@@ -8,8 +8,12 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tala.R
 import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.dictionary.PartOfSpeech
+import com.example.tala.entity.dictionary.TagType
 
-class DictionaryAdapter : RecyclerView.Adapter<DictionaryAdapter.DictionaryViewHolder>() {
+class DictionaryAdapter(
+    private val onItemClick: (Dictionary) -> Unit
+) : RecyclerView.Adapter<DictionaryAdapter.DictionaryViewHolder>() {
 
     private val items: MutableList<Dictionary> = mutableListOf()
 
@@ -46,9 +50,10 @@ class DictionaryAdapter : RecyclerView.Adapter<DictionaryAdapter.DictionaryViewH
         fun bind(entry: Dictionary) {
             wordTextView.text = entry.word
             translationTextView.text = entry.translation
+            val localizedPart = entry.partOfSpeech.localizedName(itemView.context)
             partOfSpeechTextView.text = itemView.context.getString(
                 R.string.dictionary_part_of_speech_template,
-                entry.partOfSpeech.value
+                localizedPart
             )
 
             val ipa = entry.ipa
@@ -78,7 +83,10 @@ class DictionaryAdapter : RecyclerView.Adapter<DictionaryAdapter.DictionaryViewH
                 )
             }
 
-            val tagsText = entry.tags.map { it.value }.sorted().joinToString(", ")
+            val tagsText = entry.tags
+                .map { tag -> itemView.context.getString(tag.localizedNameRes()) }
+                .sorted()
+                .joinToString(", ")
             tagsTextView.isVisible = tagsText.isNotBlank()
             if (tagsText.isNotBlank()) {
                 tagsTextView.text = itemView.context.getString(
@@ -104,7 +112,46 @@ class DictionaryAdapter : RecyclerView.Adapter<DictionaryAdapter.DictionaryViewH
                     hint
                 )
             }
+
+            itemView.setOnClickListener {
+                onItemClick(entry)
+            }
         }
     }
+}
+
+private fun PartOfSpeech.localizedName(context: android.content.Context): String = when (this) {
+    PartOfSpeech.NOUN -> context.getString(R.string.dictionary_part_of_speech_noun)
+    PartOfSpeech.VERB -> context.getString(R.string.dictionary_part_of_speech_verb)
+    PartOfSpeech.ADJECTIVE -> context.getString(R.string.dictionary_part_of_speech_adjective)
+    PartOfSpeech.ADVERB -> context.getString(R.string.dictionary_part_of_speech_adverb)
+    PartOfSpeech.PRONOUN -> context.getString(R.string.dictionary_part_of_speech_pronoun)
+    PartOfSpeech.PREPOSITION -> context.getString(R.string.dictionary_part_of_speech_preposition)
+    PartOfSpeech.CONJUNCTION -> context.getString(R.string.dictionary_part_of_speech_conjunction)
+    PartOfSpeech.INTERJECTION -> context.getString(R.string.dictionary_part_of_speech_interjection)
+    PartOfSpeech.DETERMINER -> context.getString(R.string.dictionary_part_of_speech_determiner)
+    PartOfSpeech.ARTICLE -> context.getString(R.string.dictionary_part_of_speech_article)
+    PartOfSpeech.NUMERAL -> context.getString(R.string.dictionary_part_of_speech_numeral)
+    PartOfSpeech.PARTICLE -> context.getString(R.string.dictionary_part_of_speech_particle)
+    PartOfSpeech.AUXILIARY_VERB -> context.getString(R.string.dictionary_part_of_speech_auxiliary_verb)
+    PartOfSpeech.MODAL_VERB -> context.getString(R.string.dictionary_part_of_speech_modal_verb)
+    PartOfSpeech.PHRASAL_VERB -> context.getString(R.string.dictionary_part_of_speech_phrasal_verb)
+    PartOfSpeech.GERUND -> context.getString(R.string.dictionary_part_of_speech_gerund)
+    PartOfSpeech.PROPER_NOUN -> context.getString(R.string.dictionary_part_of_speech_proper_noun)
+    PartOfSpeech.IDIOM -> context.getString(R.string.dictionary_part_of_speech_idiom)
+    PartOfSpeech.UNKNOWN -> context.getString(R.string.dictionary_part_of_speech_noun)
+}
+
+private fun TagType.localizedNameRes(): Int = when (this) {
+    TagType.IS_IDIOM -> R.string.dictionary_tag_is_idiom
+    TagType.IS_PHRASAL -> R.string.dictionary_tag_is_phrasal
+    TagType.IS_COLLOCATION -> R.string.dictionary_tag_is_collocation
+    TagType.CASE_SENSITIVE -> R.string.dictionary_tag_case_sensitive
+    TagType.IS_FIXED_EXPRESSION -> R.string.dictionary_tag_is_fixed_expression
+    TagType.PLURAL -> R.string.dictionary_tag_plural
+    TagType.PAST_SIMPLE -> R.string.dictionary_tag_past_simple
+    TagType.PAST_PARTICIPLE -> R.string.dictionary_tag_past_participle
+    TagType.COMPARATIVE -> R.string.dictionary_tag_comparative
+    TagType.SUPERLATIVE -> R.string.dictionary_tag_superlative
 }
 

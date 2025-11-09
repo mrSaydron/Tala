@@ -13,9 +13,24 @@
         android:layout_marginTop="16dp"
         android:text="@string/dictionary_list_title"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/dictionaryAddButton"
+        app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_goneMarginEnd="16dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/dictionaryAddButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/dictionary_add_button"
+        app:icon="@drawable/ic_add"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp"
+        app:layout_constraintBaseline_toBaselineOf="@id/dictionaryTitleTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/dictionaryTitleTextView" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dictionaryRecyclerView"
