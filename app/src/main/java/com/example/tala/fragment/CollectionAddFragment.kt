@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
-import com.example.tala.databinding.FragmentCollectionListBinding
+import com.example.tala.databinding.FragmentCollectionAddBinding
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryViewModel
 import com.example.tala.entity.dictionaryCollection.DictionaryCollection
@@ -22,9 +22,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class CollectionListFragment : Fragment() {
+class CollectionAddFragment : Fragment() {
 
-    private var _binding: FragmentCollectionListBinding? = null
+    private var _binding: FragmentCollectionAddBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var dictionaryCollectionViewModel: DictionaryCollectionViewModel
@@ -51,7 +51,7 @@ class CollectionListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentCollectionListBinding.inflate(inflater, container, false)
+        _binding = FragmentCollectionAddBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -263,8 +263,8 @@ class CollectionListFragment : Fragment() {
         private const val ARG_COLLECTION_ID = "collection_id"
         private const val SELECT_WORD_REQUEST_KEY = "collection_select_word"
 
-        fun newInstance(collectionId: Int? = null): CollectionListFragment {
-            val fragment = CollectionListFragment()
+        fun newInstance(collectionId: Int? = null): CollectionAddFragment {
+            val fragment = CollectionAddFragment()
             fragment.arguments = Bundle().apply {
                 collectionId?.let { putInt(ARG_COLLECTION_ID, it) }
             }
