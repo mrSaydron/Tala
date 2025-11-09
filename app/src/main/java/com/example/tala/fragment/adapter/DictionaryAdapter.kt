@@ -3,6 +3,7 @@ package com.example.tala.fragment.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -12,7 +13,8 @@ import com.example.tala.entity.dictionary.PartOfSpeech
 import com.example.tala.entity.dictionary.TagType
 
 class DictionaryAdapter(
-    private val onItemClick: (Dictionary) -> Unit
+    private val onItemClick: (Dictionary) -> Unit,
+    private val onAddToCollectionClick: ((Dictionary) -> Unit)? = null
 ) : RecyclerView.Adapter<DictionaryAdapter.DictionaryViewHolder>() {
 
     private val items: MutableList<Dictionary> = mutableListOf()
@@ -46,6 +48,7 @@ class DictionaryAdapter(
         private val tagsTextView: TextView = itemView.findViewById(R.id.tagsTextView)
         private val baseWordTextView: TextView = itemView.findViewById(R.id.baseWordTextView)
         private val hintTextView: TextView = itemView.findViewById(R.id.hintTextView)
+        private val addToCollectionButton: ImageButton = itemView.findViewById(R.id.addToCollectionButton)
 
         fun bind(entry: Dictionary) {
             wordTextView.text = entry.word
@@ -115,6 +118,17 @@ class DictionaryAdapter(
 
             itemView.setOnClickListener {
                 onItemClick(entry)
+            }
+
+            val addClick = onAddToCollectionClick
+            if (addClick != null) {
+                addToCollectionButton.isVisible = true
+                addToCollectionButton.setOnClickListener {
+                    addClick(entry)
+                }
+            } else {
+                addToCollectionButton.isVisible = false
+                addToCollectionButton.setOnClickListener(null)
             }
         }
     }

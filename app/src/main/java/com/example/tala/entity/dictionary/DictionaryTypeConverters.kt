@@ -43,20 +43,5 @@ object DictionaryTypeConverters {
         ?.toSet()
         ?: emptySet()
 
-    @TypeConverter
-    @JvmStatic
-    fun fromDictionaryIds(ids: List<Int>?): String = ids
-        ?.takeIf { it.isNotEmpty() }
-        ?.joinToString(",")
-        ?: ""
-
-    @TypeConverter
-    @JvmStatic
-    fun toDictionaryIds(value: String?): List<Int> = value
-        ?.takeIf { it.isNotBlank() }
-        ?.split(',')
-        ?.mapNotNull { it.trim().toIntOrNull() }
-        ?.filter { it >= 0 }
-        ?: emptyList()
 }
 

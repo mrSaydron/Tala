@@ -3,6 +3,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="dictionary_list_title">Словарь</string>
     <string name="dictionary_empty_state">В словаре пока нет записей</string>
+    <string name="dictionary_list_title_selection">Добавление слов</string>
     <string name="dictionary_part_of_speech_template">Часть речи: %1$s</string>
     <string name="dictionary_part_of_speech_noun">Существительное</string>
     <string name="dictionary_part_of_speech_verb">Глагол</string>
@@ -56,6 +57,7 @@
     <string name="dictionary_save_success">Слово добавлено</string>
     <string name="dictionary_update_success">Изменения сохранены</string>
     <string name="dictionary_delete_button">Удалить слово</string>
+    <string name="dictionary_add_to_collection_content_description">Добавить слово в коллекцию</string>
     <string name="dictionary_delete_success">Слово удалено</string>
     <string name="dictionary_error_not_found">Запись не найдена</string>
     <string name="dictionary_search_hint">Введите слово для поиска</string>
@@ -69,4 +71,13 @@
     <string name="dictionary_collapse_group_button">Свернуть группу</string>
     <string name="dictionary_remove_entry">Удалить элемент</string>
     <string name="dictionary_empty_results">Нет результатов</string>
+    <string name="collection_list_save_button">Сохранить</string>
+    <string name="collection_list_name_hint">Название коллекции</string>
+    <string name="collection_list_description_hint">Описание коллекции</string>
+    <string name="collection_list_add_words_button">Добавить слова</string>
+    <string name="collection_list_empty_state">В коллекции пока нет слов</string>
+    <string name="collection_list_name_required">Введите название коллекции</string>
+    <string name="collection_list_save_success">Коллекция сохранена</string>
+    <string name="collection_list_save_error">Не удалось сохранить коллекцию</string>
+    <string name="collection_list_word_already_added">Слово уже добавлено в коллекцию</string>
 </resources>

@@ -1,7 +1,6 @@
 package com.example.tala.fragment
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +10,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.core.os.bundleOf
 import com.example.tala.R
 import com.example.tala.databinding.FragmentDictionaryListBinding
 import com.example.tala.entity.dictionary.DictionaryViewModel
@@ -24,6 +24,8 @@ class DictionaryListFragment : Fragment() {
 
     private lateinit var dictionaryViewModel: DictionaryViewModel
     private lateinit var dictionaryAdapter: DictionaryAdapter
+    private var selectionMode: Boolean = false
+    private var selectionResultKey: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,20 +36,37 @@ class DictionaryListFragment : Fragment() {
         return binding.root
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        selectionMode = arguments?.getBoolean(ARG_SELECTION_MODE, false) ?: false
+        selectionResultKey = arguments?.getString(ARG_SELECTION_RESULT_KEY)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
 
-        dictionaryAdapter = DictionaryAdapter { entry ->
-            openDictionaryEntry(entry.id)
-        }
+        dictionaryAdapter = DictionaryAdapter(
+            onItemClick = { entry ->
+                openDictionaryEntry(entry.id)
+            },
+            onAddToCollectionClick = if (selectionMode && !selectionResultKey.isNullOrEmpty()) {
+                { entry -> onAddDictionaryToCollection(entry.id) }
+            } else {
+                null
+            }
+        )
 
         binding.dictionaryRecyclerView.adapter = dictionaryAdapter
         binding.dictionaryRecyclerView.itemAnimator = null
 
         binding.dictionaryAddButton.setOnClickListener {
             openDictionaryEntry(null)
+        }
+
+        if (selectionMode) {
+            binding.dictionaryTitleTextView.setText(R.string.dictionary_list_title_selection)
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -81,7 +100,6 @@ class DictionaryListFragment : Fragment() {
                     binding.dictionaryEmptyStateTextView.text = getString(R.string.dictionary_empty_state)
                 }
             }.onFailure { error ->
-                Log.e(TAG, "loadDictionaryEntries", error)
                 dictionaryAdapter.submitList(emptyList())
                 binding.dictionaryRecyclerView.isVisible = false
                 binding.dictionaryEmptyStateTextView.isVisible = true
@@ -106,7 +124,32 @@ class DictionaryListFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "DictionaryListFragment"
+        private const val ARG_SELECTION_MODE = "dictionary_selection_mode"
+        private const val ARG_SELECTION_RESULT_KEY = "dictionary_selection_result_key"
+        const val RESULT_SELECTED_DICTIONARY_ID = "dictionary_selected_id"
+
+        fun newInstance(
+            selectionMode: Boolean = false,
+            selectionResultKey: String? = null
+        ): DictionaryListFragment {
+            val fragment = DictionaryListFragment()
+            fragment.arguments = Bundle().apply {
+                putBoolean(ARG_SELECTION_MODE, selectionMode)
+                selectionResultKey?.let { putString(ARG_SELECTION_RESULT_KEY, it) }
+            }
+            return fragment
+        }
+    }
+
+    private fun onAddDictionaryToCollection(dictionaryId: Int) {
+        val resultKey = selectionResultKey
+        if (!resultKey.isNullOrEmpty()) {
+            parentFragmentManager.setFragmentResult(
+                resultKey,
+                bundleOf(RESULT_SELECTED_DICTIONARY_ID to dictionaryId)
+            )
+            parentFragmentManager.popBackStack()
+        }
     }
 }
 

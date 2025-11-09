@@ -1,10 +1,11 @@
-package com.example.tala.entity.dictionary
+package com.example.tala.entity.dictionaryCollection
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 
 @Dao
 interface DictionaryCollectionDao {
@@ -23,5 +24,13 @@ interface DictionaryCollectionDao {
 
     @Query("SELECT * FROM dictionary_collections WHERE name = :name COLLATE NOCASE LIMIT 1")
     suspend fun getByName(name: String): DictionaryCollection?
+
+    @Transaction
+    @Query("SELECT * FROM dictionary_collections ORDER BY name COLLATE NOCASE")
+    suspend fun getAllWithEntries(): List<DictionaryCollectionWithEntries>
+
+    @Transaction
+    @Query("SELECT * FROM dictionary_collections WHERE id = :id")
+    suspend fun getByIdWithEntries(id: Int): DictionaryCollectionWithEntries?
 }
 

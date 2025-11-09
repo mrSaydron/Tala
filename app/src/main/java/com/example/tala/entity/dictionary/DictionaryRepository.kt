@@ -17,5 +17,8 @@ class DictionaryRepository(private val dao: DictionaryDao) {
     suspend fun getByBaseWordId(baseWordId: Int): List<Dictionary> = dao.getByBaseWordId(baseWordId)
 
     suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> = dao.getGroupByBaseId(baseWordId)
+
+    suspend fun getByIds(ids: List<Int>): List<Dictionary> =
+        if (ids.isEmpty()) emptyList() else dao.getByIds(ids)
 }
 

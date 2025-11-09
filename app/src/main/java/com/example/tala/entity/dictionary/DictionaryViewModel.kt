@@ -53,5 +53,9 @@ class DictionaryViewModel(application: Application) : AndroidViewModel(applicati
     suspend fun getByBaseWordId(baseWordId: Int): List<Dictionary> = withContext(Dispatchers.IO) {
         repository.getByBaseWordId(baseWordId)
     }
+
+    suspend fun getByIds(ids: List<Int>): List<Dictionary> = withContext(Dispatchers.IO) {
+        repository.getByIds(ids)
+    }
 }
 

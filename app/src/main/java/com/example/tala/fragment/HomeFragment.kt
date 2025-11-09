@@ -80,7 +80,7 @@ class HomeFragment : Fragment() {
         }
 
         binding.dictionaryButton.setOnClickListener {
-            val dictionaryFragment = DictionaryListFragment()
+            val dictionaryFragment = DictionaryListFragment.newInstance()
             replaceFragment(dictionaryFragment)
         }
 

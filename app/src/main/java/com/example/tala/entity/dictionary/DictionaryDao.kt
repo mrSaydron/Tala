@@ -29,5 +29,8 @@ interface DictionaryDao {
 
     @Query("SELECT * FROM dictionary WHERE base_word_id = :baseWordId OR id = :baseWordId")
     suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary>
+
+    @Query("SELECT * FROM dictionary WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Int>): List<Dictionary>
 }
 
