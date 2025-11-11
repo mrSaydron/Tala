@@ -18,11 +18,14 @@ import com.example.tala.entity.dictionaryCollection.DictionaryCollection
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionDao
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntry
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntryDao
-import com.example.tala.entity.lesson.Lesson
 import com.example.tala.entity.lessoncardtype.LessonCardType
 import com.example.tala.entity.lessoncardtype.LessonCardTypeDao
 import com.example.tala.entity.lesson.LessonDao
 import com.example.tala.entity.lessoncardtype.LessonTypeConverters
+import com.example.tala.entity.lesson.Lesson
+import com.example.tala.entity.lessonprogress.LessonProgress
+import com.example.tala.entity.lessonprogress.LessonProgressDao
+import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
 
 @Database(
     entities = [
@@ -32,15 +35,17 @@ import com.example.tala.entity.lessoncardtype.LessonTypeConverters
         DictionaryCollection::class,
         DictionaryCollectionEntry::class,
         Lesson::class,
-        LessonCardType::class
+        LessonCardType::class,
+        LessonProgress::class
     ],
-    version = 22,
+    version = 23,
     exportSchema = false
 )
 @TypeConverters(
     value = [
         DictionaryTypeConverters::class,
-        LessonTypeConverters::class
+        LessonTypeConverters::class,
+        LessonProgressTypeConverters::class
     ]
 )
 abstract class TalaDatabase : RoomDatabase() {
@@ -51,6 +56,7 @@ abstract class TalaDatabase : RoomDatabase() {
     abstract fun dictionaryCollectionEntryDao(): DictionaryCollectionEntryDao
     abstract fun lessonDao(): LessonDao
     abstract fun lessonCardTypeDao(): LessonCardTypeDao
+    abstract fun lessonProgressDao(): LessonProgressDao
 
     companion object {
         @Volatile
@@ -70,7 +76,8 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_18_19,
                         MIGRATION_19_20,
                         MIGRATION_20_21,
-                        MIGRATION_21_22
+                        MIGRATION_21_22,
+                        MIGRATION_22_23
                     )
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -225,6 +232,12 @@ abstract class TalaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                createLessonProgressTable(db)
+            }
+        }
+
         private fun recreateDictionaryTable(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `dictionary`")
             db.execSQL(
@@ -315,6 +328,35 @@ abstract class TalaDatabase : RoomDatabase() {
             )
             db.execSQL(
                 "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_card_type` ON `lesson_card_types` (`card_type`)"
+            )
+        }
+
+        private fun createLessonProgressTable(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `lesson_progress` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `lesson_id` INTEGER NOT NULL,
+                    `card_type` TEXT NOT NULL,
+                    `dictionary_id` INTEGER,
+                    `next_review_date` INTEGER,
+                    `interval_minutes` INTEGER NOT NULL,
+                    `ef` REAL NOT NULL,
+                    `status` TEXT NOT NULL,
+                    `info` TEXT,
+                    FOREIGN KEY(`lesson_id`, `card_type`) REFERENCES `lesson_card_types`(`lesson_id`, `card_type`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(`dictionary_id`) REFERENCES `dictionary`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_lesson_card` ON `lesson_progress` (`lesson_id`, `card_type`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_dictionary` ON `lesson_progress` (`dictionary_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_next_review_date` ON `lesson_progress` (`next_review_date`)"
             )
         }
     }
