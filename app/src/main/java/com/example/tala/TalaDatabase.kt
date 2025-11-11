@@ -18,6 +18,11 @@ import com.example.tala.entity.dictionaryCollection.DictionaryCollection
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionDao
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntry
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntryDao
+import com.example.tala.entity.lesson.Lesson
+import com.example.tala.entity.lessoncardtype.LessonCardType
+import com.example.tala.entity.lessoncardtype.LessonCardTypeDao
+import com.example.tala.entity.lesson.LessonDao
+import com.example.tala.entity.lessoncardtype.LessonTypeConverters
 
 @Database(
     entities = [
@@ -25,18 +30,27 @@ import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntryDao
         CardCollection::class,
         Dictionary::class,
         DictionaryCollection::class,
-        DictionaryCollectionEntry::class
+        DictionaryCollectionEntry::class,
+        Lesson::class,
+        LessonCardType::class
     ],
-    version = 20,
+    version = 22,
     exportSchema = false
 )
-@TypeConverters(DictionaryTypeConverters::class)
+@TypeConverters(
+    value = [
+        DictionaryTypeConverters::class,
+        LessonTypeConverters::class
+    ]
+)
 abstract class TalaDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun collectionsDao(): CollectionDao
     abstract fun dictionaryDao(): DictionaryDao
     abstract fun dictionaryCollectionDao(): DictionaryCollectionDao
     abstract fun dictionaryCollectionEntryDao(): DictionaryCollectionEntryDao
+    abstract fun lessonDao(): LessonDao
+    abstract fun lessonCardTypeDao(): LessonCardTypeDao
 
     companion object {
         @Volatile
@@ -54,7 +68,9 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_16_17,
                         MIGRATION_17_18,
                         MIGRATION_18_19,
-                        MIGRATION_19_20
+                        MIGRATION_19_20,
+                        MIGRATION_20_21,
+                        MIGRATION_21_22
                     )
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -197,6 +213,18 @@ abstract class TalaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                createLessonsTable(db)
+            }
+        }
+
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                createLessonCardTypesTable(db)
+            }
+        }
+
         private fun recreateDictionaryTable(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `dictionary`")
             db.execSQL(
@@ -252,6 +280,41 @@ abstract class TalaDatabase : RoomDatabase() {
             )
             db.execSQL(
                 "CREATE INDEX IF NOT EXISTS `index_dictionary_collection_entries_dictionary` ON `dictionary_collection_entries` (`dictionary_id`)"
+            )
+        }
+
+        private fun createLessonsTable(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `lessons` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `full_name` TEXT NOT NULL,
+                    `collection_id` INTEGER NOT NULL,
+                    FOREIGN KEY(`collection_id`) REFERENCES `collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_lessons_name` ON `lessons` (`name`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_lessons_collection_id` ON `lessons` (`collection_id`)")
+        }
+
+        private fun createLessonCardTypesTable(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `lesson_card_types` (
+                    `lesson_id` INTEGER NOT NULL,
+                    `card_type` TEXT NOT NULL,
+                    PRIMARY KEY(`lesson_id`, `card_type`),
+                    FOREIGN KEY(`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_lesson_id` ON `lesson_card_types` (`lesson_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_card_type` ON `lesson_card_types` (`card_type`)"
             )
         }
     }

@@ -80,4 +80,11 @@
     <string name="collection_list_save_success">Коллекция сохранена</string>
     <string name="collection_list_save_error">Не удалось сохранить коллекцию</string>
     <string name="collection_list_word_already_added">Слово уже добавлено в коллекцию</string>
+    <string name="collection_overview_title">Коллекции</string>
+    <string name="collection_overview_add_button">Создать</string>
+    <string name="collection_overview_empty_state">Коллекций пока нет</string>
+    <string name="collection_overview_error_state">Не удалось загрузить коллекции</string>
+    <string name="lesson_list_title">Уроки</string>
+    <string name="lesson_list_empty_state">Уроков пока нет</string>
+    <string name="lesson_list_error_state">Не удалось загрузить уроки</string>
 </resources>

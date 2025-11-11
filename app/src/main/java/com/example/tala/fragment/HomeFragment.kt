@@ -84,6 +84,16 @@ class HomeFragment : Fragment() {
             replaceFragment(dictionaryFragment)
         }
 
+        binding.collectionListButton.setOnClickListener {
+            val collectionListFragment = CollectionListFragment()
+            replaceFragment(collectionListFragment)
+        }
+
+        binding.lessonListButton.setOnClickListener {
+            val lessonListFragment = LessonListFragment()
+            replaceFragment(lessonListFragment)
+        }
+
         binding.settingsButton.setOnClickListener {
             val settingsFragment = SettingsFragment()
             replaceFragment(settingsFragment)
