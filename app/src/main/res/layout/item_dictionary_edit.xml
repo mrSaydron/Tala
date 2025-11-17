@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="8dp"
@@ -114,6 +115,46 @@
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <LinearLayout
+            android:id="@+id/imageContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/imagePreview"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@string/dictionary_image_edit_content_description"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_image"
+                tools:src="@drawable/ic_image" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/selectImageButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dictionary_image_pick_button" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/removeImageButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dictionary_image_remove_button"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -139,89 +180,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:visibility="gone"
             app:singleLine="false"
-            app:singleSelection="false">
+            app:singleSelection="false" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipIsIdiom"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_is_idiom" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tagPickerLayout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/dictionary_tag_picker_hint"
+            app:endIconMode="dropdown_menu">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipIsPhrasal"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/tagPickerAutoComplete"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_is_phrasal" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipIsCollocation"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_is_collocation" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCaseSensitive"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_case_sensitive" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipIsFixedExpression"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_is_fixed_expression" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipPlural"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_plural" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipPastSimple"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_past_simple" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipPastParticiple"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_past_participle" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipComparative"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_comparative" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipSuperlative"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="true"
-                android:text="@string/dictionary_tag_superlative" />
-        </com.google.android.material.chip.ChipGroup>
+                android:inputType="none"
+                android:importantForAutofill="no" />
+        </com.google.android.material.textfield.TextInputLayout>
 
     </LinearLayout>
 

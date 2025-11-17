@@ -87,12 +87,14 @@ class DictionaryListFragment : Fragment() {
             binding.dictionaryEmptyStateTextView.isVisible = false
 
             runCatching {
-                dictionaryViewModel.getAll()
+                dictionaryViewModel.getBaseEntriesWithDependentCount()
             }.onSuccess { entries ->
-                val baseEntries = entries.filter { entry ->
-                    entry.baseWordId == null || entry.baseWordId == entry.id
-                }
-                val sortedEntries = baseEntries.sortedWith(compareBy({ it.word.lowercase() }, { it.translation.lowercase() }))
+                val sortedEntries = entries.sortedWith(
+                    compareBy(
+                        { it.dictionary.word.lowercase() },
+                        { it.dictionary.translation.lowercase() }
+                    )
+                )
                 dictionaryAdapter.submitList(sortedEntries)
                 binding.dictionaryRecyclerView.isVisible = sortedEntries.isNotEmpty()
                 binding.dictionaryEmptyStateTextView.isVisible = sortedEntries.isEmpty()

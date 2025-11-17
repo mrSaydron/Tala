@@ -34,6 +34,8 @@ data class Dictionary(
     val partOfSpeech: DictionaryPartOfSpeech,
     val ipa: String? = null,
     val hint: String? = null,
+    @ColumnInfo(name = "image_path")
+    val imagePath: String? = null,
     @ColumnInfo(name = "base_word_id")
     val baseWordId: Int? = null,
     val frequency: Double? = null,

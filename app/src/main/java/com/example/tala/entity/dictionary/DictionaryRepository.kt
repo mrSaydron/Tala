@@ -10,6 +10,11 @@ class DictionaryRepository(private val dao: DictionaryDao) {
 
     suspend fun getAll(): List<Dictionary> = dao.getAll()
 
+    suspend fun getBaseEntries(): List<Dictionary> = dao.getBaseEntries()
+
+    suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> =
+        dao.getBaseEntriesWithDependentCount()
+
     suspend fun getById(id: Int): Dictionary? = dao.getById(id)
 
     suspend fun getByWord(word: String): List<Dictionary> = dao.getByWord(word)
@@ -17,6 +22,8 @@ class DictionaryRepository(private val dao: DictionaryDao) {
     suspend fun getByBaseWordId(baseWordId: Int): List<Dictionary> = dao.getByBaseWordId(baseWordId)
 
     suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> = dao.getGroupByBaseId(baseWordId)
+
+    suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> = dao.getGroupByEntryId(entryId)
 
     suspend fun getByIds(ids: List<Int>): List<Dictionary> =
         if (ids.isEmpty()) emptyList() else dao.getByIds(ids)

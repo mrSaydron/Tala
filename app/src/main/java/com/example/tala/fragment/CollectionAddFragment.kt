@@ -17,7 +17,10 @@ import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryViewModel
 import com.example.tala.entity.dictionaryCollection.DictionaryCollection
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionViewModel
+import com.example.tala.entity.lessoncardtype.LessonCardType
+import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
 import com.example.tala.fragment.adapter.CollectionWordsAdapter
+import com.example.tala.model.enums.CardTypeEnum
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,8 +32,10 @@ class CollectionAddFragment : Fragment() {
 
     private lateinit var dictionaryCollectionViewModel: DictionaryCollectionViewModel
     private lateinit var dictionaryViewModel: DictionaryViewModel
+    private lateinit var lessonCardTypeViewModel: LessonCardTypeViewModel
     private val wordsAdapter = CollectionWordsAdapter()
     private val selectedDictionaries: MutableList<Dictionary> = mutableListOf()
+    private val selectedCardTypes: MutableList<CardTypeEnum> = mutableListOf()
 
     private var collectionId: Int? = null
 
@@ -43,6 +48,16 @@ class CollectionAddFragment : Fragment() {
             if (dictionaryId > 0) {
                 onDictionaryChosen(dictionaryId)
             }
+        }
+
+        parentFragmentManager.setFragmentResultListener(CollectionCardTypeFragment.RESULT_KEY_CARD_TYPES, this) { _, bundle ->
+            val selected = bundle.getStringArrayList(CollectionCardTypeFragment.RESULT_SELECTED_CARD_TYPES)
+                ?.mapNotNull { runCatching { CardTypeEnum.valueOf(it) }.getOrNull() }
+                ?: emptyList()
+            selectedCardTypes.clear()
+            selectedCardTypes.addAll(selected)
+            applyDefaultCardTypesIfEmpty()
+            updateCardTypeSummary()
         }
     }
 
@@ -61,13 +76,20 @@ class CollectionAddFragment : Fragment() {
         dictionaryCollectionViewModel =
             ViewModelProvider(requireActivity())[DictionaryCollectionViewModel::class.java]
         dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
+        lessonCardTypeViewModel =
+            ViewModelProvider(requireActivity())[LessonCardTypeViewModel::class.java]
 
         setupToolbar()
         setupRecyclerView()
         setupButtons()
+        setupCardTypeCard()
         applyWindowInsets()
 
-        collectionId?.let { loadCollection(it) } ?: updateWordsList()
+        collectionId?.let { loadCollection(it) } ?: run {
+            applyDefaultCardTypesIfEmpty()
+            updateCardTypeSummary()
+            updateWordsList()
+        }
     }
 
     private fun setupToolbar() {
@@ -90,12 +112,45 @@ class CollectionAddFragment : Fragment() {
         }
     }
 
+    private fun setupCardTypeCard() {
+        binding.collectionCardTypeCard.setOnClickListener {
+            openCardTypeSelection()
+        }
+    }
+
     private fun applyWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.collectionToolbar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(v.paddingLeft, systemBars.top, v.paddingRight, v.paddingBottom)
             WindowInsetsCompat.CONSUMED
         }
+    }
+
+    private fun openCardTypeSelection() {
+        applyDefaultCardTypesIfEmpty()
+        val fragment = CollectionCardTypeFragment.newInstance(selectedCardTypes)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun applyDefaultCardTypesIfEmpty() {
+        if (selectedCardTypes.isEmpty()) {
+            selectedCardTypes.addAll(CardTypeEnum.values().filter { it.use })
+        }
+    }
+
+    private fun updateCardTypeSummary() {
+        val binding = _binding ?: return
+        val summary = if (selectedCardTypes.isEmpty()) {
+            getString(R.string.collection_card_type_empty)
+        } else {
+            selectedCardTypes
+                .sortedBy { it.ordinal }
+                .joinToString(separator = ", ") { it.titleRu }
+        }
+        binding.collectionCardTypeValueTextView.text = summary
     }
 
     private fun openDictionarySelection() {
@@ -152,9 +207,15 @@ class CollectionAddFragment : Fragment() {
                 }
                 selectedDictionaries.clear()
                 selectedDictionaries.addAll(dictionaries.sortedBy { it.word.lowercase() })
+
+                val cardTypes = lessonCardTypeViewModel.getByCollectionId(id)
+                selectedCardTypes.clear()
+                selectedCardTypes.addAll(cardTypes.map { it.cardType })
             }
 
             updateWordsList()
+            applyDefaultCardTypesIfEmpty()
+            updateCardTypeSummary()
             setLoading(false)
         }
     }
@@ -214,6 +275,11 @@ class CollectionAddFragment : Fragment() {
         val description = binding.collectionDescriptionEditText.text?.toString()?.trim()
             ?.takeIf { it.isNotBlank() }
 
+        if (selectedCardTypes.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.collection_card_type_error_required, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             setLoading(true)
             val saved = runCatching {
@@ -232,6 +298,14 @@ class CollectionAddFragment : Fragment() {
                 dictionaryCollectionViewModel.replaceCollectionDictionariesSync(
                     targetCollectionId,
                     selectedDictionaries.map { it.id }.distinct()
+                )
+                lessonCardTypeViewModel.replaceForCollection(
+                    targetCollectionId,
+                    selectedCardTypes
+                        .sortedBy { it.ordinal }
+                        .map { cardType ->
+                        LessonCardType(collectionId = targetCollectionId, cardType = cardType)
+                    }
                 )
             }.isSuccess
 
@@ -252,6 +326,7 @@ class CollectionAddFragment : Fragment() {
         binding.collectionAddWordsButton.isEnabled = !isLoading
         binding.collectionNameLayout.isEnabled = !isLoading
         binding.collectionDescriptionLayout.isEnabled = !isLoading
+        binding.collectionCardTypeCard.isEnabled = !isLoading
     }
 
     override fun onDestroyView() {

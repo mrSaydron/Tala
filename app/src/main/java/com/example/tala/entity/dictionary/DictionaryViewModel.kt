@@ -38,12 +38,24 @@ class DictionaryViewModel(application: Application) : AndroidViewModel(applicati
         repository.getAll()
     }
 
+    suspend fun getBaseEntries(): List<Dictionary> = withContext(Dispatchers.IO) {
+        repository.getBaseEntries()
+    }
+
+    suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> = withContext(Dispatchers.IO) {
+        repository.getBaseEntriesWithDependentCount()
+    }
+
     suspend fun getById(id: Int): Dictionary? = withContext(Dispatchers.IO) {
         repository.getById(id)
     }
 
     suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> = withContext(Dispatchers.IO) {
         repository.getGroupByBaseId(baseWordId)
+    }
+
+    suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> = withContext(Dispatchers.IO) {
+        repository.getGroupByEntryId(entryId)
     }
 
     suspend fun getByWord(word: String): List<Dictionary> = withContext(Dispatchers.IO) {

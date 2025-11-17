@@ -1,10 +1,13 @@
 package com.example.tala.fragment
 
+import android.app.Activity.RESULT_OK
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -20,10 +23,17 @@ import com.example.tala.fragment.adapter.DictionaryEditGroup
 import com.example.tala.fragment.adapter.DictionaryEditGroupAdapter
 import com.example.tala.fragment.adapter.DictionaryEditItem
 import com.example.tala.fragment.adapter.DictionaryGroupPayload
+import com.example.tala.fragment.dialog.ImagePickerDialog
+import com.example.tala.integration.picture.ImageRepository
 import com.example.tala.service.DictionarySearchProvider
 import com.example.tala.service.GeminiDictionarySearchProvider
 import com.example.tala.service.YandexDictionarySearchProvider
+import com.example.tala.util.ImageStorage
+import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
+import java.io.File
+
+private data class ImageTarget(val groupIndex: Int, val itemIndex: Int)
 
 class DictionaryAddFragment : Fragment() {
 
@@ -40,6 +50,22 @@ class DictionaryAddFragment : Fragment() {
 
     private var entryId: Int? = null
     private var existingEntry: Dictionary? = null
+    private val imageRepo by lazy { ImageRepository() }
+    private var pendingPickerTarget: ImageTarget? = null
+    private var pendingCropTarget: ImageTarget? = null
+
+    private val cropLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) {
+                pendingCropTarget = null
+                return@registerForActivityResult
+            }
+            val target = pendingCropTarget ?: return@registerForActivityResult
+            val data = result.data ?: return@registerForActivityResult
+            val outputUri = UCrop.getOutput(data) ?: return@registerForActivityResult
+            applyImage(target, outputUri)
+            pendingCropTarget = null
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +88,7 @@ class DictionaryAddFragment : Fragment() {
 
         setupRecycler()
         setupButtons()
+        setupImagePickerListener()
 
         if (entryId != null) {
             binding.dictionarySearchContainer.isVisible = false
@@ -80,7 +107,9 @@ class DictionaryAddFragment : Fragment() {
         groupAdapter = DictionaryEditGroupAdapter(
             partOfSpeechItems = partOfSpeechItems,
             levelItems = levelItems,
-            onGroupsChanged = { updateEmptyState() }
+            onGroupsChanged = { updateEmptyState() },
+            onSelectImage = { groupIndex, itemIndex -> openImagePickerForItem(groupIndex, itemIndex) },
+            onRemoveImage = { groupIndex, itemIndex -> removeImageForItem(groupIndex, itemIndex) }
         )
         binding.dictionaryGroupsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.dictionaryGroupsRecyclerView.adapter = groupAdapter
@@ -95,14 +124,12 @@ class DictionaryAddFragment : Fragment() {
 
     private fun loadEntry(id: Int) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val entry = dictionaryViewModel.getById(id)
-            if (entry == null) {
+            val group = dictionaryViewModel.getGroupByEntryId(id)
+            if (group.isEmpty()) {
                 Toast.makeText(requireContext(), getString(R.string.dictionary_error_not_found), Toast.LENGTH_SHORT).show()
                 parentFragmentManager.popBackStack()
                 return@launch
             }
-            val baseId = entry.baseWordId ?: entry.id
-            val group = dictionaryViewModel.getGroupByBaseId(baseId)
             populateEntry(group)
         }
     }
@@ -199,6 +226,100 @@ class DictionaryAddFragment : Fragment() {
         if (newPayloads.isNotEmpty()) {
             saveNewGroups(newPayloads)
         }
+    }
+
+    private fun setupImagePickerListener() {
+        parentFragmentManager.setFragmentResultListener(
+            ImagePickerDialog.RESULT_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
+            val target = pendingPickerTarget ?: return@setFragmentResultListener
+            val selection = bundle.getString(ImagePickerDialog.KEY_URL_OR_URI).orEmpty()
+            if (selection.isBlank()) {
+                pendingPickerTarget = null
+                return@setFragmentResultListener
+            }
+            handleSelectedImage(target, selection)
+        }
+    }
+
+    private fun openImagePickerForItem(groupIndex: Int, itemIndex: Int) {
+        pendingPickerTarget = ImageTarget(groupIndex, itemIndex)
+        val item = groupAdapter.getGroups()
+            .getOrNull(groupIndex)
+            ?.items
+            ?.getOrNull(itemIndex)
+        val query = item?.word?.takeIf { it.isNotBlank() }
+            ?: item?.translation?.takeIf { it.isNotBlank() }
+            ?: ""
+        ImagePickerDialog.newInstance(query)
+            .show(parentFragmentManager, "DictionaryImagePickerDialog")
+    }
+
+    private fun removeImageForItem(groupIndex: Int, itemIndex: Int) {
+        groupAdapter.updateItemImage(groupIndex, itemIndex, null)
+    }
+
+    private fun handleSelectedImage(target: ImageTarget, urlOrUri: String) {
+        if (urlOrUri.startsWith("http", ignoreCase = true)) {
+            downloadImage(urlOrUri) { file ->
+                if (!isAdded) return@downloadImage
+                val localFile = file?.let { ImageStorage.copyFileToInternal(requireContext(), it) } ?: file
+                val localUri = localFile?.let { Uri.fromFile(it) }
+                if (localUri != null) {
+                    setImageWithOptionalCrop(target, localUri)
+                } else {
+                    Toast.makeText(requireContext(), R.string.dictionary_error_state, Toast.LENGTH_SHORT).show()
+                    if (pendingPickerTarget == target) {
+                        pendingPickerTarget = null
+                    }
+                }
+            }
+        } else {
+            val pickedUri = Uri.parse(urlOrUri)
+            val localFile = ImageStorage.copyUriToInternal(requireContext(), pickedUri)
+            val localUri = localFile?.let { Uri.fromFile(it) } ?: pickedUri
+            setImageWithOptionalCrop(target, localUri)
+        }
+    }
+
+    private fun setImageWithOptionalCrop(target: ImageTarget, uri: Uri) {
+        if (!isAdded) return
+        if (ImageStorage.shouldCrop(requireContext(), uri)) {
+            startCropping(target, uri)
+        } else {
+            applyImage(target, uri)
+            if (pendingPickerTarget == target) {
+                pendingPickerTarget = null
+            }
+        }
+    }
+
+    private fun startCropping(target: ImageTarget, uri: Uri) {
+        if (!isAdded) return
+        pendingCropTarget = target
+        val destinationUri = Uri.fromFile(
+            File(
+                ImageStorage.getAppImagesDir(requireContext()),
+                "cropped_${System.currentTimeMillis()}.jpg"
+            )
+        )
+        val uCrop = UCrop.of(uri, destinationUri)
+            .withAspectRatio(1f, 1f)
+            .withMaxResultSize(1280, 1280)
+        cropLauncher.launch(uCrop.getIntent(requireContext()))
+    }
+
+    private fun applyImage(target: ImageTarget, uri: Uri) {
+        if (!isAdded) return
+        groupAdapter.updateItemImage(target.groupIndex, target.itemIndex, uri.toString())
+        if (pendingPickerTarget == target) {
+            pendingPickerTarget = null
+        }
+    }
+
+    private fun downloadImage(imageUrl: String, callback: (File?) -> Unit) {
+        imageRepo.downloadToFile(requireContext(), imageUrl, callback)
     }
 
     private fun handleDelete() {

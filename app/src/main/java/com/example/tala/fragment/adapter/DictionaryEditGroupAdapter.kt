@@ -15,6 +15,8 @@ class DictionaryEditGroupAdapter(
     private val partOfSpeechItems: List<PartOfSpeech>,
     private val levelItems: List<DictionaryLevel?>,
     private val onGroupsChanged: () -> Unit,
+    private val onSelectImage: (groupIndex: Int, itemIndex: Int) -> Unit,
+    private val onRemoveImage: (groupIndex: Int, itemIndex: Int) -> Unit,
 ) : RecyclerView.Adapter<DictionaryEditGroupAdapter.GroupViewHolder>() {
 
     private val groups = mutableListOf<DictionaryEditGroup>()
@@ -74,6 +76,35 @@ class DictionaryEditGroupAdapter(
 
     fun getGroups(): List<DictionaryEditGroup> = groups
 
+    fun updateItemImage(groupIndex: Int, itemIndex: Int, imagePath: String?) {
+        val group = groups.getOrNull(groupIndex) ?: return
+        if (itemIndex !in group.items.indices) return
+
+        val normalizedPath = imagePath.orEmpty()
+        group.items[itemIndex].imagePath = normalizedPath
+
+        val baseId = group.baseWordId
+        val isBaseItem = when {
+            itemIndex == 0 -> true
+            baseId != null -> {
+                val item = group.items[itemIndex]
+                item.id == baseId || item.baseWordId == null
+            }
+            else -> false
+        }
+
+        if (isBaseItem && normalizedPath.isNotBlank()) {
+            group.items.forEachIndexed { index, item ->
+                if (index != itemIndex && item.imagePath.isBlank()) {
+                    item.imagePath = normalizedPath
+                }
+            }
+        }
+
+        notifyItemChanged(groupIndex)
+        onGroupsChanged()
+    }
+
     fun validateAndBuildGroups(): List<DictionaryGroupPayload>? {
         var isValid = true
         attachedHolders.forEach { holder ->
@@ -115,7 +146,9 @@ class DictionaryEditGroupAdapter(
             entryAdapter = DictionaryEditAdapter(
                 partOfSpeechItems = partOfSpeechItems,
                 levelItems = levelItems,
-                onRemoveItem = { position -> handleEntryRemoved(position) }
+                onRemoveItem = { position -> handleEntryRemoved(position) },
+                onSelectImage = { position -> handleSelectImage(position) },
+                onRemoveImage = { position -> handleRemoveImage(position) },
             )
 
             binding.groupEntriesRecyclerView.layoutManager = LinearLayoutManager(binding.root.context)
@@ -156,6 +189,18 @@ class DictionaryEditGroupAdapter(
             group.items.removeAt(position)
             entryAdapter.submitItems(group.items.toList())
             updateRemovalState(group)
+        }
+
+        private fun handleSelectImage(position: Int) {
+            val groupIndex = adapterPosition
+            if (groupIndex == RecyclerView.NO_POSITION) return
+            onSelectImage(groupIndex, position)
+        }
+
+        private fun handleRemoveImage(position: Int) {
+            val groupIndex = adapterPosition
+            if (groupIndex == RecyclerView.NO_POSITION) return
+            onRemoveImage(groupIndex, position)
         }
 
         fun bind(group: DictionaryEditGroup, position: Int) {

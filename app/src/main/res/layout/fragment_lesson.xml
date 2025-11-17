@@ -4,37 +4,34 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="16dp">
+    android:padding="16dp">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/lessonAddButton"
-        android:layout_width="wrap_content"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/lessonToolbar"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/lesson_list_add_button"
-        app:icon="@drawable/ic_add"
-        app:iconGravity="textStart"
-        app:iconPadding="8dp"
+        android:background="?attr/colorSurface"
+        android:elevation="0dp"
+        android:theme="?attr/actionBarTheme"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="@string/lesson_fragment_title" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/lessonRecyclerView"
+    <FrameLayout
+        android:id="@+id/reviewContentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lessonAddButton"
-        tools:listitem="@layout/item_lesson_entry" />
+        app:layout_constraintTop_toBottomOf="@id/lessonToolbar"
+        tools:ignore="MissingConstraints"
+        tools:layout="@layout/fragment_translate_card_type" />
 
     <ProgressBar
-        android:id="@+id/lessonListProgressBar"
+        android:id="@+id/lessonProgressBar"
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -45,11 +42,11 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/lessonListEmptyState"
+        android:id="@+id/lessonEmptyStateTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="@string/lesson_list_empty_state"
+        android:text="@string/lesson_fragment_empty_state"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"

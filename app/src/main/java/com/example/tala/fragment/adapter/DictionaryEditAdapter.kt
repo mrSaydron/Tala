@@ -8,17 +8,21 @@ import android.widget.ArrayAdapter
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.tala.R
 import com.example.tala.databinding.ItemDictionaryEditBinding
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryLevel
 import com.example.tala.entity.dictionary.PartOfSpeech
 import com.example.tala.entity.dictionary.TagType
+import com.google.android.material.chip.Chip
 
 class DictionaryEditAdapter(
     private val partOfSpeechItems: List<PartOfSpeech>,
     private val levelItems: List<DictionaryLevel?>,
     private val onRemoveItem: (Int) -> Unit,
+    private val onSelectImage: (position: Int) -> Unit,
+    private val onRemoveImage: (position: Int) -> Unit,
 ) : RecyclerView.Adapter<DictionaryEditAdapter.DictionaryEditViewHolder>() {
 
     private val items = mutableListOf<DictionaryEditItem>()
@@ -88,10 +92,13 @@ class DictionaryEditAdapter(
         private var currentItem: DictionaryEditItem? = null
         private var isBinding: Boolean = false
 
+        private val tagItems = TagType.values().toList()
+        private var availableTags: List<TagType> = emptyList()
+
         init {
             setupTextWatchers()
             setupSpinners()
-            setupChips()
+            setupTagPicker()
             binding.removeEntryButton.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
@@ -145,16 +152,34 @@ class DictionaryEditAdapter(
             val levelIndex = levelItems.indexOf(item.level).takeIf { it >= 0 } ?: 0
             binding.levelSpinner.setSelection(levelIndex, false)
 
-            binding.chipIsIdiom.isChecked = item.tags.contains(TagType.IS_IDIOM)
-            binding.chipIsPhrasal.isChecked = item.tags.contains(TagType.IS_PHRASAL)
-            binding.chipIsCollocation.isChecked = item.tags.contains(TagType.IS_COLLOCATION)
-            binding.chipCaseSensitive.isChecked = item.tags.contains(TagType.CASE_SENSITIVE)
-            binding.chipIsFixedExpression.isChecked = item.tags.contains(TagType.IS_FIXED_EXPRESSION)
-            binding.chipPlural.isChecked = item.tags.contains(TagType.PLURAL)
-            binding.chipPastSimple.isChecked = item.tags.contains(TagType.PAST_SIMPLE)
-            binding.chipPastParticiple.isChecked = item.tags.contains(TagType.PAST_PARTICIPLE)
-            binding.chipComparative.isChecked = item.tags.contains(TagType.COMPARATIVE)
-            binding.chipSuperlative.isChecked = item.tags.contains(TagType.SUPERLATIVE)
+            val imagePath = item.imagePath
+            if (!imagePath.isNullOrBlank()) {
+                Glide.with(binding.root)
+                    .load(imagePath)
+                    .placeholder(R.drawable.ic_image)
+                    .centerCrop()
+                    .into(binding.imagePreview)
+                binding.removeImageButton.isVisible = true
+            } else {
+                binding.imagePreview.setImageResource(R.drawable.ic_image)
+                binding.removeImageButton.isVisible = false
+            }
+
+            binding.selectImageButton.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onSelectImage(position)
+                }
+            }
+            binding.removeImageButton.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onRemoveImage(position)
+                }
+            }
+
+            refreshTagChips()
+            updateTagPickerOptions()
 
             clearErrors()
             isBinding = false
@@ -248,31 +273,69 @@ class DictionaryEditAdapter(
             }
         }
 
-        private fun setupChips() {
-            val chipViews = listOf(
-                binding.chipIsIdiom to TagType.IS_IDIOM,
-                binding.chipIsPhrasal to TagType.IS_PHRASAL,
-                binding.chipIsCollocation to TagType.IS_COLLOCATION,
-                binding.chipCaseSensitive to TagType.CASE_SENSITIVE,
-                binding.chipIsFixedExpression to TagType.IS_FIXED_EXPRESSION,
-                binding.chipPlural to TagType.PLURAL,
-                binding.chipPastSimple to TagType.PAST_SIMPLE,
-                binding.chipPastParticiple to TagType.PAST_PARTICIPLE,
-                binding.chipComparative to TagType.COMPARATIVE,
-                binding.chipSuperlative to TagType.SUPERLATIVE,
+        private fun setupTagPicker() {
+            val context = binding.root.context
+            val autoComplete = binding.tagPickerAutoComplete
+            val adapter = ArrayAdapter<String>(
+                context,
+                android.R.layout.simple_dropdown_item_1line,
+                mutableListOf()
             )
+            autoComplete.setAdapter(adapter)
+            autoComplete.setOnItemClickListener { _, _, position, _ ->
+                val tag = availableTags.getOrNull(position) ?: return@setOnItemClickListener
+                val item = currentItem ?: return@setOnItemClickListener
+                if (item.tags.add(tag)) {
+                    refreshTagChips()
+                    updateTagPickerOptions()
+                }
+                autoComplete.setText("", false)
+            }
+            autoComplete.setOnClickListener {
+                if (availableTags.isNotEmpty()) {
+                    autoComplete.showDropDown()
+                }
+            }
+        }
 
-            chipViews.forEach { (chip, tag) ->
-                chip.text = chip.context.getString(tag.localizedNameRes())
-                chip.setOnCheckedChangeListener { _, isChecked ->
-                    if (isBinding) return@setOnCheckedChangeListener
-                    val item = currentItem ?: return@setOnCheckedChangeListener
-                    if (isChecked) {
-                        item.tags.add(tag)
-                    } else {
-                        item.tags.remove(tag)
+        private fun refreshTagChips() {
+            val item = currentItem ?: return
+            val context = binding.root.context
+            val chipGroup = binding.tagsChipGroup
+            chipGroup.removeAllViews()
+            val sortedTags = item.tags.sortedBy { context.getString(it.localizedNameRes()) }
+            sortedTags.forEach { tag ->
+                val chip = Chip(context).apply {
+                    text = context.getString(tag.localizedNameRes())
+                    isCheckable = false
+                    isCloseIconVisible = true
+                    setOnCloseIconClickListener {
+                        currentItem?.tags?.remove(tag)
+                        refreshTagChips()
+                        updateTagPickerOptions()
                     }
                 }
+                chipGroup.addView(chip)
+            }
+            chipGroup.isVisible = sortedTags.isNotEmpty()
+        }
+
+        private fun updateTagPickerOptions() {
+            val item = currentItem ?: return
+            val context = binding.root.context
+            val autoComplete = binding.tagPickerAutoComplete
+            val adapter = (autoComplete.adapter as? ArrayAdapter<String>)
+                ?: return
+            availableTags = tagItems.filterNot { item.tags.contains(it) }
+            adapter.clear()
+            adapter.addAll(availableTags.map { context.getString(it.localizedNameRes()) })
+            adapter.notifyDataSetChanged()
+
+            val hasOptions = availableTags.isNotEmpty()
+            binding.tagPickerLayout.isEnabled = hasOptions
+            binding.tagPickerLayout.isEndIconVisible = hasOptions
+            if (!hasOptions) {
+                autoComplete.setText("", false)
             }
         }
     }
@@ -310,6 +373,7 @@ data class DictionaryEditItem(
     var partOfSpeech: PartOfSpeech = PartOfSpeech.NOUN,
     var ipa: String = "",
     var hint: String = "",
+    var imagePath: String = "",
     var frequencyText: String = "",
     var level: DictionaryLevel? = null,
     val tags: MutableSet<TagType> = mutableSetOf(),
@@ -322,6 +386,7 @@ data class DictionaryEditItem(
             partOfSpeech = partOfSpeech,
             ipa = ipa.trim().takeIf { it.isNotEmpty() },
             hint = hint.trim().takeIf { it.isNotEmpty() },
+            imagePath = imagePath.trim().takeIf { it.isNotEmpty() },
             baseWordId = baseWordId,
             frequency = frequencyText.trim().takeIf { it.isNotEmpty() }?.replace(',', '.')?.toDoubleOrNull(),
             level = level,
@@ -338,6 +403,7 @@ data class DictionaryEditItem(
             partOfSpeech = dictionary.partOfSpeech,
             ipa = dictionary.ipa.orEmpty(),
             hint = dictionary.hint.orEmpty(),
+            imagePath = dictionary.imagePath.orEmpty(),
             frequencyText = dictionary.frequency?.toString().orEmpty(),
             level = dictionary.level,
             tags = dictionary.tags.toMutableSet(),

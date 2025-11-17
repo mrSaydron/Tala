@@ -5,13 +5,13 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.tala.entity.collection.CardCollection
+import com.example.tala.entity.dictionaryCollection.DictionaryCollection
 
 @Entity(
     tableName = "lessons",
     foreignKeys = [
         ForeignKey(
-            entity = CardCollection::class,
+            entity = DictionaryCollection::class,
             parentColumns = ["id"],
             childColumns = ["collection_id"],
             onDelete = ForeignKey.CASCADE,

@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/collectionToolbar"
+        android:id="@+id/lessonAddToolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
@@ -17,18 +17,18 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/collectionSaveButton"
+            android:id="@+id/lessonSaveButton"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/collection_list_save_button"
+            android:text="@string/lesson_add_save_button"
             app:icon="@drawable/ic_save"
             app:iconGravity="textStart"
             app:iconPadding="8dp" />
     </com.google.android.material.appbar.MaterialToolbar>
 
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/collectionScrollView"
+        android:id="@+id/lessonScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
@@ -39,7 +39,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/collectionToolbar">
+        app:layout_constraintTop_toBottomOf="@id/lessonAddToolbar">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,42 +47,40 @@
             android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/collectionNameLayout"
+                android:id="@+id/lessonNameLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/collection_list_name_hint">
+                android:hint="@string/lesson_add_name_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/collectionNameEditText"
+                    android:id="@+id/lessonNameEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textCapSentences" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/collectionDescriptionLayout"
+                android:id="@+id/lessonFullNameLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/collection_list_description_hint">
+                android:hint="@string/lesson_add_full_name_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/collectionDescriptionEditText"
+                    android:id="@+id/lessonFullNameEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textMultiLine"
-                    android:maxLines="4" />
+                    android:inputType="textCapSentences" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/collectionCardTypeCard"
+                android:id="@+id/lessonCollectionCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clickable="true"
-                android:focusable="true"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
 
                 <LinearLayout
@@ -92,57 +90,46 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/collectionCardTypeTitleTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/collection_card_type_title"
-                        android:textAppearance="?attr/textAppearanceTitleSmall" />
+                        android:text="@string/lesson_add_collection_hint"
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
 
                     <TextView
-                        android:id="@+id/collectionCardTypeValueTextView"
+                        android:id="@+id/lessonCollectionValueTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorSecondary"
-                        tools:text="Перевод, Обратный перевод" />
+                        android:textAppearance="?attr/textAppearanceBodyLarge"
+                        android:textStyle="bold"
+                        tools:text="Collection name" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/collectionAddWordsButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/collection_list_add_words_button"
-                app:icon="@drawable/ic_add"
-                app:iconGravity="textStart"
-                app:iconPadding="8dp" />
-
             <TextView
-                android:id="@+id/collectionEmptyStateTextView"
+                android:id="@+id/lessonCardTypeEmptyState"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 android:gravity="center"
-                android:text="@string/collection_list_empty_state"
+                android:text="@string/lesson_add_card_type_empty"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/collectionWordsRecyclerView"
+                android:id="@+id/lessonCardTypesRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_collection_word" />
+                tools:listitem="@layout/item_lesson_card_type" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
     <ProgressBar
-        android:id="@+id/collectionProgressBar"
+        android:id="@+id/lessonAddProgressBar"
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

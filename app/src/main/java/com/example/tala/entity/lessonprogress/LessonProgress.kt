@@ -6,7 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.lessoncardtype.LessonCardType
+import com.example.tala.entity.lesson.Lesson
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
 
@@ -14,9 +14,9 @@ import com.example.tala.model.enums.StatusEnum
     tableName = "lesson_progress",
     foreignKeys = [
         ForeignKey(
-            entity = LessonCardType::class,
-            parentColumns = ["lesson_id", "card_type"],
-            childColumns = ["lesson_id", "card_type"],
+            entity = Lesson::class,
+            parentColumns = ["id"],
+            childColumns = ["lesson_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.NO_ACTION
         ),

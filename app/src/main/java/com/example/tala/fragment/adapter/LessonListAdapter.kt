@@ -8,7 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tala.R
 import com.example.tala.entity.lesson.Lesson
 
-class LessonListAdapter : RecyclerView.Adapter<LessonListAdapter.LessonViewHolder>() {
+class LessonListAdapter(
+    private val onItemClick: (Lesson) -> Unit
+) : RecyclerView.Adapter<LessonListAdapter.LessonViewHolder>() {
 
     private val items: MutableList<Lesson> = mutableListOf()
 
@@ -30,11 +32,12 @@ class LessonListAdapter : RecyclerView.Adapter<LessonListAdapter.LessonViewHolde
 
     override fun getItemCount(): Int = items.size
 
-    class LessonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class LessonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val nameTextView: TextView = itemView.findViewById(R.id.lessonNameTextView)
 
         fun bind(item: Lesson) {
             nameTextView.text = item.name
+            itemView.setOnClickListener { onItemClick(item) }
         }
     }
 }

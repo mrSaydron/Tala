@@ -11,10 +11,26 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="16dp">
 
+        <ImageView
+            android:id="@+id/dictionaryImageView"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@string/dictionary_image_content_description"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_image"
+            tools:src="@drawable/ic_image" />
+
         <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -51,61 +67,13 @@
             tools:text="выполнять, завершать" />
 
         <TextView
-            android:id="@+id/partOfSpeechTextView"
-            android:layout_width="match_parent"
+                android:id="@+id/dependentCountTextView"
+                android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
             android:textAppearance="?attr/textAppearanceBodySmall"
-            tools:text="Часть речи: verb" />
-
-        <TextView
-            android:id="@+id/ipaTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            tools:text="IPA: əˈkʌmplɪʃ" />
-
-        <TextView
-            android:id="@+id/levelTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            tools:text="Уровень: B1" />
-
-        <TextView
-            android:id="@+id/frequencyTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            tools:text="Частота: 178.0" />
-
-        <TextView
-            android:id="@+id/tagsTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            tools:text="Теги: is_phrasal, case_sensitive" />
-
-        <TextView
-            android:id="@+id/baseWordTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            tools:text="Базовое слово ID: 12" />
-
-        <TextView
-            android:id="@+id/hintTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            tools:text="Совет: можно использовать в деловом контексте" />
-
+                tools:text="Связанных слов: 3" />
+        </LinearLayout>
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

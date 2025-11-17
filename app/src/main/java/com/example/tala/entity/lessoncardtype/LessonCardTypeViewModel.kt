@@ -22,21 +22,30 @@ class LessonCardTypeViewModel(application: Application) : AndroidViewModel(appli
         repository.insertAll(entities)
     }
 
+    suspend fun insertAllSync(entities: List<LessonCardType>) = withContext(Dispatchers.IO) {
+        repository.insertAll(entities)
+    }
+
     fun delete(entity: LessonCardType) = viewModelScope.launch(Dispatchers.IO) {
         repository.delete(entity)
     }
 
-    fun deleteByLessonId(lessonId: Int) = viewModelScope.launch(Dispatchers.IO) {
-        repository.deleteByLessonId(lessonId)
+    fun deleteByCollectionId(collectionId: Int) = viewModelScope.launch(Dispatchers.IO) {
+        repository.deleteByCollectionId(collectionId)
     }
 
     suspend fun getAll(): List<LessonCardType> = withContext(Dispatchers.IO) {
         repository.getAll()
     }
 
-    suspend fun getByLessonId(lessonId: Int): List<LessonCardType> = withContext(Dispatchers.IO) {
-        repository.getByLessonId(lessonId)
+    suspend fun getByCollectionId(collectionId: Int): List<LessonCardType> = withContext(Dispatchers.IO) {
+        repository.getByCollectionId(collectionId)
     }
+
+    suspend fun replaceForCollection(collectionId: Int, entities: List<LessonCardType>) =
+        withContext(Dispatchers.IO) {
+            repository.replaceForCollection(collectionId, entities)
+        }
 }
 
 

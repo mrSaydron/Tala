@@ -38,9 +38,19 @@ class LessonListFragment : Fragment() {
 
         lessonViewModel = ViewModelProvider(requireActivity())[LessonViewModel::class.java]
 
-        adapter = LessonListAdapter()
+        adapter = LessonListAdapter { lesson ->
+            openLesson(lesson.id)
+        }
         binding.lessonRecyclerView.adapter = adapter
         binding.lessonRecyclerView.itemAnimator = null
+
+        binding.lessonAddButton.setOnClickListener {
+            val fragment = LessonAddFragment()
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack(null)
+                .commit()
+        }
 
         val initialPaddingLeft = binding.root.paddingLeft
         val initialPaddingTop = binding.root.paddingTop
@@ -88,6 +98,14 @@ class LessonListFragment : Fragment() {
 
     private fun setLoading(isLoading: Boolean) {
         binding.lessonListProgressBar.isVisible = isLoading
+    }
+
+    private fun openLesson(lessonId: Int) {
+        val fragment = LessonFragment.newInstance(lessonId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onDestroyView() {

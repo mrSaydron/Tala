@@ -38,7 +38,7 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
         LessonCardType::class,
         LessonProgress::class
     ],
-    version = 23,
+    version = 26,
     exportSchema = false
 )
 @TypeConverters(
@@ -77,7 +77,10 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_19_20,
                         MIGRATION_20_21,
                         MIGRATION_21_22,
-                        MIGRATION_22_23
+                        MIGRATION_22_23,
+                        MIGRATION_23_24,
+                        MIGRATION_24_25,
+                        MIGRATION_25_26
                     )
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -238,6 +241,31 @@ abstract class TalaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `lesson_progress`")
+                db.execSQL("DROP TABLE IF EXISTS `lesson_card_types`")
+                createLessonCardTypesTable(db)
+                createLessonProgressTable(db)
+            }
+        }
+
+        private val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `lesson_progress`")
+                db.execSQL("DROP TABLE IF EXISTS `lessons`")
+                createLessonsTable(db)
+                createLessonCardTypesTable(db)
+                createLessonProgressTable(db)
+            }
+        }
+
+        private val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `dictionary` ADD COLUMN `image_path` TEXT")
+            }
+        }
+
         private fun recreateDictionaryTable(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `dictionary`")
             db.execSQL(
@@ -304,7 +332,7 @@ abstract class TalaDatabase : RoomDatabase() {
                     `name` TEXT NOT NULL,
                     `full_name` TEXT NOT NULL,
                     `collection_id` INTEGER NOT NULL,
-                    FOREIGN KEY(`collection_id`) REFERENCES `collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    FOREIGN KEY(`collection_id`) REFERENCES `dictionary_collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                 )
                 """.trimIndent()
             )
@@ -316,15 +344,15 @@ abstract class TalaDatabase : RoomDatabase() {
             db.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS `lesson_card_types` (
-                    `lesson_id` INTEGER NOT NULL,
+                    `collection_id` INTEGER NOT NULL,
                     `card_type` TEXT NOT NULL,
-                    PRIMARY KEY(`lesson_id`, `card_type`),
-                    FOREIGN KEY(`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    PRIMARY KEY(`collection_id`, `card_type`),
+                    FOREIGN KEY(`collection_id`) REFERENCES `dictionary_collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                 )
                 """.trimIndent()
             )
             db.execSQL(
-                "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_lesson_id` ON `lesson_card_types` (`lesson_id`)"
+                "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_collection_id` ON `lesson_card_types` (`collection_id`)"
             )
             db.execSQL(
                 "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_card_type` ON `lesson_card_types` (`card_type`)"
@@ -344,7 +372,7 @@ abstract class TalaDatabase : RoomDatabase() {
                     `ef` REAL NOT NULL,
                     `status` TEXT NOT NULL,
                     `info` TEXT,
-                    FOREIGN KEY(`lesson_id`, `card_type`) REFERENCES `lesson_card_types`(`lesson_id`, `card_type`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
                     FOREIGN KEY(`dictionary_id`) REFERENCES `dictionary`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
                 )
                 """.trimIndent()
