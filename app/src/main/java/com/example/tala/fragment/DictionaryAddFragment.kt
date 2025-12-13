@@ -20,9 +20,9 @@ import com.example.tala.entity.dictionary.DictionaryLevel
 import com.example.tala.entity.dictionary.DictionaryViewModel
 import com.example.tala.entity.dictionary.PartOfSpeech
 import com.example.tala.fragment.adapter.DictionaryEditGroup
-import com.example.tala.fragment.adapter.DictionaryEditGroupAdapter
 import com.example.tala.fragment.adapter.DictionaryEditItem
-import com.example.tala.fragment.adapter.DictionaryGroupPayload
+import com.example.tala.fragment.adapter.DictionaryEditorAdapter
+import com.example.tala.fragment.adapter.DictionaryEditorAdapter.DictionaryGroupPayload
 import com.example.tala.fragment.dialog.ImagePickerDialog
 import com.example.tala.integration.picture.ImageRepository
 import com.example.tala.service.DictionarySearchProvider
@@ -41,7 +41,9 @@ class DictionaryAddFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var dictionaryViewModel: DictionaryViewModel
-    private lateinit var groupAdapter: DictionaryEditGroupAdapter
+    private lateinit var groupAdapter: DictionaryEditorAdapter
+
+    private val groups: MutableList<DictionaryEditGroup> = mutableListOf()
 
     private val dictionarySearchProvider: DictionarySearchProvider =
         GeminiDictionarySearchProvider(fallbackProvider = YandexDictionarySearchProvider())
@@ -86,6 +88,7 @@ class DictionaryAddFragment : Fragment() {
 
         dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
 
+        setupToolbar()
         setupRecycler()
         setupButtons()
         setupImagePickerListener()
@@ -103,16 +106,60 @@ class DictionaryAddFragment : Fragment() {
         updateEmptyState()
     }
 
+    private fun setupToolbar() {
+        binding.dictionaryToolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+    }
+
     private fun setupRecycler() {
-        groupAdapter = DictionaryEditGroupAdapter(
+        groupAdapter = DictionaryEditorAdapter(
             partOfSpeechItems = partOfSpeechItems,
             levelItems = levelItems,
-            onGroupsChanged = { updateEmptyState() },
-            onSelectImage = { groupIndex, itemIndex -> openImagePickerForItem(groupIndex, itemIndex) },
-            onRemoveImage = { groupIndex, itemIndex -> removeImageForItem(groupIndex, itemIndex) }
+            listener = object : DictionaryEditorAdapter.Listener {
+                override fun onToggleGroup(groupIndex: Int) {
+                    val group = groups.getOrNull(groupIndex) ?: return
+                    group.isExpanded = !group.isExpanded
+                    refreshGroups()
+                }
+
+                override fun onRemoveGroup(groupIndex: Int) {
+                    if (groupIndex !in groups.indices) return
+                    groups.removeAt(groupIndex)
+                    refreshGroups()
+                }
+
+                override fun onAddWord(groupIndex: Int) {
+                    val group = groups.getOrNull(groupIndex) ?: return
+                    group.items.add(
+                        DictionaryEditItem(
+                            baseWordId = group.baseWordId,
+                            level = group.level
+                        )
+                    )
+                    refreshGroups()
+                    scrollToGroup(groupIndex)
+                }
+
+                override fun onRemoveWord(groupIndex: Int, itemIndex: Int) {
+                    val group = groups.getOrNull(groupIndex) ?: return
+                    if (group.items.size == 1 || itemIndex !in group.items.indices) return
+                    group.items.removeAt(itemIndex)
+                    refreshGroups()
+                }
+
+                override fun onSelectImage(groupIndex: Int, itemIndex: Int) {
+                    openImagePickerForItem(groupIndex, itemIndex)
+                }
+
+                override fun onRemoveImage(groupIndex: Int, itemIndex: Int) {
+                    updateItemImage(groupIndex, itemIndex, null)
+                }
+            }
         )
         binding.dictionaryGroupsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.dictionaryGroupsRecyclerView.adapter = groupAdapter
+        binding.dictionaryGroupsRecyclerView.itemAnimator = null
     }
 
     private fun setupButtons() {
@@ -139,14 +186,15 @@ class DictionaryAddFragment : Fragment() {
         existingEntry = entries.first()
         binding.deleteDictionaryButton.isVisible = true
 
-        val group = DictionaryEditGroup(
-            baseWordId = entries.first().baseWordId ?: entries.first().id,
-            level = entries.first().level,
+        groups.clear()
+        val first = entries.first()
+        groups += DictionaryEditGroup(
+            baseWordId = first.baseWordId ?: first.id,
+            level = first.level,
             items = entries.map { DictionaryEditItem.fromDictionary(it) }.toMutableList(),
             isExpanded = true
         )
-        groupAdapter.submitGroups(listOf(group))
-        updateEmptyState()
+        refreshGroups()
     }
 
     private fun handleSave() {
@@ -245,7 +293,7 @@ class DictionaryAddFragment : Fragment() {
 
     private fun openImagePickerForItem(groupIndex: Int, itemIndex: Int) {
         pendingPickerTarget = ImageTarget(groupIndex, itemIndex)
-        val item = groupAdapter.getGroups()
+        val item = groups
             .getOrNull(groupIndex)
             ?.items
             ?.getOrNull(itemIndex)
@@ -257,7 +305,7 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun removeImageForItem(groupIndex: Int, itemIndex: Int) {
-        groupAdapter.updateItemImage(groupIndex, itemIndex, null)
+        updateItemImage(groupIndex, itemIndex, null)
     }
 
     private fun handleSelectedImage(target: ImageTarget, urlOrUri: String) {
@@ -312,7 +360,7 @@ class DictionaryAddFragment : Fragment() {
 
     private fun applyImage(target: ImageTarget, uri: Uri) {
         if (!isAdded) return
-        groupAdapter.updateItemImage(target.groupIndex, target.itemIndex, uri.toString())
+        updateItemImage(target.groupIndex, target.itemIndex, uri.toString())
         if (pendingPickerTarget == target) {
             pendingPickerTarget = null
         }
@@ -345,27 +393,31 @@ class DictionaryAddFragment : Fragment() {
             result.onSuccess { grouped ->
                 val hasEntries = grouped.any { it.isNotEmpty() }
                 if (!hasEntries) {
-                    groupAdapter.submitGroups(emptyList())
+                    groups.clear()
+                    refreshGroups()
                     updateEmptyState(getString(R.string.dictionary_empty_results))
                 } else {
                     existingEntry = null
                     binding.deleteDictionaryButton.isVisible = false
-                    val groups = grouped.mapIndexed { index, dictionaries ->
-                        val baseEntry = dictionaries.firstOrNull()
+                    groups.clear()
+                    grouped.filter { it.isNotEmpty() }.forEachIndexed { index, dictionaries ->
+                        val baseEntry = dictionaries.first()
                         val items = dictionaries.map { dictionary ->
-                            DictionaryEditItem.fromDictionary(
-                                dictionary.copy(id = 0)
-                            )
+                            DictionaryEditItem.fromDictionary(dictionary.copy(id = 0))
                         }.toMutableList()
-                        DictionaryEditGroup(
-                            baseWordId = baseEntry?.baseWordId,
-                            level = baseEntry?.level,
+                        groups += DictionaryEditGroup(
+                            baseWordId = baseEntry.baseWordId,
+                            level = baseEntry.level,
                             items = items,
                             isExpanded = index == 0
                         )
                     }
-                    groupAdapter.submitGroups(groups)
-                    updateEmptyState()
+                    if (groups.isEmpty()) {
+                        updateEmptyState(getString(R.string.dictionary_empty_results))
+                    } else {
+                        refreshGroups()
+                        binding.dictionaryGroupsRecyclerView.scrollToPosition(0)
+                    }
                 }
             }.onFailure {
                 Toast.makeText(requireContext(), getString(R.string.dictionary_error_state), Toast.LENGTH_SHORT).show()
@@ -374,20 +426,24 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun addGroup() {
-        val shouldExpand = groupAdapter.itemCount == 0
+        val shouldExpand = groups.isEmpty()
         val group = DictionaryEditGroup(
             items = mutableListOf(DictionaryEditItem()),
             isExpanded = shouldExpand
         )
-        groupAdapter.addGroup(group)
-        updateEmptyState()
-        binding.dictionaryGroupsRecyclerView.post {
-            binding.dictionaryGroupsRecyclerView.smoothScrollToPosition(groupAdapter.itemCount - 1)
-        }
+        groups += group
+        refreshGroups()
+        scrollToGroup(groups.lastIndex)
     }
 
     private fun showLoading(show: Boolean) {
         binding.dictionaryProgressBar.isVisible = show
+        binding.dictionarySearchButton.isEnabled = !show
+        binding.dictionarySearchInputLayout.isEnabled = !show
+        binding.saveDictionaryButton.isEnabled = !show
+        binding.deleteDictionaryButton.isEnabled = !show
+        binding.addGroupButton.isEnabled = !show
+
         if (show) {
             binding.dictionaryGroupsRecyclerView.isVisible = false
             binding.dictionaryEmptyStateTextView.isVisible = false
@@ -397,12 +453,56 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun updateEmptyState(message: String? = null) {
-        val isEmpty = groupAdapter.itemCount == 0 && !binding.dictionaryProgressBar.isVisible
-        binding.dictionaryGroupsRecyclerView.isVisible = !isEmpty
+        val isLoading = binding.dictionaryProgressBar.isVisible
+        val isEmpty = !isLoading && groups.isEmpty()
+        binding.dictionaryGroupsRecyclerView.isVisible = !isLoading && groups.isNotEmpty()
         binding.dictionaryEmptyStateTextView.isVisible = isEmpty
         if (isEmpty) {
             binding.dictionaryEmptyStateTextView.text = message ?: getString(R.string.dictionary_empty_results)
         }
+        if (entryId == null) {
+            binding.addGroupButton.isVisible = !isLoading
+        }
+    }
+
+    private fun refreshGroups() {
+        groupAdapter.submitGroups(groups)
+        updateEmptyState()
+    }
+
+    private fun scrollToGroup(groupIndex: Int) {
+        if (groupIndex < 0) return
+        binding.dictionaryGroupsRecyclerView.post {
+            val lastPosition = groupAdapter.itemCount - 1
+            if (lastPosition >= 0) {
+                binding.dictionaryGroupsRecyclerView.smoothScrollToPosition(lastPosition)
+            }
+        }
+    }
+
+    private fun updateItemImage(groupIndex: Int, itemIndex: Int, imagePath: String?) {
+        val group = groups.getOrNull(groupIndex) ?: return
+        if (itemIndex !in group.items.indices) return
+        val normalized = imagePath.orEmpty()
+        val item = group.items[itemIndex]
+        item.imagePath = normalized
+
+        val baseId = group.baseWordId
+        val isBaseItem = when {
+            itemIndex == 0 -> true
+            baseId != null -> item.id == baseId || item.baseWordId == null
+            else -> false
+        }
+
+        if (isBaseItem && normalized.isNotBlank()) {
+            group.items.forEachIndexed { index, entry ->
+                if (index != itemIndex && entry.imagePath.isBlank()) {
+                    entry.imagePath = normalized
+                }
+            }
+        }
+
+        refreshGroups()
     }
 
     override fun onDestroyView() {

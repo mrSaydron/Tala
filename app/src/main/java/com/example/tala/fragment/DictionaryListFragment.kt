@@ -4,18 +4,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.core.os.bundleOf
 import com.example.tala.R
 import com.example.tala.databinding.FragmentDictionaryListBinding
+import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryViewModel
 import com.example.tala.fragment.adapter.DictionaryAdapter
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class DictionaryListFragment : Fragment() {
 
@@ -87,22 +90,17 @@ class DictionaryListFragment : Fragment() {
             binding.dictionaryEmptyStateTextView.isVisible = false
 
             runCatching {
-                dictionaryViewModel.getBaseEntriesWithDependentCount()
-            }.onSuccess { entries ->
-                val sortedEntries = entries.sortedWith(
-                    compareBy(
-                        { it.dictionary.word.lowercase() },
-                        { it.dictionary.translation.lowercase() }
-                    )
-                )
-                dictionaryAdapter.submitList(sortedEntries)
-                binding.dictionaryRecyclerView.isVisible = sortedEntries.isNotEmpty()
-                binding.dictionaryEmptyStateTextView.isVisible = sortedEntries.isEmpty()
-                if (sortedEntries.isEmpty()) {
+                val entries = dictionaryViewModel.getAll()
+                buildGroupedEntries(entries)
+            }.onSuccess { groups ->
+                dictionaryAdapter.submitGroups(groups)
+                binding.dictionaryRecyclerView.isVisible = groups.isNotEmpty()
+                binding.dictionaryEmptyStateTextView.isVisible = groups.isEmpty()
+                if (groups.isEmpty()) {
                     binding.dictionaryEmptyStateTextView.text = getString(R.string.dictionary_empty_state)
-                }
-            }.onFailure { error ->
-                dictionaryAdapter.submitList(emptyList())
+                } 
+            }.onFailure {
+                dictionaryAdapter.submitGroups(emptyList())
                 binding.dictionaryRecyclerView.isVisible = false
                 binding.dictionaryEmptyStateTextView.isVisible = true
                 binding.dictionaryEmptyStateTextView.text = getString(R.string.dictionary_error_state)
@@ -152,6 +150,54 @@ class DictionaryListFragment : Fragment() {
             )
             parentFragmentManager.popBackStack()
         }
+    }
+
+    private suspend fun buildGroupedEntries(
+        entries: List<Dictionary>
+    ): List<DictionaryAdapter.Group> = withContext(Dispatchers.Default) {
+        if (entries.isEmpty()) {
+            return@withContext emptyList()
+        }
+
+        val entriesById = entries.associateBy { it.id }
+        val groupedEntries = entries.groupBy { dictionary ->
+            dictionary.baseWordId ?: dictionary.id
+        }
+
+        val missingBaseIds = groupedEntries.keys.filter { baseId ->
+            entriesById[baseId] == null
+        }
+
+        val missingBaseEntries = if (missingBaseIds.isNotEmpty()) {
+            dictionaryViewModel.getByIds(missingBaseIds)
+        } else {
+            emptyList()
+        }.associateBy { it.id }
+
+        val baseEntries = entriesById + missingBaseEntries
+
+        groupedEntries.entries
+            .map { (baseId, groupEntries) ->
+                val baseEntry = baseEntries[baseId] ?: groupEntries.first()
+                val allWords = (groupEntries + baseEntry).distinctBy { it.id }
+
+                val sortedWords = allWords.sortedWith(
+                    compareBy<Dictionary> { if (it.id == baseEntry.id) 0 else 1 }
+                        .thenBy { it.word.lowercase() }
+                        .thenBy { it.translation.lowercase() }
+                )
+
+                DictionaryAdapter.Group(
+                    base = baseEntry,
+                    words = sortedWords
+                )
+            }
+            .sortedWith(
+                compareBy(
+                    { it.base.word.lowercase() },
+                    { it.base.translation.lowercase() }
+                )
+            )
     }
 }
 

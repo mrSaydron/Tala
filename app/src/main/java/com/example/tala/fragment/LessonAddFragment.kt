@@ -11,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.example.tala.MainActivity
 import com.example.tala.R
 import com.example.tala.databinding.FragmentLessonAddBinding
 import com.example.tala.entity.dictionaryCollection.DictionaryCollection
@@ -18,9 +19,9 @@ import com.example.tala.entity.dictionaryCollection.DictionaryCollectionViewMode
 import com.example.tala.entity.lesson.Lesson
 import com.example.tala.entity.lesson.LessonViewModel
 import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
+import com.example.tala.entity.lessonprogress.LessonProgressViewModel
 import com.example.tala.fragment.adapter.LessonCardTypeAdapter
 import com.example.tala.model.enums.CardTypeEnum
-import com.example.tala.MainActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tala.TalaDatabase
+import com.example.tala.model.enums.StatusEnum
 import com.example.tala.model.enums.CardTypeEnum
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -11,9 +12,9 @@ import kotlinx.coroutines.withContext
 
 class LessonProgressViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: LessonProgressRepository = LessonProgressRepository(
-        TalaDatabase.getDatabase(application).lessonProgressDao()
-    )
+    private val database = TalaDatabase.getDatabase(application)
+    private val repository: LessonProgressRepository =
+        LessonProgressRepository(database.lessonProgressDao())
 
     fun insert(progress: LessonProgress) = viewModelScope.launch(Dispatchers.IO) {
         repository.insert(progress)

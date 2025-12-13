@@ -19,8 +19,9 @@ import com.example.tala.entity.dictionaryCollection.DictionaryCollection
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionViewModel
 import com.example.tala.entity.lessoncardtype.LessonCardType
 import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
-import com.example.tala.fragment.adapter.CollectionWordsAdapter
+import com.example.tala.fragment.adapter.DictionaryAdapter
 import com.example.tala.model.enums.CardTypeEnum
+import androidx.core.widget.doAfterTextChanged
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,11 +34,17 @@ class CollectionAddFragment : Fragment() {
     private lateinit var dictionaryCollectionViewModel: DictionaryCollectionViewModel
     private lateinit var dictionaryViewModel: DictionaryViewModel
     private lateinit var lessonCardTypeViewModel: LessonCardTypeViewModel
-    private val wordsAdapter = CollectionWordsAdapter()
+    private val wordsAdapter = DictionaryAdapter(
+        onItemClick = { _ -> },
+        onAddToCollectionClick = null
+    )
     private val selectedDictionaries: MutableList<Dictionary> = mutableListOf()
     private val selectedCardTypes: MutableList<CardTypeEnum> = mutableListOf()
 
     private var collectionId: Int? = null
+    private var isCollectionLoaded: Boolean = false
+    private var nameDraft: String = ""
+    private var descriptionDraft: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,12 +91,24 @@ class CollectionAddFragment : Fragment() {
         setupButtons()
         setupCardTypeCard()
         applyWindowInsets()
+        setupInputListeners()
 
-        collectionId?.let { loadCollection(it) } ?: run {
+        if (collectionId != null) {
+            val targetId = collectionId!!
+            if (isCollectionLoaded) {
+                applyDraftsToInputs()
+                updateWordsList()
+                updateCardTypeSummary()
+            } else {
+                loadCollection(targetId)
+            }
+        } else {
             applyDefaultCardTypesIfEmpty()
+            applyDraftsToInputs()
             updateCardTypeSummary()
             updateWordsList()
         }
+
     }
 
     private fun setupToolbar() {
@@ -194,10 +213,9 @@ class CollectionAddFragment : Fragment() {
             }.getOrNull()
 
             if (collectionWithEntries != null) {
-                binding.collectionNameEditText.setText(collectionWithEntries.collection.name)
-                binding.collectionDescriptionEditText.setText(
-                    collectionWithEntries.collection.description.orEmpty()
-                )
+                nameDraft = collectionWithEntries.collection.name
+                descriptionDraft = collectionWithEntries.collection.description.orEmpty()
+                applyDraftsToInputs()
 
                 val dictionaryIds = collectionWithEntries.entries.map { it.dictionaryId }
                 val dictionaries = if (dictionaryIds.isEmpty()) {
@@ -213,6 +231,7 @@ class CollectionAddFragment : Fragment() {
                 selectedCardTypes.addAll(cardTypes.map { it.cardType })
             }
 
+            isCollectionLoaded = true
             updateWordsList()
             applyDefaultCardTypesIfEmpty()
             updateCardTypeSummary()
@@ -222,45 +241,42 @@ class CollectionAddFragment : Fragment() {
 
     private fun updateWordsList() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val items = buildListItems()
-            wordsAdapter.submitItems(items)
-            binding.collectionEmptyStateTextView.isVisible = selectedDictionaries.isEmpty()
+            val groups = buildDisplayGroups()
+            wordsAdapter.submitGroups(groups)
+            binding.collectionEmptyStateTextView.isVisible = groups.isEmpty()
         }
     }
 
-    private suspend fun buildListItems(): List<CollectionWordsAdapter.Item> = withContext(Dispatchers.Default) {
-        val items = mutableListOf<CollectionWordsAdapter.Item>()
+    private suspend fun buildDisplayGroups(): List<DictionaryAdapter.Group> = withContext(Dispatchers.Default) {
         if (selectedDictionaries.isEmpty()) {
-            return@withContext items
+            return@withContext emptyList()
         }
 
-        val entriesById = selectedDictionaries.associateBy { it.id }
-        val groups = selectedDictionaries.groupBy { it.baseWordId ?: it.id }
-        val missingBaseIds = groups.keys.filter { key -> entriesById[key] == null }
-        val baseEntries = if (missingBaseIds.isNotEmpty()) {
-            dictionaryViewModel.getByIds(missingBaseIds)
-        } else {
-            emptyList()
-        }.associateBy { it.id }
-
-        val sortedGroups = groups.entries.sortedBy { entry ->
-            val base = entriesById[entry.key] ?: baseEntries[entry.key] ?: entry.value.first()
-            base.word.lowercase()
-        }
-
-        sortedGroups.forEach { (baseId, dictionaries) ->
-            val baseEntry = entriesById[baseId] ?: baseEntries[baseId] ?: dictionaries.first()
-            items += CollectionWordsAdapter.Item.Header(
-                title = baseEntry.word,
-                subtitle = baseEntry.translation.takeIf { it.isNotBlank() }
+        selectedDictionaries
+            .groupBy { it.baseWordId ?: it.id }
+            .map { (_, dictionaries) ->
+                val sortedById = dictionaries.sortedWith(
+                    compareBy<Dictionary> { it.id }
+                        .thenBy { it.word.lowercase() }
+                        .thenBy { it.translation.lowercase() }
+                )
+                val primary = sortedById.first()
+                val words = sortedById.sortedWith(
+                    compareBy<Dictionary> { if (it.id == primary.id) 0 else 1 }
+                        .thenBy { it.word.lowercase() }
+                        .thenBy { it.translation.lowercase() }
+                )
+                DictionaryAdapter.Group(
+                    base = primary,
+                    words = words
+                )
+            }
+            .sortedWith(
+                compareBy(
+                    { it.base.word.lowercase() },
+                    { it.base.translation.lowercase() }
+                )
             )
-            dictionaries
-                .sortedWith(compareBy({ it.word.lowercase() }, { it.translation.lowercase() }))
-                .forEach { dictionary ->
-                    items += CollectionWordsAdapter.Item.Word(dictionary)
-                }
-        }
-        items
     }
 
     private fun saveCollection() {
@@ -327,6 +343,24 @@ class CollectionAddFragment : Fragment() {
         binding.collectionNameLayout.isEnabled = !isLoading
         binding.collectionDescriptionLayout.isEnabled = !isLoading
         binding.collectionCardTypeCard.isEnabled = !isLoading
+    }
+
+    private fun setupInputListeners() {
+        binding.collectionNameEditText.doAfterTextChanged {
+            nameDraft = it?.toString().orEmpty()
+        }
+        binding.collectionDescriptionEditText.doAfterTextChanged {
+            descriptionDraft = it?.toString().orEmpty()
+        }
+    }
+
+    private fun applyDraftsToInputs() {
+        if (binding.collectionNameEditText.text?.toString() != nameDraft) {
+            binding.collectionNameEditText.setText(nameDraft)
+        }
+        if (binding.collectionDescriptionEditText.text?.toString() != descriptionDraft) {
+            binding.collectionDescriptionEditText.setText(descriptionDraft)
+        }
     }
 
     override fun onDestroyView() {

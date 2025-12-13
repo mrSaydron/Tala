@@ -25,7 +25,7 @@ class TranslateLessonCardTypeService(
                         cardType = CardTypeEnum.TRANSLATE,
                         dictionaryId = dictionary.id,
                         nextReviewDate = System.currentTimeMillis(),
-                        intervalMinutes = 0,
+                        intervalMinutes = 1440,
                         ef = 2.5,
                         status = StatusEnum.NEW,
                         info = null

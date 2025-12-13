@@ -3,6 +3,7 @@ package com.example.tala.service.lessonCard
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryDao
 import com.example.tala.entity.dictionary.DictionaryRepository
+import com.example.tala.entity.dictionary.DictionaryWithDependentCount
 import com.example.tala.entity.dictionary.PartOfSpeech
 import com.example.tala.entity.dictionaryCollection.DictionaryCollection
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionDao
@@ -361,6 +362,9 @@ class LessonCardServiceTest {
 
         override suspend fun getAll(): List<Dictionary> = dictionaries.values.toList()
 
+        override suspend fun getBaseEntries(): List<Dictionary> =
+            dictionaries.values.filter { it.baseWordId == null || it.baseWordId == it.id }
+
         override suspend fun getById(id: Int): Dictionary? = dictionaries[id]
 
         override suspend fun getByWord(word: String): List<Dictionary> =
@@ -374,6 +378,24 @@ class LessonCardServiceTest {
 
         override suspend fun getByIds(ids: List<Int>): List<Dictionary> =
             ids.mapNotNull { dictionaries[it] }
+
+        override suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> {
+            val baseEntries = getBaseEntries()
+            return baseEntries.map { base ->
+                val dependentCount = dictionaries.values.count { entry ->
+                    entry.baseWordId == base.id && entry.id != base.id
+                }
+                DictionaryWithDependentCount(base, dependentCount)
+            }
+        }
+
+        override suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> {
+            val baseId = dictionaries[entryId]?.baseWordId ?: entryId
+            val resolvedBaseId = if (baseId == 0) entryId else baseId
+            return dictionaries.values.filter { entry ->
+                entry.id == resolvedBaseId || entry.baseWordId == resolvedBaseId
+            }.sortedBy { it.id }
+        }
     }
 
     private class FakeLessonProgressDao : LessonProgressDao {

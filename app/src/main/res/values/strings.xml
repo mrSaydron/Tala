@@ -63,6 +63,7 @@
     <string name="dictionary_image_pick_button">Выбрать изображение</string>
     <string name="dictionary_image_remove_button">Удалить изображение</string>
     <string name="dictionary_dependent_count_template">Связанных слов: %1$d</string>
+    <string name="dictionary_group_word_count_template">Всего слов: %1$d</string>
     <string name="dictionary_delete_success">Слово удалено</string>
     <string name="dictionary_error_not_found">Запись не найдена</string>
     <string name="dictionary_tag_picker_hint">Добавить тег</string>
@@ -77,6 +78,12 @@
     <string name="dictionary_collapse_group_button">Свернуть группу</string>
     <string name="dictionary_remove_entry">Удалить элемент</string>
     <string name="dictionary_empty_results">Нет результатов</string>
+    <plurals name="dictionary_group_word_count">
+        <item quantity="one">%d вариант</item>
+        <item quantity="few">%d варианта</item>
+        <item quantity="many">%d вариантов</item>
+        <item quantity="other">%d вариантов</item>
+    </plurals>
     <string name="collection_list_save_button">Сохранить</string>
     <string name="collection_list_name_hint">Название коллекции</string>
     <string name="collection_list_description_hint">Описание коллекции</string>
