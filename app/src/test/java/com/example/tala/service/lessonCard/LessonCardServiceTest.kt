@@ -247,6 +247,43 @@ class LessonCardServiceTest {
         assertTrue(cards.any { it is DummyLessonCardDto })
     }
 
+    @Test
+    fun answerResult_delegatesToRegisteredTypeService() = runBlocking {
+        val progress = LessonProgress(
+            id = 501,
+            lessonId = LESSON_ID,
+            cardType = CardTypeEnum.TRANSLATE,
+            dictionaryId = 1,
+            nextReviewDate = 0L,
+            intervalMinutes = 1440,
+            ef = 2.5,
+            status = StatusEnum.IN_PROGRESS,
+            info = "original"
+        )
+        lessonProgressDao.storage.add(progress)
+
+        val expectedProgress = progress.copy(info = "updated")
+        val recordingService = RecordingLessonCardTypeService(
+            answerResult = { expectedProgress }
+        )
+        val delegatingService = LessonCardService(
+            lessonRepository,
+            lessonCardTypeRepository,
+            dictionaryCollectionRepository,
+            dictionaryRepository,
+            lessonProgressRepository,
+            mapOf(CardTypeEnum.TRANSLATE to recordingService),
+            timeProvider = { 1234L }
+        )
+
+        val result = delegatingService.answerResult(progress.id, 4)
+
+        assertEquals(expectedProgress, result)
+        assertEquals(progress, recordingService.lastProgress)
+        assertEquals(4, recordingService.lastQuality)
+        assertEquals(1234L, recordingService.lastTimestamp)
+    }
+
     private class FakeLessonDao : LessonDao {
         val lessons = mutableMapOf<Int, Lesson>()
         private var nextId = 1000
@@ -432,6 +469,9 @@ class LessonCardServiceTest {
         override suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress> =
             storage.filter { it.dictionaryId == dictionaryId }
 
+        override suspend fun getById(id: Int): LessonProgress? =
+            storage.firstOrNull { it.id == id }
+
         private fun ensureId(progress: LessonProgress): LessonProgress {
             if (progress.id != 0) return progress
             val id = nextId++
@@ -451,6 +491,40 @@ class LessonCardServiceTest {
 
         override suspend fun getCards(cardProgress: List<LessonProgress>): List<LessonCardDto> =
             cardsToReturn
+
+        override suspend fun answerResult(
+            progress: LessonProgress,
+            quality: Int,
+            currentTimeMillis: Long
+        ): LessonProgress = progress
+    }
+
+    private class RecordingLessonCardTypeService(
+        private val cardsToReturn: List<LessonCardDto> = emptyList(),
+        private val answerResult: (LessonProgress) -> LessonProgress
+    ) : LessonCardTypeService {
+
+        var lastProgress: LessonProgress? = null
+        var lastQuality: Int? = null
+        var lastTimestamp: Long? = null
+
+        override suspend fun createProgress(lessonId: Int, words: List<Dictionary>) {
+            // no-op
+        }
+
+        override suspend fun getCards(cardProgress: List<LessonProgress>): List<LessonCardDto> =
+            cardsToReturn
+
+        override suspend fun answerResult(
+            progress: LessonProgress,
+            quality: Int,
+            currentTimeMillis: Long
+        ): LessonProgress {
+            lastProgress = progress
+            lastQuality = quality
+            lastTimestamp = currentTimeMillis
+            return answerResult(progress)
+        }
     }
 
     private data class DummyLessonCardDto(val label: String) : LessonCardDto

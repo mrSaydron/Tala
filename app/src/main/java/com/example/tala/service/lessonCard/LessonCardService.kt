@@ -3,6 +3,7 @@ package com.example.tala.service.lessonCard
 import com.example.tala.entity.dictionary.DictionaryRepository
 import com.example.tala.entity.lesson.LessonRepository
 import com.example.tala.entity.lessoncardtype.LessonCardTypeRepository
+import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionRepository
 import com.example.tala.model.dto.lessonCard.LessonCardDto
@@ -14,7 +15,8 @@ class LessonCardService(
     private val dictionaryCollectionRepository: DictionaryCollectionRepository,
     private val dictionaryRepository: DictionaryRepository,
     private val lessonProgressRepository: LessonProgressRepository,
-    private val typeServices: Map<CardTypeEnum, LessonCardTypeService>
+    private val typeServices: Map<CardTypeEnum, LessonCardTypeService>,
+    private val timeProvider: () -> Long = System::currentTimeMillis
 ) {
 
     suspend fun createProgress(lessonId: Int) {
@@ -44,5 +46,12 @@ class LessonCardService(
             val progress = lessonProgressRepository.getByLessonCardType(lessonId, lessonCardType.cardType)
             service.getCards(progress)
         }
+    }
+
+    suspend fun answerResult(progressId: Int, quality: Int) : LessonProgress? {
+        val progress = lessonProgressRepository.getById(progressId) ?: return null
+        val service = typeServices[progress.cardType] ?: return null
+        val currentTime = timeProvider()
+        return service.answerResult(progress, quality, currentTime)
     }
 }

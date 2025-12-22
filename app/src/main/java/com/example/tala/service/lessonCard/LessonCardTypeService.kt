@@ -7,4 +7,9 @@ import com.example.tala.model.dto.lessonCard.LessonCardDto
 interface LessonCardTypeService {
     suspend fun createProgress(lessonId: Int, words: List<Dictionary>)
     suspend fun getCards(cardProgress: List<LessonProgress>): List<LessonCardDto>
+    suspend fun answerResult(
+        progress: LessonProgress,
+        quality: Int,
+        currentTimeMillis: Long
+    ): LessonProgress
 }

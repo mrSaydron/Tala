@@ -17,6 +17,8 @@ class LessonProgressRepository(private val dao: LessonProgressDao) {
 
     suspend fun getAll(): List<LessonProgress> = dao.getAll()
 
+    suspend fun getById(id: Int): LessonProgress? = dao.getById(id)
+
     suspend fun getByLessonCardType(lessonId: Int, cardType: CardTypeEnum): List<LessonProgress> =
         dao.getByLessonCardType(lessonId, cardType)
 
