@@ -18,8 +18,9 @@ import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.service.TextToSpeechHelper
 import com.example.tala.service.lessonCard.LessonCardService
 import com.example.tala.service.lessonCard.LessonCardTypeService
-import com.example.tala.service.lessonCard.TranslateLessonCardTypeService
+import com.example.tala.service.lessonCard.EnterWordLessonCardTypeService
 import com.example.tala.service.lessonCard.ReverseTranslateLessonCardTypeService
+import com.example.tala.service.lessonCard.TranslateLessonCardTypeService
 import kotlin.math.max
 
 class MainActivity : AppCompatActivity() {
@@ -84,10 +85,15 @@ class MainActivity : AppCompatActivity() {
             lessonProgressRepository,
             dictionaryRepository
         )
+        val enterWordService = EnterWordLessonCardTypeService(
+            lessonProgressRepository,
+            dictionaryRepository
+        )
 
         val services = mapOf<CardTypeEnum, LessonCardTypeService>(
             CardTypeEnum.TRANSLATE to translateService,
-            CardTypeEnum.REVERSE_TRANSLATE to reverseTranslateService
+            CardTypeEnum.REVERSE_TRANSLATE to reverseTranslateService,
+            CardTypeEnum.ENTER_WORD to enterWordService
         )
 
         return LessonCardService(

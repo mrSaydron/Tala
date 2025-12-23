@@ -15,6 +15,7 @@ import com.example.tala.databinding.FragmentLessonBinding
 import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
+import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
@@ -108,6 +109,7 @@ class LessonFragment : Fragment() {
         val fragment = when (card) {
             is TranslateLessonCardDto -> TranslateCardTypeFragment.newInstance(card)
             is ReverseTranslateLessonCardDto -> ReverseTranslateCardTypeFragment.newInstance(card)
+            is EnterWordLessonCardDto -> EnterWordCardTypeFragment.newInstance(card)
             else -> null
         }
 
@@ -140,6 +142,9 @@ class LessonFragment : Fragment() {
             return status to nextReviewDate
         }
         if (this is ReverseTranslateLessonCardDto) {
+            return status to nextReviewDate
+        }
+        if (this is EnterWordLessonCardDto) {
             return status to nextReviewDate
         }
         return null

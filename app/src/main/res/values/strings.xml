@@ -133,4 +133,6 @@
     <string name="content_description_card_image">Изображение подсказки</string>
     <string name="content_description_play_pronunciation">Озвучить слово</string>
     <string name="translate_card_result_error">Не удалось сохранить ответ</string>
+    <string name="enter_word_input_hint">Введите слово на английском</string>
+    <string name="enter_word_keyboard_action">Показать перевод</string>
 </resources>
