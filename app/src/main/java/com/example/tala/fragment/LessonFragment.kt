@@ -14,6 +14,7 @@ import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentLessonBinding
 import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
+import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
 
@@ -62,6 +63,12 @@ class LessonFragment : Fragment() {
         }
 
         loadLessonCards()
+        childFragmentManager.setFragmentResultListener(
+            TranslateCardTypeFragment.RESULT_REVIEW_COMPLETED,
+            viewLifecycleOwner
+        ) { _, _ ->
+            loadLessonCards()
+        }
     }
 
     private fun loadLessonCards() {
@@ -69,22 +76,48 @@ class LessonFragment : Fragment() {
             setLoading(true)
             binding.lessonEmptyStateTextView.isVisible = false
 
-            val cards = runCatching {
-                lessonCardService.getCards(lessonId)
-            }.getOrElse { emptyList() }
+            val cards = runCatching { lessonCardService.getCards(lessonId) }
+                .getOrElse { emptyList() }
 
             setLoading(false)
 
-            if (cards.isEmpty()) {
+            val nextCard = selectNextCard(cards)
+
+            if (nextCard == null) {
                 binding.lessonEmptyStateTextView.isVisible = true
+                binding.reviewContentContainer.isVisible = false
                 return@launch
             }
 
-            displayCard(cards.first())
+            displayCard(nextCard)
+        }
+    }
+
+    private fun selectNextCard(cards: List<LessonCardDto>): LessonCardDto? {
+        if (cards.isEmpty()) return null
+        val now = System.currentTimeMillis()
+        val dueCards = cards.filter { card ->
+            when (card) {
+                is TranslateLessonCardDto -> {
+                    card.status == StatusEnum.NEW ||
+                        card.status == StatusEnum.PROGRESS_RESET ||
+                        (card.nextReviewDate?.let { it <= now } ?: true)
+                }
+                else -> true
+            }
+        }
+        if (dueCards.isEmpty()) return null
+
+        return dueCards.minByOrNull { card ->
+            when (card) {
+                is TranslateLessonCardDto -> card.nextReviewDate ?: Long.MIN_VALUE
+                else -> Long.MIN_VALUE
+            }
         }
     }
 
     private fun displayCard(card: LessonCardDto) {
+        binding.lessonEmptyStateTextView.isVisible = false
         val fragment = when (card) {
             is TranslateLessonCardDto -> TranslateCardTypeFragment.newInstance(card)
             else -> null
@@ -93,9 +126,11 @@ class LessonFragment : Fragment() {
         if (fragment == null) {
             binding.lessonEmptyStateTextView.isVisible = true
             binding.lessonEmptyStateTextView.text = getString(R.string.lesson_fragment_unsupported_type)
+            binding.reviewContentContainer.isVisible = false
             return
         }
 
+        binding.reviewContentContainer.isVisible = true
         childFragmentManager.beginTransaction()
             .replace(R.id.reviewContentContainer, fragment)
             .commit()

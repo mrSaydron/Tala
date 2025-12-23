@@ -27,20 +27,30 @@ class TranslateLessonCardDtoTest {
             word = "example",
             translation = "пример",
             partOfSpeech = com.example.tala.entity.dictionary.PartOfSpeech.NOUN,
+            hint = "подсказка",
+            imagePath = "https://example.com/image.jpg",
             baseWordId = null
         )
 
         val dto = TranslateLessonCardDto.fromProgress(progress, dictionary)
 
+        assertEquals(10, dto.progressId)
         assertEquals(42, dto.lessonId)
         assertEquals(7, dto.dictionaryId)
         assertEquals("example", dto.word)
         assertEquals("пример", dto.translation)
+        assertEquals("подсказка", dto.hint)
+        assertEquals("https://example.com/image.jpg", dto.imagePath)
         assertEquals(StatusEnum.IN_PROGRESS, dto.status)
         assertEquals(25, dto.intervalMinutes)
         assertEquals(2.85, dto.ef, 0.0001)
+        assertEquals(123456789L, dto.nextReviewDate)
         assertEquals("custom info", dto.info)
         assertEquals(CardTypeEnum.TRANSLATE, dto.type)
+        assertEquals("example", dto.cardInfo.english)
+        assertEquals("пример", dto.cardInfo.russian)
+        assertEquals("подсказка", dto.cardInfo.hint)
+        assertEquals("https://example.com/image.jpg", dto.cardInfo.imagePath)
     }
 }
 

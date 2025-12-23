@@ -123,4 +123,14 @@
     <string name="lesson_fragment_title">Урок</string>
     <string name="lesson_fragment_empty_state">Для этого урока пока нет карточек</string>
     <string name="lesson_fragment_unsupported_type">Этот тип карточки пока не поддерживается</string>
+    <string name="translate_card_show_translation">Показать перевод</string>
+    <string name="translate_card_answer_hard">Сложно</string>
+    <string name="translate_card_answer_medium">Средне</string>
+    <string name="translate_card_answer_easy">Легко</string>
+    <string name="translate_card_answer_hard_description">Качество 0</string>
+    <string name="translate_card_answer_medium_description">Качество 3</string>
+    <string name="translate_card_answer_easy_description">Качество 5</string>
+    <string name="content_description_card_image">Изображение подсказки</string>
+    <string name="content_description_play_pronunciation">Озвучить слово</string>
+    <string name="translate_card_result_error">Не удалось сохранить ответ</string>
 </resources>

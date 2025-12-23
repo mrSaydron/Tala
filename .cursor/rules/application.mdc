@@ -11,3 +11,5 @@ alwaysApply: true
 - Планирование повторений реализовано в `CardViewModel` через интервалы (`intervalMinutes`, `ef`, `nextReviewDate`) и настройки из `ReviewSettings`.
 - Для подстановки переводов и изображений задействованы Retrofit-клиенты (`ApiClient`) к Yandex Dictionary, Unsplash и Mistral; сетевые вызовы выполняются из репозиториев с корутинами.
 - UI основан на ViewBinding; список слов и коллекций отображается через RecyclerView-адаптеры, добавление/редактирование карточек происходит во `AddWordFragment`.
+
+[Документация проекта](../../documentation/README.md)
