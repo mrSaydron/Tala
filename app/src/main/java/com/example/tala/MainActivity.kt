@@ -19,6 +19,7 @@ import com.example.tala.service.TextToSpeechHelper
 import com.example.tala.service.lessonCard.LessonCardService
 import com.example.tala.service.lessonCard.LessonCardTypeService
 import com.example.tala.service.lessonCard.TranslateLessonCardTypeService
+import com.example.tala.service.lessonCard.ReverseTranslateLessonCardTypeService
 import kotlin.math.max
 
 class MainActivity : AppCompatActivity() {
@@ -79,9 +80,14 @@ class MainActivity : AppCompatActivity() {
             lessonProgressRepository,
             dictionaryRepository
         )
+        val reverseTranslateService = ReverseTranslateLessonCardTypeService(
+            lessonProgressRepository,
+            dictionaryRepository
+        )
 
         val services = mapOf<CardTypeEnum, LessonCardTypeService>(
-            CardTypeEnum.TRANSLATE to translateService
+            CardTypeEnum.TRANSLATE to translateService,
+            CardTypeEnum.REVERSE_TRANSLATE to reverseTranslateService
         )
 
         return LessonCardService(

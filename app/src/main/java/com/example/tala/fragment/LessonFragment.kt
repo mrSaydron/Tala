@@ -14,6 +14,7 @@ import com.example.tala.MainActivity
 import com.example.tala.databinding.FragmentLessonBinding
 import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
+import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
@@ -96,30 +97,17 @@ class LessonFragment : Fragment() {
     private fun selectNextCard(cards: List<LessonCardDto>): LessonCardDto? {
         if (cards.isEmpty()) return null
         val now = System.currentTimeMillis()
-        val dueCards = cards.filter { card ->
-            when (card) {
-                is TranslateLessonCardDto -> {
-                    card.status == StatusEnum.NEW ||
-                        card.status == StatusEnum.PROGRESS_RESET ||
-                        (card.nextReviewDate?.let { it <= now } ?: true)
-                }
-                else -> true
-            }
-        }
+        val dueCards = cards.filter { isCardDue(it, now) }
         if (dueCards.isEmpty()) return null
 
-        return dueCards.minByOrNull { card ->
-            when (card) {
-                is TranslateLessonCardDto -> card.nextReviewDate ?: Long.MIN_VALUE
-                else -> Long.MIN_VALUE
-            }
-        }
+        return dueCards.minByOrNull { resolveNextReviewTimestamp(it) }
     }
 
     private fun displayCard(card: LessonCardDto) {
         binding.lessonEmptyStateTextView.isVisible = false
         val fragment = when (card) {
             is TranslateLessonCardDto -> TranslateCardTypeFragment.newInstance(card)
+            is ReverseTranslateLessonCardDto -> ReverseTranslateCardTypeFragment.newInstance(card)
             else -> null
         }
 
@@ -134,6 +122,27 @@ class LessonFragment : Fragment() {
         childFragmentManager.beginTransaction()
             .replace(R.id.reviewContentContainer, fragment)
             .commit()
+    }
+
+    private fun isCardDue(card: LessonCardDto, now: Long): Boolean {
+        val (status, nextReviewDate) = card.statusAndNextReview() ?: return true
+        if (status == StatusEnum.NEW || status == StatusEnum.PROGRESS_RESET) return true
+        return nextReviewDate?.let { it <= now } ?: true
+    }
+
+    private fun resolveNextReviewTimestamp(card: LessonCardDto): Long {
+        val nextReviewDate = card.statusAndNextReview()?.second ?: return Long.MIN_VALUE
+        return nextReviewDate ?: Long.MIN_VALUE
+    }
+
+    private fun LessonCardDto.statusAndNextReview(): Pair<StatusEnum, Long?>? {
+        if (this is TranslateLessonCardDto) {
+            return status to nextReviewDate
+        }
+        if (this is ReverseTranslateLessonCardDto) {
+            return status to nextReviewDate
+        }
+        return null
     }
 
     private fun setLoading(isLoading: Boolean) {
