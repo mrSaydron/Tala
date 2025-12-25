@@ -139,4 +139,5 @@
     <string name="translation_comparison_left_column_title">Слова</string>
     <string name="translation_comparison_right_column_title">Переводы</string>
     <string name="translation_comparison_user_answer">Ваш ответ: %1$s</string>
+    <string name="translation_comparison_next_button">Дальше</string>
 </resources>

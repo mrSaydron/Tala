@@ -16,10 +16,8 @@ import com.example.tala.MainActivity
 import com.example.tala.R
 import com.example.tala.databinding.FragmentTranslationComparisonCardTypeBinding
 import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
-import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.model.CardAnswer
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 class TranslationComparisonCardTypeFragment : Fragment() {
 
@@ -42,6 +40,7 @@ class TranslationComparisonCardTypeFragment : Fragment() {
     private var isSubmitting = false
     private var answerRevealed = false
     private var currentAnswer: CardAnswer.Comparison? = null
+    private var wasAnswerFullyCorrect = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -162,16 +161,9 @@ class TranslationComparisonCardTypeFragment : Fragment() {
         binding.translationComparisonShowAnswerButton.setOnClickListener {
             revealAnswer()
         }
-        binding.translationComparisonHardButton.setOnClickListener {
-            submitAnswer(QUALITY_HARD)
+        binding.translationComparisonNextButton.setOnClickListener {
+            submitAnswer()
         }
-        binding.translationComparisonMediumButton.setOnClickListener {
-            submitAnswer(QUALITY_MEDIUM)
-        }
-        binding.translationComparisonEasyButton.setOnClickListener {
-            submitAnswer(QUALITY_EASY)
-        }
-        updateAnswerButtonsText()
     }
 
     private fun revealAnswer() {
@@ -192,6 +184,7 @@ class TranslationComparisonCardTypeFragment : Fragment() {
         val correctness = matches.mapIndexed { index, match ->
             match.selectedDictionaryId == currentWords[index].dictionaryId
         }
+        wasAnswerFullyCorrect = correctness.all { it }
 
         wordAdapter.showResult(correctness)
         optionAdapter.showResult(
@@ -203,12 +196,13 @@ class TranslationComparisonCardTypeFragment : Fragment() {
 
         answerRevealed = true
         binding.translationComparisonShowAnswerButton.visibility = View.GONE
-        binding.translationComparisonAnswerButtonsGroup.visibility = View.VISIBLE
+        binding.translationComparisonNextButton.visibility = View.VISIBLE
+        binding.translationComparisonNextButton.isEnabled = true
         optionItemTouchHelper?.attachToRecyclerView(null)
         wordItemTouchHelper?.attachToRecyclerView(null)
     }
 
-    private fun submitAnswer(quality: Int) {
+    private fun submitAnswer() {
         if (!answerRevealed) {
             Toast.makeText(requireContext(), R.string.translation_comparison_instruction, Toast.LENGTH_SHORT).show()
             return
@@ -216,8 +210,9 @@ class TranslationComparisonCardTypeFragment : Fragment() {
         if (isSubmitting) return
         val answer = currentAnswer ?: return
         isSubmitting = true
-        setAnswerButtonsEnabled(false)
+        binding.translationComparisonNextButton.isEnabled = false
         binding.translationComparisonLoadingIndicator.visibility = View.VISIBLE
+        val quality = if (wasAnswerFullyCorrect) QUALITY_SUCCESS else QUALITY_FAILURE
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
@@ -229,7 +224,7 @@ class TranslationComparisonCardTypeFragment : Fragment() {
             result.onFailure {
                 Toast.makeText(requireContext(), R.string.translate_card_result_error, Toast.LENGTH_SHORT).show()
                 isSubmitting = false
-                setAnswerButtonsEnabled(true)
+                binding.translationComparisonNextButton.isEnabled = true
                 return@launch
             }
 
@@ -240,45 +235,6 @@ class TranslationComparisonCardTypeFragment : Fragment() {
                     TranslateCardTypeFragment.RESULT_ARG_QUALITY to quality
                 )
             )
-        }
-    }
-
-    private fun setAnswerButtonsEnabled(enabled: Boolean) {
-        binding.translationComparisonHardButton.isEnabled = enabled
-        binding.translationComparisonMediumButton.isEnabled = enabled
-        binding.translationComparisonEasyButton.isEnabled = enabled
-    }
-
-    private fun updateAnswerButtonsText() {
-        binding.translationComparisonHardButton.text =
-            "${getString(R.string.translate_card_answer_hard)}\n${HARD_INTERVAL_HINT}"
-        binding.translationComparisonMediumButton.text =
-            "${getString(R.string.translate_card_answer_medium)}\n${formatMediumInterval()}"
-        binding.translationComparisonEasyButton.text =
-            "${getString(R.string.translate_card_answer_easy)}\n${formatEasyInterval()}"
-    }
-
-    private fun formatMediumInterval(): String {
-        val reference = wordAdapter.currentOrder().firstOrNull() ?: dto.items.firstOrNull()
-        return if (reference == null || reference.status == StatusEnum.NEW || reference.status == StatusEnum.PROGRESS_RESET) {
-            "1 дн."
-        } else {
-            val intervalDays = (reference.intervalMinutes / MINUTES_IN_DAY.toDouble() * reference.ef)
-                .coerceAtLeast(1.0)
-                .roundToInt()
-            "$intervalDays дн."
-        }
-    }
-
-    private fun formatEasyInterval(): String {
-        val reference = wordAdapter.currentOrder().firstOrNull() ?: dto.items.firstOrNull()
-        return if (reference == null || reference.status == StatusEnum.NEW || reference.status == StatusEnum.PROGRESS_RESET) {
-            "2 дн."
-        } else {
-            val intervalDays = (reference.intervalMinutes * reference.ef * 1.5 / MINUTES_IN_DAY)
-                .coerceAtLeast(1.0)
-                .roundToInt()
-            "$intervalDays дн."
         }
     }
 
@@ -458,11 +414,8 @@ class TranslationComparisonCardTypeFragment : Fragment() {
     companion object {
         private const val ARG_CARD_DTO = "translation_comparison_card_dto"
 
-        private const val QUALITY_HARD = 0
-        private const val QUALITY_MEDIUM = 3
-        private const val QUALITY_EASY = 5
-        private const val HARD_INTERVAL_HINT = "<10 мин."
-        private const val MINUTES_IN_DAY = 1440.0
+        private const val QUALITY_FAILURE = 0
+        private const val QUALITY_SUCCESS = 5
 
         fun newInstance(dto: TranslationComparisonLessonCardDto): TranslationComparisonCardTypeFragment {
             return TranslationComparisonCardTypeFragment().apply {

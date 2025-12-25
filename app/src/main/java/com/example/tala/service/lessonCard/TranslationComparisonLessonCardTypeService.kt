@@ -75,7 +75,7 @@ class TranslationComparisonLessonCardTypeService(
     override suspend fun answerResult(
         card: LessonCardDto,
         answer: CardAnswer?,
-        quality: Int,
+        @Suppress("UNUSED_PARAMETER") quality: Int,
         currentTimeMillis: Long
     ): LessonCardDto? {
         val dto = card as? TranslationComparisonLessonCardDto ?: return null
@@ -95,13 +95,13 @@ class TranslationComparisonLessonCardTypeService(
             if (!isCorrect) {
                 shouldRepeat = true
             }
-            val itemQuality = if (isCorrect) quality else 0
-            val updated = updateProgressForQuality(progress, itemQuality.coerceIn(MIN_QUALITY, MAX_QUALITY), currentTimeMillis)
+            val itemQuality = if (isCorrect) MAX_QUALITY else MIN_QUALITY
+            val updated = updateProgressForQuality(progress, itemQuality, currentTimeMillis)
             lessonProgressRepository.update(updated)
             updatedProgresses.add(updated)
         }
 
-        return if (shouldRepeat || quality <= 0) {
+        return if (shouldRepeat) {
             TranslationComparisonLessonCardDto.fromProgress(
                 lessonId = dto.lessonId,
                 progresses = updatedProgresses,

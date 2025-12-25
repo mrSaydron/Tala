@@ -74,41 +74,14 @@
         android:text="@string/translate_card_show_translation"
         android:textAllCaps="false" />
 
-    <LinearLayout
-        android:id="@+id/translationComparisonAnswerButtonsGroup"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/translationComparisonNextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:visibility="gone">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/translationComparisonHardButton"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="@string/translate_card_answer_hard"
-            android:textAllCaps="false" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/translationComparisonMediumButton"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="@string/translate_card_answer_medium"
-            android:textAllCaps="false" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/translationComparisonEasyButton"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/translate_card_answer_easy"
-            android:textAllCaps="false" />
-    </LinearLayout>
+        android:text="@string/translation_comparison_next_button"
+        android:textAllCaps="false"
+        android:visibility="gone" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/translationComparisonLoadingIndicator"
