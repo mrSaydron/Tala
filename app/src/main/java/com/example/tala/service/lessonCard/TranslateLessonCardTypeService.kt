@@ -8,6 +8,7 @@ import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
+import com.example.tala.service.lessonCard.model.CardAnswer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToLong
@@ -68,10 +69,13 @@ class TranslateLessonCardTypeService(
     }
 
     override suspend fun answerResult(
-        progress: LessonProgress,
+        card: LessonCardDto,
+        answer: CardAnswer?,
         quality: Int,
         currentTimeMillis: Long
-    ): LessonProgress {
+    ): LessonCardDto? {
+        val dto = card as? TranslateLessonCardDto ?: return null
+        val progress = lessonProgressRepository.getById(dto.progressId) ?: return null
         val clampedQuality = quality.coerceIn(MIN_QUALITY, MAX_QUALITY)
         val updatedProgress = when {
             clampedQuality == 0 -> handleIncorrect(progress, currentTimeMillis)
@@ -80,7 +84,16 @@ class TranslateLessonCardTypeService(
             else -> handleRepeatedSuccess(progress, clampedQuality, currentTimeMillis)
         }
         lessonProgressRepository.update(updatedProgress)
-        return updatedProgress
+        return if (clampedQuality == 0) {
+            buildCardFromProgress(updatedProgress)
+        } else {
+            null
+        }
+    }
+
+    private suspend fun buildCardFromProgress(progress: LessonProgress): TranslateLessonCardDto {
+        val dictionary = progress.dictionaryId?.let { dictionaryRepository.getById(it) }
+        return TranslateLessonCardDto.fromProgress(progress, dictionary)
     }
 
     private fun handleIncorrect(

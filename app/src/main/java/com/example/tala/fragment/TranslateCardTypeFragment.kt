@@ -189,12 +189,12 @@ class TranslateCardTypeFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
-                MainActivity.lessonCardService.answerResult(dto.progressId, quality)
-            }.getOrNull()
+                MainActivity.lessonCardService.answerResult(dto, null, quality)
+            }
 
             binding.translateCardLoadingIndicator.visibility = View.GONE
 
-            if (result == null) {
+            result.onFailure {
                 Toast.makeText(requireContext(), R.string.translate_card_result_error, Toast.LENGTH_SHORT).show()
                 isSubmitting = false
                 setAnswerButtonsEnabled(true)
@@ -237,7 +237,7 @@ class TranslateCardTypeFragment : Fragment() {
         fun newInstance(dto: TranslateLessonCardDto): TranslateCardTypeFragment {
             return TranslateCardTypeFragment().apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_CARD_DTO, dto)
+                putParcelable(ARG_CARD_DTO, dto)
                 }
             }
         }

@@ -135,4 +135,8 @@
     <string name="translate_card_result_error">Не удалось сохранить ответ</string>
     <string name="enter_word_input_hint">Введите слово на английском</string>
     <string name="enter_word_keyboard_action">Показать перевод</string>
+    <string name="translation_comparison_instruction">Переставьте переводы справа, чтобы составить правильные пары.</string>
+    <string name="translation_comparison_left_column_title">Слова</string>
+    <string name="translation_comparison_right_column_title">Переводы</string>
+    <string name="translation_comparison_user_answer">Ваш ответ: %1$s</string>
 </resources>

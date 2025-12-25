@@ -21,6 +21,7 @@ import com.example.tala.service.lessonCard.LessonCardTypeService
 import com.example.tala.service.lessonCard.EnterWordLessonCardTypeService
 import com.example.tala.service.lessonCard.ReverseTranslateLessonCardTypeService
 import com.example.tala.service.lessonCard.TranslateLessonCardTypeService
+import com.example.tala.service.lessonCard.TranslationComparisonLessonCardTypeService
 import kotlin.math.max
 
 class MainActivity : AppCompatActivity() {
@@ -89,11 +90,16 @@ class MainActivity : AppCompatActivity() {
             lessonProgressRepository,
             dictionaryRepository
         )
+        val comparisonService = TranslationComparisonLessonCardTypeService(
+            lessonProgressRepository,
+            dictionaryRepository
+        )
 
         val services = mapOf<CardTypeEnum, LessonCardTypeService>(
             CardTypeEnum.TRANSLATE to translateService,
             CardTypeEnum.REVERSE_TRANSLATE to reverseTranslateService,
-            CardTypeEnum.ENTER_WORD to enterWordService
+            CardTypeEnum.ENTER_WORD to enterWordService,
+            CardTypeEnum.TRANSLATION_COMPARISON to comparisonService
         )
 
         return LessonCardService(

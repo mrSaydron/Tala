@@ -24,6 +24,7 @@ import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
+import com.example.tala.service.lessonCard.model.CardAnswer
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -200,7 +201,9 @@ class LessonCardServiceTest {
             LessonCardType(collectionId = COLLECTION_ID, cardType = CardTypeEnum.REVERSE_TRANSLATE)
         )
 
-        val reverseService = FakeLessonCardTypeService(listOf(DummyLessonCardDto("reverse")))
+        val reverseService = FakeLessonCardTypeService(
+            listOf(DummyLessonCardDto("reverse", CardTypeEnum.REVERSE_TRANSLATE))
+        )
         val aggregatorService = LessonCardService(
             lessonRepository,
             lessonCardTypeRepository,
@@ -262,9 +265,9 @@ class LessonCardServiceTest {
         )
         lessonProgressDao.storage.add(progress)
 
-        val expectedProgress = progress.copy(info = "updated")
+        val expectedResultCard = DummyLessonCardDto("updated", CardTypeEnum.TRANSLATE)
         val recordingService = RecordingLessonCardTypeService(
-            answerResult = { expectedProgress }
+            answerResult = { _, _, _ -> expectedResultCard }
         )
         val delegatingService = LessonCardService(
             lessonRepository,
@@ -276,10 +279,12 @@ class LessonCardServiceTest {
             timeProvider = { 1234L }
         )
 
-        val result = delegatingService.answerResult(progress.id, 4)
+        val card = DummyLessonCardDto("original", CardTypeEnum.TRANSLATE)
+        val result = delegatingService.answerResult(card, null, 4)
 
-        assertEquals(expectedProgress, result)
-        assertEquals(progress, recordingService.lastProgress)
+        assertEquals(expectedResultCard, result)
+        assertEquals(card, recordingService.lastCard)
+        assertEquals(null, recordingService.lastAnswer)
         assertEquals(4, recordingService.lastQuality)
         assertEquals(1234L, recordingService.lastTimestamp)
     }
@@ -493,18 +498,20 @@ class LessonCardServiceTest {
             cardsToReturn
 
         override suspend fun answerResult(
-            progress: LessonProgress,
+            card: LessonCardDto,
+            answer: CardAnswer?,
             quality: Int,
             currentTimeMillis: Long
-        ): LessonProgress = progress
+        ): LessonCardDto? = null
     }
 
     private class RecordingLessonCardTypeService(
         private val cardsToReturn: List<LessonCardDto> = emptyList(),
-        private val answerResult: (LessonProgress) -> LessonProgress
+        private val answerResult: (LessonCardDto, CardAnswer?, Int) -> LessonCardDto?
     ) : LessonCardTypeService {
 
-        var lastProgress: LessonProgress? = null
+        var lastCard: LessonCardDto? = null
+        var lastAnswer: CardAnswer? = null
         var lastQuality: Int? = null
         var lastTimestamp: Long? = null
 
@@ -516,18 +523,23 @@ class LessonCardServiceTest {
             cardsToReturn
 
         override suspend fun answerResult(
-            progress: LessonProgress,
+            card: LessonCardDto,
+            answer: CardAnswer?,
             quality: Int,
             currentTimeMillis: Long
-        ): LessonProgress {
-            lastProgress = progress
+        ): LessonCardDto? {
+            lastCard = card
+            lastAnswer = answer
             lastQuality = quality
             lastTimestamp = currentTimeMillis
-            return answerResult(progress)
+            return answerResult(card, answer, quality)
         }
     }
 
-    private data class DummyLessonCardDto(val label: String) : LessonCardDto
+    private data class DummyLessonCardDto(
+        val label: String,
+        override val type: CardTypeEnum
+    ) : LessonCardDto
 
     private companion object {
         private const val LESSON_ID = 1

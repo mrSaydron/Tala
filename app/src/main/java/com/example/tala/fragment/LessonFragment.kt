@@ -16,6 +16,7 @@ import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
+import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
@@ -110,6 +111,7 @@ class LessonFragment : Fragment() {
             is TranslateLessonCardDto -> TranslateCardTypeFragment.newInstance(card)
             is ReverseTranslateLessonCardDto -> ReverseTranslateCardTypeFragment.newInstance(card)
             is EnterWordLessonCardDto -> EnterWordCardTypeFragment.newInstance(card)
+            is TranslationComparisonLessonCardDto -> TranslationComparisonCardTypeFragment.newInstance(card)
             else -> null
         }
 
@@ -146,6 +148,10 @@ class LessonFragment : Fragment() {
         }
         if (this is EnterWordLessonCardDto) {
             return status to nextReviewDate
+        }
+        if (this is TranslationComparisonLessonCardDto) {
+            val reference = items.minByOrNull { it.nextReviewDate ?: Long.MIN_VALUE }
+            return reference?.let { it.status to it.nextReviewDate }
         }
         return null
     }

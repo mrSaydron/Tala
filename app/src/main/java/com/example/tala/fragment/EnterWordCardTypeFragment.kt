@@ -17,8 +17,8 @@ import com.example.tala.databinding.FragmentEnterWordCardTypeBinding
 import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.enums.StatusEnum
+import com.example.tala.service.lessonCard.model.CardAnswer
 import com.example.tala.util.TextDiffHighlighter
-import androidx.core.text.HtmlCompat
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -38,6 +38,7 @@ class EnterWordCardTypeFragment : Fragment() {
 
     private var isSubmitting: Boolean = false
     private var answerRevealed: Boolean = false
+    private var userAnswer: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,6 +66,7 @@ class EnterWordCardTypeFragment : Fragment() {
         binding.enterWordCardShowAnswerButton.visibility = View.VISIBLE
         binding.enterWordCardLoadingIndicator.visibility = View.GONE
         binding.enterWordCardAnswerInput.setText("")
+        userAnswer = ""
 
         setupHint()
         loadImage()
@@ -146,7 +148,7 @@ class EnterWordCardTypeFragment : Fragment() {
         binding.enterWordCardPlayButton.visibility = View.VISIBLE
         binding.enterWordCardAnswerButtonsGroup.visibility = View.VISIBLE
 
-        val userAnswer = binding.enterWordCardAnswerInput.text?.toString().orEmpty()
+        userAnswer = binding.enterWordCardAnswerInput.text?.toString().orEmpty()
         val diffSpannable = TextDiffHighlighter.buildColoredAnswer(userAnswer, info.english ?: dto.word)
         binding.enterWordCardDiffTextView.visibility = View.VISIBLE
         binding.enterWordCardDiffTextView.text = diffSpannable
@@ -209,12 +211,16 @@ class EnterWordCardTypeFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
-                MainActivity.lessonCardService.answerResult(dto.progressId, quality)
-            }.getOrNull()
+                MainActivity.lessonCardService.answerResult(
+                    dto,
+                    CardAnswer.Text(userAnswer),
+                    quality
+                )
+            }
 
             binding.enterWordCardLoadingIndicator.visibility = View.GONE
 
-            if (result == null) {
+            result.onFailure {
                 Toast.makeText(requireContext(), R.string.translate_card_result_error, Toast.LENGTH_SHORT).show()
                 isSubmitting = false
                 setAnswerButtonsEnabled(true)

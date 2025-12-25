@@ -26,7 +26,7 @@ data class ReverseTranslateLessonCardDto(
 ) : LessonCardDto, Parcelable {
 
     @IgnoredOnParcel
-    val type: CardTypeEnum = CardTypeEnum.REVERSE_TRANSLATE
+    override val type: CardTypeEnum = CardTypeEnum.REVERSE_TRANSLATE
 
     @IgnoredOnParcel
     val cardInfo: WordCardInfo =

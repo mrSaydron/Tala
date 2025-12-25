@@ -46,8 +46,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                android:textStyle="bold"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textStyle="bold"
                 tools:text="train" />
 
             <ImageButton
@@ -147,7 +147,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/translate_card_answer_easy"
                 android:textAllCaps="false" />
-        </LinearLayout>
+    </LinearLayout>
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/translateCardLoadingIndicator"

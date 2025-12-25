@@ -23,6 +23,7 @@ class ReviewSettings(context: Context) {
         CardTypeEnum.TRANSLATE -> "ef_translate"
         CardTypeEnum.REVERSE_TRANSLATE -> "ef_reverse_translate"
         CardTypeEnum.ENTER_WORD -> "ef_enter_word"
+        CardTypeEnum.TRANSLATION_COMPARISON -> "ef_translation_comparison"
         CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> "ef_sentence_to_studied"
         CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> "ef_sentence_to_student"
     }

@@ -178,12 +178,12 @@ class ReverseTranslateCardTypeFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
-                MainActivity.lessonCardService.answerResult(dto.progressId, quality)
-            }.getOrNull()
+                MainActivity.lessonCardService.answerResult(dto, null, quality)
+            }
 
             binding.reverseTranslateCardLoadingIndicator.visibility = View.GONE
 
-            if (result == null) {
+            result.onFailure {
                 Toast.makeText(requireContext(), R.string.translate_card_result_error, Toast.LENGTH_SHORT).show()
                 isSubmitting = false
                 setAnswerButtonsEnabled(true)

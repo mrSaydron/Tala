@@ -4,8 +4,8 @@ import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
-import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.LessonCardDto
+import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.model.CardAnswer
@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToLong
 
-class EnterWordLessonCardTypeService(
+class TranslationComparisonLessonCardTypeService(
     private val lessonProgressRepository: LessonProgressRepository,
     private val dictionaryRepository: DictionaryRepository,
     private val timeProvider: () -> Long = System::currentTimeMillis
@@ -22,7 +22,7 @@ class EnterWordLessonCardTypeService(
     override suspend fun createProgress(lessonId: Int, words: List<Dictionary>) {
         withContext(Dispatchers.IO) {
             val existingDictionaryIds = lessonProgressRepository
-                .getByLessonCardType(lessonId, CardTypeEnum.ENTER_WORD)
+                .getByLessonCardType(lessonId, CardTypeEnum.TRANSLATION_COMPARISON)
                 .mapNotNull { it.dictionaryId }
                 .toSet()
 
@@ -40,7 +40,7 @@ class EnterWordLessonCardTypeService(
             val progressEntries = candidates.map { dictionary ->
                 LessonProgress(
                     lessonId = lessonId,
-                    cardType = CardTypeEnum.ENTER_WORD,
+                    cardType = CardTypeEnum.TRANSLATION_COMPARISON,
                     dictionaryId = dictionary.id,
                     nextReviewDate = createdAt,
                     intervalMinutes = MINUTES_IN_DAY,
@@ -56,15 +56,19 @@ class EnterWordLessonCardTypeService(
     }
 
     override suspend fun getCards(cardProgress: List<LessonProgress>): List<LessonCardDto> {
-        if (cardProgress.isEmpty()) return emptyList()
+        if (cardProgress.size < MIN_ITEMS_PER_CARD) return emptyList()
 
-        val dictionaryIds = cardProgress.mapNotNull { it.dictionaryId }.distinct()
-        val dictionaries = dictionaryRepository.getByIds(dictionaryIds)
-            .associateBy { it.id }
+        val shuffled = cardProgress.shuffled()
+        val dictionaryIds = shuffled.mapNotNull { it.dictionaryId }.distinct()
+        val dictionaries = dictionaryRepository.getByIds(dictionaryIds).associateBy { it.id }
 
-        return cardProgress.map { progress ->
-            val dictionary = progress.dictionaryId?.let { dictionaries[it] }
-            EnterWordLessonCardDto.fromProgress(progress, dictionary)
+        val groups = shuffled.chunked(MAX_ITEMS_PER_CARD).filter { it.size >= MIN_ITEMS_PER_CARD }
+        return groups.map { group ->
+            TranslationComparisonLessonCardDto.fromProgress(
+                lessonId = group.first().lessonId,
+                progresses = group,
+                dictionaries = dictionaries
+            )
         }
     }
 
@@ -74,26 +78,51 @@ class EnterWordLessonCardTypeService(
         quality: Int,
         currentTimeMillis: Long
     ): LessonCardDto? {
-        val dto = card as? EnterWordLessonCardDto ?: return null
-        val progress = lessonProgressRepository.getById(dto.progressId) ?: return null
-        val clampedQuality = quality.coerceIn(MIN_QUALITY, MAX_QUALITY)
-        val updatedProgress = when {
-            clampedQuality == 0 -> handleIncorrect(progress, currentTimeMillis)
-            progress.status == StatusEnum.NEW || progress.status == StatusEnum.PROGRESS_RESET ->
-                handleFirstSuccess(progress, currentTimeMillis)
-            else -> handleRepeatedSuccess(progress, clampedQuality, currentTimeMillis)
+        val dto = card as? TranslationComparisonLessonCardDto ?: return null
+        val progressList = dto.items.mapNotNull { lessonProgressRepository.getById(it.progressId) }
+        if (progressList.isEmpty()) return null
+
+        val answerMap = (answer as? CardAnswer.Comparison)?.matches?.associateBy { it.progressId } ?: emptyMap()
+        val dictionaries = dictionaryRepository
+            .getByIds(progressList.mapNotNull { it.dictionaryId })
+            .associateBy { it.id }
+
+        val updatedProgresses = mutableListOf<LessonProgress>()
+        var shouldRepeat = false
+        progressList.forEach { progress ->
+            val match = answerMap[progress.id]
+            val isCorrect = match != null && match.selectedDictionaryId == progress.dictionaryId
+            if (!isCorrect) {
+                shouldRepeat = true
+            }
+            val itemQuality = if (isCorrect) quality else 0
+            val updated = updateProgressForQuality(progress, itemQuality.coerceIn(MIN_QUALITY, MAX_QUALITY), currentTimeMillis)
+            lessonProgressRepository.update(updated)
+            updatedProgresses.add(updated)
         }
-        lessonProgressRepository.update(updatedProgress)
-        return if (clampedQuality == 0) {
-            buildCardFromProgress(updatedProgress)
+
+        return if (shouldRepeat || quality <= 0) {
+            TranslationComparisonLessonCardDto.fromProgress(
+                lessonId = dto.lessonId,
+                progresses = updatedProgresses,
+                dictionaries = dictionaries
+            )
         } else {
             null
         }
     }
 
-    private suspend fun buildCardFromProgress(progress: LessonProgress): EnterWordLessonCardDto {
-        val dictionary = progress.dictionaryId?.let { dictionaryRepository.getById(it) }
-        return EnterWordLessonCardDto.fromProgress(progress, dictionary)
+    private fun updateProgressForQuality(
+        progress: LessonProgress,
+        quality: Int,
+        currentTimeMillis: Long
+    ): LessonProgress {
+        return when {
+            quality == 0 -> handleIncorrect(progress, currentTimeMillis)
+            progress.status == StatusEnum.NEW || progress.status == StatusEnum.PROGRESS_RESET ->
+                handleFirstSuccess(progress, currentTimeMillis)
+            else -> handleRepeatedSuccess(progress, quality, currentTimeMillis)
+        }
     }
 
     private fun handleIncorrect(
@@ -156,6 +185,9 @@ class EnterWordLessonCardTypeService(
         java.util.concurrent.TimeUnit.MINUTES.toMillis(minutes)
 
     companion object {
+        private const val MIN_ITEMS_PER_CARD = 2
+        private const val MAX_ITEMS_PER_CARD = 5
+
         private const val MIN_EF = 1.3
         private const val MIN_QUALITY = 0
         private const val MAX_QUALITY = 5
@@ -165,5 +197,4 @@ class EnterWordLessonCardTypeService(
         private const val RESET_DELAY_MINUTES = 10L
     }
 }
-
 

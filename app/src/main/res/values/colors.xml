@@ -6,4 +6,7 @@
     <color name="status_new_bg">#E6F6EA</color>
     <color name="status_reset_bg">#FBE8E7</color>
     <color name="status_in_progress_bg">#E7F0FF</color>
+    <color name="comparison_bg_neutral">#ECEFF1</color>
+    <color name="comparison_bg_correct">#C8E6C9</color>
+    <color name="comparison_bg_incorrect">#FFCDD2</color>
 </resources>

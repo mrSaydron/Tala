@@ -9,9 +9,10 @@ import com.example.tala.entity.lessonprogress.LessonProgressDao
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
+import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
+import com.example.tala.service.lessonCard.model.CardAnswer
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -38,41 +39,49 @@ class EnterWordLessonCardTypeServiceTest {
     fun answerResult_qualityZero_movesToResetAndSchedulesSoon() = runBlocking {
         val progress = createProgress(status = StatusEnum.IN_PROGRESS, ef = 2.5, interval = 2880L)
         progressDao.storage.add(progress)
+        val card = EnterWordLessonCardDto.fromProgress(progress, null)
 
-        val updated = service.answerResult(progress, 0, NOW)
+        val repeatCard = service.answerResult(card, CardAnswer.Text("wrong"), 0, NOW)
 
+        val updated = progressDao.lastUpdated!!
         val expectedEf = maxOf(1.3, 2.5 - 0.8)
         assertEquals(StatusEnum.PROGRESS_RESET, updated.status)
         assertEquals(1440L, updated.intervalMinutes)
         assertEquals(expectedEf, updated.ef, 0.0001)
         assertEquals(NOW + TimeUnit.MINUTES.toMillis(10), updated.nextReviewDate)
-        assertSame(updated, progressDao.lastUpdated)
+        assertTrue(repeatCard is EnterWordLessonCardDto)
     }
 
     @Test
     fun answerResult_qualityZeroRepeated_errorDoesNotChangeEf() = runBlocking {
         val progress = createProgress(status = StatusEnum.PROGRESS_RESET, ef = 1.6, interval = 1440L)
         progressDao.storage.add(progress)
+        val card = EnterWordLessonCardDto.fromProgress(progress, null)
 
-        val updated = service.answerResult(progress, 0, NOW)
+        val repeatCard = service.answerResult(card, CardAnswer.Text("wrong"), 0, NOW)
 
+        val updated = progressDao.lastUpdated!!
         assertEquals(StatusEnum.PROGRESS_RESET, updated.status)
         assertEquals(1440L, updated.intervalMinutes)
         assertEquals(1.6, updated.ef, 0.0001)
         assertEquals(NOW + TimeUnit.MINUTES.toMillis(10), updated.nextReviewDate)
+        assertTrue(repeatCard is EnterWordLessonCardDto)
     }
 
     @Test
     fun answerResult_firstSuccess_movesToInProgressWithoutChangingEf() = runBlocking {
         val progress = createProgress(status = StatusEnum.NEW, ef = 2.3, interval = 1440L)
         progressDao.storage.add(progress)
+        val card = EnterWordLessonCardDto.fromProgress(progress, null)
 
-        val updated = service.answerResult(progress, 5, NOW)
+        val repeatCard = service.answerResult(card, CardAnswer.Text("correct"), 5, NOW)
 
+        val updated = progressDao.lastUpdated!!
         assertEquals(StatusEnum.IN_PROGRESS, updated.status)
         assertEquals(1440L, updated.intervalMinutes)
         assertEquals(2.3, updated.ef, 0.0001)
         assertEquals(NOW + TimeUnit.DAYS.toMillis(1), updated.nextReviewDate)
+        assertEquals(null, repeatCard)
     }
 
     @Test
@@ -84,9 +93,11 @@ class EnterWordLessonCardTypeServiceTest {
             nextReview = NOW - TimeUnit.DAYS.toMillis(1)
         )
         progressDao.storage.add(progress)
+        val card = EnterWordLessonCardDto.fromProgress(progress, null)
 
-        val updated = service.answerResult(progress, 5, NOW)
+        val repeatCard = service.answerResult(card, CardAnswer.Text("correct"), 5, NOW)
 
+        val updated = progressDao.lastUpdated!!
         val expectedEf = 2.5 + 0.1 // q = 5
         val expectedInterval = (1440L * expectedEf).roundToLong()
         assertEquals(StatusEnum.IN_PROGRESS, updated.status)
@@ -94,6 +105,7 @@ class EnterWordLessonCardTypeServiceTest {
         assertEquals(expectedInterval, updated.intervalMinutes)
         assertEquals(NOW + TimeUnit.MINUTES.toMillis(expectedInterval), updated.nextReviewDate)
         assertTrue("Interval should grow", updated.intervalMinutes > progress.intervalMinutes)
+        assertEquals(null, repeatCard)
     }
 
     private fun createProgress(

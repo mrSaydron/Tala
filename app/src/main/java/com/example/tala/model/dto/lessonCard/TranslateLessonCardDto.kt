@@ -25,7 +25,7 @@ data class TranslateLessonCardDto(
     val info: String?
 ) : LessonCardDto, Parcelable {
     @IgnoredOnParcel
-    val type: CardTypeEnum = CardTypeEnum.TRANSLATE
+    override val type: CardTypeEnum = CardTypeEnum.TRANSLATE
 
     @IgnoredOnParcel
     val cardInfo: WordCardInfo =

@@ -267,6 +267,7 @@ class ReviewFragment : Fragment() {
             CardTypeEnum.TRANSLATE -> CardTranslateFragment.newInstance(dto.info as WordCardInfo)
             CardTypeEnum.REVERSE_TRANSLATE -> CardReverseTranslateFragment.newInstance(dto.info as WordCardInfo)
             CardTypeEnum.ENTER_WORD -> CardEnterWordFragment.newInstance(dto.info as WordCardInfo)
+            CardTypeEnum.TRANSLATION_COMPARISON -> null
             CardTypeEnum.SENTENCE_TO_STUDIED_LANGUAGE -> TODO()
             CardTypeEnum.SENTENCE_TO_STUDENT_LANGUAGE -> TODO()
         }

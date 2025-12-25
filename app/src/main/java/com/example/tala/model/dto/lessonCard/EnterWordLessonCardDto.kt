@@ -26,7 +26,7 @@ data class EnterWordLessonCardDto(
 ) : LessonCardDto, Parcelable {
 
     @IgnoredOnParcel
-    val type: CardTypeEnum = CardTypeEnum.ENTER_WORD
+    override val type: CardTypeEnum = CardTypeEnum.ENTER_WORD
 
     @IgnoredOnParcel
     val cardInfo: WordCardInfo =
