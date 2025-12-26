@@ -1,5 +1,8 @@
 package com.example.tala.service.lessonCard
 
+import com.example.tala.entity.cardhistory.CardHistory
+import com.example.tala.entity.cardhistory.CardHistoryDao
+import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryDao
 import com.example.tala.entity.dictionary.DictionaryRepository
@@ -22,6 +25,7 @@ import com.example.tala.entity.lessonprogress.LessonProgressDao
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
 import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
+import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.model.CardAnswer
@@ -39,12 +43,14 @@ class LessonCardServiceTest {
     private lateinit var dictionaryCollectionEntryDao: FakeDictionaryCollectionEntryDao
     private lateinit var dictionaryDao: FakeDictionaryDao
     private lateinit var lessonProgressDao: FakeLessonProgressDao
+    private lateinit var cardHistoryDao: FakeCardHistoryDao
 
     private lateinit var lessonRepository: LessonRepository
     private lateinit var lessonCardTypeRepository: LessonCardTypeRepository
     private lateinit var dictionaryCollectionRepository: DictionaryCollectionRepository
     private lateinit var dictionaryRepository: DictionaryRepository
     private lateinit var lessonProgressRepository: LessonProgressRepository
+    private lateinit var cardHistoryRepository: CardHistoryRepository
 
     private lateinit var translateService: TranslateLessonCardTypeService
     private lateinit var lessonCardService: LessonCardService
@@ -111,6 +117,8 @@ class LessonCardServiceTest {
 
         lessonProgressDao = FakeLessonProgressDao()
         lessonProgressRepository = LessonProgressRepository(lessonProgressDao)
+        cardHistoryDao = FakeCardHistoryDao()
+        cardHistoryRepository = CardHistoryRepository(cardHistoryDao)
 
         translateService = TranslateLessonCardTypeService(
             lessonProgressRepository,
@@ -123,6 +131,7 @@ class LessonCardServiceTest {
             dictionaryCollectionRepository,
             dictionaryRepository,
             lessonProgressRepository,
+            cardHistoryRepository,
             mapOf(CardTypeEnum.TRANSLATE to translateService)
         )
     }
@@ -210,6 +219,7 @@ class LessonCardServiceTest {
             dictionaryCollectionRepository,
             dictionaryRepository,
             lessonProgressRepository,
+            cardHistoryRepository,
             mapOf(
                 CardTypeEnum.TRANSLATE to translateService,
                 CardTypeEnum.REVERSE_TRANSLATE to reverseService
@@ -267,7 +277,7 @@ class LessonCardServiceTest {
 
         val expectedResultCard = DummyLessonCardDto("updated", CardTypeEnum.TRANSLATE)
         val recordingService = RecordingLessonCardTypeService(
-            answerResult = { _, _, _ -> expectedResultCard }
+            onAnswerResult = { _, _, _, _ -> expectedResultCard }
         )
         val delegatingService = LessonCardService(
             lessonRepository,
@@ -275,6 +285,7 @@ class LessonCardServiceTest {
             dictionaryCollectionRepository,
             dictionaryRepository,
             lessonProgressRepository,
+            cardHistoryRepository,
             mapOf(CardTypeEnum.TRANSLATE to recordingService),
             timeProvider = { 1234L }
         )
@@ -287,6 +298,116 @@ class LessonCardServiceTest {
         assertEquals(null, recordingService.lastAnswer)
         assertEquals(4, recordingService.lastQuality)
         assertEquals(1234L, recordingService.lastTimestamp)
+    }
+
+    @Test
+    fun answerResult_logsHistoryForTranslateCard() = runBlocking {
+        val progressId = 600
+        lessonProgressDao.storage.add(
+            LessonProgress(
+                id = progressId,
+                lessonId = LESSON_ID,
+                cardType = CardTypeEnum.TRANSLATE,
+                dictionaryId = 1,
+                nextReviewDate = 0L,
+                intervalMinutes = 1440,
+                ef = 2.5,
+                status = StatusEnum.NEW,
+                info = null
+            )
+        )
+
+        val card = TranslateLessonCardDto(
+            progressId = progressId,
+            lessonId = LESSON_ID,
+            dictionaryId = 1,
+            word = "word",
+            translation = "перевод",
+            hint = null,
+            imagePath = null,
+            status = StatusEnum.NEW,
+            intervalMinutes = 1440,
+            ef = 2.5,
+            nextReviewDate = null,
+            info = null
+        )
+
+        val result = lessonCardService.answerResult(card, null, 5)
+
+        assertEquals(null, result)
+        val history = cardHistoryDao.storage
+        assertEquals(1, history.size)
+        val entry = history.first()
+        assertEquals(LESSON_ID, entry.lessonId)
+        assertEquals(CardTypeEnum.TRANSLATE, entry.cardType)
+        assertEquals(1, entry.dictionaryId)
+        assertEquals(5, entry.quality)
+        assertTrue(entry.date > 0)
+    }
+
+    @Test
+    fun answerResult_logsHistoryForTranslationComparisonCard() = runBlocking {
+        val comparisonService = RecordingLessonCardTypeService(
+            cardsToReturn = emptyList(),
+            onAnswerResult = { _, _, _, _ -> null }
+        )
+        val comparisonLessonCardService = LessonCardService(
+            lessonRepository,
+            lessonCardTypeRepository,
+            dictionaryCollectionRepository,
+            dictionaryRepository,
+            lessonProgressRepository,
+            cardHistoryRepository,
+            mapOf(CardTypeEnum.TRANSLATION_COMPARISON to comparisonService),
+            timeProvider = { 9999L }
+        )
+
+        val card = TranslationComparisonLessonCardDto(
+            lessonId = LESSON_ID,
+            items = listOf(
+                TranslationComparisonLessonCardDto.Item(
+                    progressId = 1,
+                    dictionaryId = 1,
+                    word = "one",
+                    translation = "раз",
+                    hint = null,
+                    imagePath = null,
+                    status = StatusEnum.NEW,
+                    intervalMinutes = 10,
+                    ef = 2.5,
+                    nextReviewDate = null,
+                    info = null
+                ),
+                TranslationComparisonLessonCardDto.Item(
+                    progressId = 2,
+                    dictionaryId = 2,
+                    word = "two",
+                    translation = "два",
+                    hint = null,
+                    imagePath = null,
+                    status = StatusEnum.NEW,
+                    intervalMinutes = 10,
+                    ef = 2.5,
+                    nextReviewDate = null,
+                    info = null
+                )
+            )
+        )
+        val answer = CardAnswer.Comparison(
+            matches = listOf(
+                CardAnswer.Comparison.Match(progressId = 1, selectedDictionaryId = 1),
+                CardAnswer.Comparison.Match(progressId = 2, selectedDictionaryId = 42)
+            )
+        )
+
+        val result = comparisonLessonCardService.answerResult(card, answer, 5)
+
+        assertEquals(null, result)
+        val historyByDictionary = cardHistoryDao.storage.associateBy { it.dictionaryId }
+        assertEquals(2, historyByDictionary.size)
+        assertEquals(5, historyByDictionary[1]?.quality)
+        assertEquals(0, historyByDictionary[2]?.quality)
+        assertEquals(9999L, historyByDictionary.values.firstOrNull()?.date)
     }
 
     private class FakeLessonDao : LessonDao {
@@ -484,6 +605,42 @@ class LessonCardServiceTest {
         }
     }
 
+    private class FakeCardHistoryDao : CardHistoryDao {
+        private var nextId = 1
+        val storage = mutableListOf<CardHistory>()
+
+        override suspend fun insert(entry: CardHistory) {
+            storage.add(assignId(entry))
+        }
+
+        override suspend fun insertAll(entries: List<CardHistory>) {
+            entries.forEach { insert(it) }
+        }
+
+        override suspend fun getByLesson(lessonId: Int): List<CardHistory> =
+            storage.filter { it.lessonId == lessonId }.sortedByDescending { it.date }
+
+        override suspend fun getByLessonAndType(lessonId: Int, cardType: CardTypeEnum): List<CardHistory> =
+            storage.filter { it.lessonId == lessonId && it.cardType == cardType }
+                .sortedByDescending { it.date }
+
+        override suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> =
+            storage.filter { it.dictionaryId == dictionaryId }.sortedByDescending { it.date }
+
+        override suspend fun clearAll() {
+            storage.clear()
+        }
+
+        override suspend fun clearByLesson(lessonId: Int) {
+            storage.removeIf { it.lessonId == lessonId }
+        }
+
+        private fun assignId(entry: CardHistory): CardHistory {
+            val id = if (entry.id == 0) nextId++ else entry.id
+            return entry.copy(id = id)
+        }
+    }
+
     private class FakeLessonCardTypeService(
         private val cardsToReturn: List<LessonCardDto>
     ) : LessonCardTypeService {
@@ -507,7 +664,7 @@ class LessonCardServiceTest {
 
     private class RecordingLessonCardTypeService(
         private val cardsToReturn: List<LessonCardDto> = emptyList(),
-        private val answerResult: (LessonCardDto, CardAnswer?, Int) -> LessonCardDto?
+        private val onAnswerResult: (LessonCardDto, CardAnswer?, Int, Long) -> LessonCardDto?
     ) : LessonCardTypeService {
 
         var lastCard: LessonCardDto? = null
@@ -532,7 +689,7 @@ class LessonCardServiceTest {
             lastAnswer = answer
             lastQuality = quality
             lastTimestamp = currentTimeMillis
-            return answerResult(card, answer, quality)
+            return onAnswerResult(card, answer, quality, currentTimeMillis)
         }
     }
 

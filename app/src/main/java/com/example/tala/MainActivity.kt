@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.example.tala.TalaDatabase
 import com.example.tala.entity.dictionary.DictionaryRepository
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionRepository
+import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.lesson.LessonRepository
 import com.example.tala.entity.lessoncardtype.LessonCardTypeRepository
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
@@ -77,6 +78,7 @@ class MainActivity : AppCompatActivity() {
             database.dictionaryCollectionEntryDao()
         )
         val lessonProgressRepository = LessonProgressRepository(database.lessonProgressDao())
+        val cardHistoryRepository = CardHistoryRepository(database.cardHistoryDao())
 
         val translateService = TranslateLessonCardTypeService(
             lessonProgressRepository,
@@ -108,6 +110,7 @@ class MainActivity : AppCompatActivity() {
             dictionaryCollectionRepository = dictionaryCollectionRepository,
             dictionaryRepository = dictionaryRepository,
             lessonProgressRepository = lessonProgressRepository,
+            cardHistoryRepository = cardHistoryRepository,
             typeServices = services
         )
     }

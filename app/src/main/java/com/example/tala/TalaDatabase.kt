@@ -11,6 +11,8 @@ import com.example.tala.entity.collection.CollectionDao
 import com.example.tala.entity.collection.CardCollection
 import com.example.tala.entity.card.Card
 import com.example.tala.entity.card.CardDao
+import com.example.tala.entity.cardhistory.CardHistory
+import com.example.tala.entity.cardhistory.CardHistoryDao
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryDao
 import com.example.tala.entity.dictionary.DictionaryTypeConverters
@@ -36,9 +38,10 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
         DictionaryCollectionEntry::class,
         Lesson::class,
         LessonCardType::class,
-        LessonProgress::class
+        LessonProgress::class,
+        CardHistory::class
     ],
-    version = 26,
+    version = 27,
     exportSchema = false
 )
 @TypeConverters(
@@ -57,6 +60,7 @@ abstract class TalaDatabase : RoomDatabase() {
     abstract fun lessonDao(): LessonDao
     abstract fun lessonCardTypeDao(): LessonCardTypeDao
     abstract fun lessonProgressDao(): LessonProgressDao
+    abstract fun cardHistoryDao(): CardHistoryDao
 
     companion object {
         @Volatile
@@ -80,7 +84,8 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_22_23,
                         MIGRATION_23_24,
                         MIGRATION_24_25,
-                        MIGRATION_25_26
+                        MIGRATION_25_26,
+                        MIGRATION_26_27
                     )
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -263,6 +268,34 @@ abstract class TalaDatabase : RoomDatabase() {
         private val MIGRATION_25_26 = object : Migration(25, 26) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `dictionary` ADD COLUMN `image_path` TEXT")
+            }
+        }
+
+        private val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `card_history` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `lesson_id` INTEGER NOT NULL,
+                        `card_type` TEXT NOT NULL,
+                        `dictionary_id` INTEGER,
+                        `quality` INTEGER NOT NULL,
+                        `date` INTEGER NOT NULL,
+                        FOREIGN KEY(`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`dictionary_id`) REFERENCES `dictionary`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_card_history_lesson_id` ON `card_history` (`lesson_id`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_card_history_dictionary_id` ON `card_history` (`dictionary_id`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_card_history_date` ON `card_history` (`date`)"
+                )
             }
         }
 

@@ -57,6 +57,14 @@ erDiagram
         STRING status
         STRING info
     }
+    card_history {
+        INT id PK
+        INT lesson_id FK
+        STRING card_type
+        INT dictionary_id FK
+        INT quality
+        LONG date
+    }
 
     dictionary ||--o{ dictionary : "base_word_id (самоссылка)"
     dictionary ||--o{ dictionary_collection_entries : "слова в коллекциях"
@@ -66,3 +74,6 @@ erDiagram
     lessons ||--o{ lesson_progress : "прогресс по уроку"
     dictionary ||--o{ lesson_progress : "словарная привязка (nullable)"
     collections ||--o{ card : "карточки коллекции"
+    collections ||--o{ card : "карточки коллекции"
+    lessons ||--o{ card_history : "история ответов по уроку"
+    dictionary ||--o{ card_history : "словарная привязка к истории"
