@@ -6,7 +6,7 @@
 | Аудитория | Разработчики, AI агент |
 | Ответственный | Команда разработки |
 | Последнее обновление | 2025-12-23 |
-| Связанные документы | [Прогресс карточек](./card_progress.md), [ER-диаграмма](../data/er_diagram.mermaid) |
+| Связанные документы | [Прогресс карточек](./card_progress.md), [ER-диаграмма](../data/er_diagram.puml) |
 | Ключевые классы | `LessonCardTypeService`, `TranslateLessonCardTypeService` |
 
 ## Описание

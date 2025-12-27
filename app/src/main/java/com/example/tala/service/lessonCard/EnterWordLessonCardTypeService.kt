@@ -1,11 +1,16 @@
 package com.example.tala.service.lessonCard
 
+import com.example.tala.entity.cardhistory.CardHistory
+import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.LessonCardDto
+import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
+import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
+import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.model.CardAnswer
@@ -16,6 +21,7 @@ import kotlin.math.roundToLong
 class EnterWordLessonCardTypeService(
     private val lessonProgressRepository: LessonProgressRepository,
     private val dictionaryRepository: DictionaryRepository,
+    private val cardHistoryRepository: CardHistoryRepository,
     private val timeProvider: () -> Long = System::currentTimeMillis
 ) : LessonCardTypeService {
 
@@ -75,6 +81,8 @@ class EnterWordLessonCardTypeService(
         currentTimeMillis: Long
     ): LessonCardDto? {
         val dto = card as? EnterWordLessonCardDto ?: return null
+        logHistory(card, quality, currentTimeMillis)
+
         val progress = lessonProgressRepository.getById(dto.progressId) ?: return null
         val clampedQuality = quality.coerceIn(MIN_QUALITY, MAX_QUALITY)
         val updatedProgress = when {
@@ -88,6 +96,26 @@ class EnterWordLessonCardTypeService(
             buildCardFromProgress(updatedProgress)
         } else {
             null
+        }
+    }
+
+    private suspend fun logHistory(
+        card: EnterWordLessonCardDto,
+        quality: Int,
+        timestamp: Long
+    ) {
+        val entries: List<CardHistory> = listOf(
+                buildEntry(
+                    lessonId = card.lessonId,
+                    cardType = card.type,
+                    dictionaryId = card.dictionaryId,
+                    quality = quality,
+                    timestamp = timestamp
+                )
+            )
+
+        if (entries.isNotEmpty()) {
+            cardHistoryRepository.insertAll(entries)
         }
     }
 

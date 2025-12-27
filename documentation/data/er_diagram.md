@@ -1,3 +1,5 @@
+```mermaid
+
 erDiagram
     dictionary {
         INT id PK
@@ -77,3 +79,4 @@ erDiagram
     collections ||--o{ card : "карточки коллекции"
     lessons ||--o{ card_history : "история ответов по уроку"
     dictionary ||--o{ card_history : "словарная привязка к истории"
+    ```

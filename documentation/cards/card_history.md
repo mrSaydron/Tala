@@ -6,7 +6,7 @@
 | Аудитория | Разработчики, AI агент                     |
 | Ответственный | Команда разработки                         |
 | Последнее обновление | 2025-12-25                                 |
-| Связанные документы | [ER-диаграмма](../data/er_diagram.mermaid) |
+| Связанные документы | [ER-диаграмма](../data/er_diagram.puml) |
 | Ключевые классы | `CardHistory`, `CardHistoryDao`, `CardHistoryRepository`, `CardHistoryViewModel`, `LessonCardService` |
 
 ## Описание

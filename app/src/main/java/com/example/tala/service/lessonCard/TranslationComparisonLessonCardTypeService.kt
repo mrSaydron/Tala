@@ -1,10 +1,15 @@
 package com.example.tala.service.lessonCard
 
+import com.example.tala.entity.cardhistory.CardHistory
+import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
+import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.LessonCardDto
+import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
+import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -16,6 +21,7 @@ import kotlin.math.roundToLong
 class TranslationComparisonLessonCardTypeService(
     private val lessonProgressRepository: LessonProgressRepository,
     private val dictionaryRepository: DictionaryRepository,
+    private val cardHistoryRepository: CardHistoryRepository,
     private val timeProvider: () -> Long = System::currentTimeMillis
 ) : LessonCardTypeService {
 
@@ -79,6 +85,8 @@ class TranslationComparisonLessonCardTypeService(
         currentTimeMillis: Long
     ): LessonCardDto? {
         val dto = card as? TranslationComparisonLessonCardDto ?: return null
+        logHistory(card, answer, currentTimeMillis)
+
         val progressList = dto.items.mapNotNull { lessonProgressRepository.getById(it.progressId) }
         if (progressList.isEmpty()) return null
 
@@ -109,6 +117,36 @@ class TranslationComparisonLessonCardTypeService(
             )
         } else {
             null
+        }
+    }
+
+    private suspend fun logHistory(
+        card: TranslationComparisonLessonCardDto,
+        answer: CardAnswer?,
+        timestamp: Long
+    ) {
+        val matches = (answer as? CardAnswer.Comparison)
+            ?.matches
+            ?.associateBy { it.progressId }
+            ?: emptyMap()
+        val entries: List<CardHistory> = card.items.map { item ->
+            val match = matches[item.progressId]
+            val itemQuality = if (match != null && match.selectedDictionaryId == item.dictionaryId) {
+                MAX_QUALITY
+            } else {
+                MIN_QUALITY
+            }
+            buildEntry(
+                lessonId = card.lessonId,
+                cardType = card.type,
+                dictionaryId = item.dictionaryId,
+                quality = itemQuality,
+                timestamp = timestamp
+            )
+        }
+
+        if (entries.isNotEmpty()) {
+            cardHistoryRepository.insertAll(entries)
         }
     }
 

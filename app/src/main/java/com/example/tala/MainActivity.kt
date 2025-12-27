@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import com.example.tala.TalaDatabase
 import com.example.tala.entity.dictionary.DictionaryRepository
 import com.example.tala.entity.dictionaryCollection.DictionaryCollectionRepository
 import com.example.tala.entity.cardhistory.CardHistoryRepository
@@ -81,20 +80,24 @@ class MainActivity : AppCompatActivity() {
         val cardHistoryRepository = CardHistoryRepository(database.cardHistoryDao())
 
         val translateService = TranslateLessonCardTypeService(
-            lessonProgressRepository,
-            dictionaryRepository
+            lessonProgressRepository = lessonProgressRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
         )
         val reverseTranslateService = ReverseTranslateLessonCardTypeService(
-            lessonProgressRepository,
-            dictionaryRepository
+            lessonProgressRepository = lessonProgressRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
         )
         val enterWordService = EnterWordLessonCardTypeService(
-            lessonProgressRepository,
-            dictionaryRepository
+            lessonProgressRepository = lessonProgressRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
         )
         val comparisonService = TranslationComparisonLessonCardTypeService(
-            lessonProgressRepository,
-            dictionaryRepository
+            lessonProgressRepository = lessonProgressRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
         )
 
         val services = mapOf<CardTypeEnum, LessonCardTypeService>(
@@ -110,7 +113,6 @@ class MainActivity : AppCompatActivity() {
             dictionaryCollectionRepository = dictionaryCollectionRepository,
             dictionaryRepository = dictionaryRepository,
             lessonProgressRepository = lessonProgressRepository,
-            cardHistoryRepository = cardHistoryRepository,
             typeServices = services
         )
     }
