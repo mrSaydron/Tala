@@ -62,9 +62,13 @@ class TranslationComparisonLessonCardTypeService(
     }
 
     override suspend fun getCards(cardProgress: List<LessonProgress>): List<LessonCardDto> {
-        if (cardProgress.size < MIN_ITEMS_PER_CARD) return emptyList()
+        if (cardProgress.isEmpty()) return emptyList()
 
-        val shuffled = cardProgress.shuffled()
+        val now = timeProvider()
+        val readyProgress = cardProgress.filter { isProgressReady(it, now) }
+        if (readyProgress.size < MIN_ITEMS_PER_CARD) return emptyList()
+
+        val shuffled = readyProgress.shuffled()
         val dictionaryIds = shuffled.mapNotNull { it.dictionaryId }.distinct()
         val dictionaries = dictionaryRepository.getByIds(dictionaryIds).associateBy { it.id }
 

@@ -112,6 +112,7 @@ class MainActivity : AppCompatActivity() {
             lessonCardTypeRepository = lessonCardTypeRepository,
             dictionaryCollectionRepository = dictionaryCollectionRepository,
             dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
             lessonProgressRepository = lessonProgressRepository,
             typeServices = services
         )

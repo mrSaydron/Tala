@@ -64,11 +64,15 @@ class ReverseTranslateLessonCardTypeService(
     override suspend fun getCards(cardProgress: List<LessonProgress>): List<LessonCardDto> {
         if (cardProgress.isEmpty()) return emptyList()
 
-        val dictionaryIds = cardProgress.mapNotNull { it.dictionaryId }.distinct()
+        val now = timeProvider()
+        val readyProgress = cardProgress.filter { isProgressReady(it, now) }
+        if (readyProgress.isEmpty()) return emptyList()
+
+        val dictionaryIds = readyProgress.mapNotNull { it.dictionaryId }.distinct()
         val dictionaries = dictionaryRepository.getByIds(dictionaryIds)
             .associateBy { it.id }
 
-        return cardProgress.map { progress ->
+        return readyProgress.map { progress ->
             val dictionary = progress.dictionaryId?.let { dictionaries[it] }
             ReverseTranslateLessonCardDto.fromProgress(progress, dictionary)
         }

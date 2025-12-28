@@ -17,7 +17,6 @@ import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
-import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
 
@@ -84,7 +83,7 @@ class LessonFragment : Fragment() {
 
             setLoading(false)
 
-            val nextCard = selectNextCard(cards)
+            val nextCard = cards.firstOrNull()
 
             if (nextCard == null) {
                 binding.lessonEmptyStateTextView.isVisible = true
@@ -94,15 +93,6 @@ class LessonFragment : Fragment() {
 
             displayCard(nextCard)
         }
-    }
-
-    private fun selectNextCard(cards: List<LessonCardDto>): LessonCardDto? {
-        if (cards.isEmpty()) return null
-        val now = System.currentTimeMillis()
-        val dueCards = cards.filter { isCardDue(it, now) }
-        if (dueCards.isEmpty()) return null
-
-        return dueCards.minByOrNull { resolveNextReviewTimestamp(it) }
     }
 
     private fun displayCard(card: LessonCardDto) {
@@ -126,34 +116,6 @@ class LessonFragment : Fragment() {
         childFragmentManager.beginTransaction()
             .replace(R.id.reviewContentContainer, fragment)
             .commit()
-    }
-
-    private fun isCardDue(card: LessonCardDto, now: Long): Boolean {
-        val (status, nextReviewDate) = card.statusAndNextReview() ?: return true
-        if (status == StatusEnum.NEW || status == StatusEnum.PROGRESS_RESET) return true
-        return nextReviewDate?.let { it <= now } ?: true
-    }
-
-    private fun resolveNextReviewTimestamp(card: LessonCardDto): Long {
-        val nextReviewDate = card.statusAndNextReview()?.second ?: return Long.MIN_VALUE
-        return nextReviewDate ?: Long.MIN_VALUE
-    }
-
-    private fun LessonCardDto.statusAndNextReview(): Pair<StatusEnum, Long?>? {
-        if (this is TranslateLessonCardDto) {
-            return status to nextReviewDate
-        }
-        if (this is ReverseTranslateLessonCardDto) {
-            return status to nextReviewDate
-        }
-        if (this is EnterWordLessonCardDto) {
-            return status to nextReviewDate
-        }
-        if (this is TranslationComparisonLessonCardDto) {
-            val reference = items.minByOrNull { it.nextReviewDate ?: Long.MIN_VALUE }
-            return reference?.let { it.status to it.nextReviewDate }
-        }
-        return null
     }
 
     private fun setLoading(isLoading: Boolean) {

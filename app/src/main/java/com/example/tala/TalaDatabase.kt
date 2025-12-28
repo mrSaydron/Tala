@@ -41,7 +41,7 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
         LessonProgress::class,
         CardHistory::class
     ],
-    version = 27,
+    version = 28,
     exportSchema = false
 )
 @TypeConverters(
@@ -85,7 +85,8 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_23_24,
                         MIGRATION_24_25,
                         MIGRATION_25_26,
-                        MIGRATION_26_27
+                        MIGRATION_26_27,
+                        MIGRATION_27_28
                     )
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -299,6 +300,15 @@ abstract class TalaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_27_28 = object : Migration(27, 28) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_on_card_type` TEXT")
+                db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_on_value` INTEGER")
+                db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_off_card_type` TEXT")
+                db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_off_value` INTEGER")
+            }
+        }
+
         private fun recreateDictionaryTable(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `dictionary`")
             db.execSQL(
@@ -379,6 +389,10 @@ abstract class TalaDatabase : RoomDatabase() {
                 CREATE TABLE IF NOT EXISTS `lesson_card_types` (
                     `collection_id` INTEGER NOT NULL,
                     `card_type` TEXT NOT NULL,
+                    `condition_on_card_type` TEXT,
+                    `condition_on_value` INTEGER,
+                    `condition_off_card_type` TEXT,
+                    `condition_off_value` INTEGER,
                     PRIMARY KEY(`collection_id`, `card_type`),
                     FOREIGN KEY(`collection_id`) REFERENCES `dictionary_collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                 )

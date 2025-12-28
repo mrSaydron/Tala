@@ -5,6 +5,7 @@ import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
+import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.model.CardAnswer
 
 interface LessonCardTypeService {
@@ -17,7 +18,7 @@ interface LessonCardTypeService {
         currentTimeMillis: Long
     ): LessonCardDto?
 
-   fun buildEntry(
+    fun buildEntry(
         lessonId: Int,
         cardType: CardTypeEnum,
         dictionaryId: Int?,
@@ -32,6 +33,14 @@ interface LessonCardTypeService {
             quality = clampedQuality,
             date = timestamp
         )
+    }
+
+    fun isProgressReady(progress: LessonProgress, now: Long): Boolean {
+        if (progress.status == StatusEnum.NEW || progress.status == StatusEnum.PROGRESS_RESET) {
+            return true
+        }
+        val nextReviewDate = progress.nextReviewDate ?: return true
+        return nextReviewDate <= now
     }
 
     companion object {

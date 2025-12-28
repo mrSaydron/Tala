@@ -21,6 +21,7 @@ import com.example.tala.entity.lessoncardtype.LessonCardType
 import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
 import com.example.tala.fragment.adapter.DictionaryAdapter
 import com.example.tala.model.enums.CardTypeEnum
+import com.example.tala.fragment.model.CardTypeConditionArgs
 import androidx.core.widget.doAfterTextChanged
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +40,7 @@ class CollectionAddFragment : Fragment() {
         onAddToCollectionClick = null
     )
     private val selectedDictionaries: MutableList<Dictionary> = mutableListOf()
-    private val selectedCardTypes: MutableList<CardTypeEnum> = mutableListOf()
+    private val selectedCardTypes: MutableList<CardTypeConditionArgs> = mutableListOf()
 
     private var collectionId: Int? = null
     private var isCollectionLoaded: Boolean = false
@@ -58,11 +59,22 @@ class CollectionAddFragment : Fragment() {
         }
 
         parentFragmentManager.setFragmentResultListener(CollectionCardTypeFragment.RESULT_KEY_CARD_TYPES, this) { _, bundle ->
-            val selected = bundle.getStringArrayList(CollectionCardTypeFragment.RESULT_SELECTED_CARD_TYPES)
-                ?.mapNotNull { runCatching { CardTypeEnum.valueOf(it) }.getOrNull() }
-                ?: emptyList()
-            selectedCardTypes.clear()
-            selectedCardTypes.addAll(selected)
+            val detailed = bundle.getParcelableArrayList<CardTypeConditionArgs>(
+                CollectionCardTypeFragment.RESULT_SELECTED_CARD_TYPES_DETAIL
+            )
+            if (detailed != null) {
+                selectedCardTypes.clear()
+                selectedCardTypes.addAll(detailed)
+            } else {
+                val selected = bundle.getStringArrayList(CollectionCardTypeFragment.RESULT_SELECTED_CARD_TYPES)
+                    ?.mapNotNull { value ->
+                        runCatching { CardTypeEnum.valueOf(value) }.getOrNull()
+                    }
+                    ?.map { CardTypeConditionArgs(cardType = it, enabled = true) }
+                    ?: emptyList()
+                selectedCardTypes.clear()
+                selectedCardTypes.addAll(selected)
+            }
             applyDefaultCardTypesIfEmpty()
             updateCardTypeSummary()
         }
@@ -155,17 +167,27 @@ class CollectionAddFragment : Fragment() {
     }
 
     private fun applyDefaultCardTypesIfEmpty() {
+        val available = CardTypeEnum.values().filter { it.use }
         if (selectedCardTypes.isEmpty()) {
-            selectedCardTypes.addAll(CardTypeEnum.values().filter { it.use })
+            selectedCardTypes.addAll(
+                available.map { cardType ->
+                    CardTypeConditionArgs(cardType = cardType, enabled = true)
+                }
+            )
+        } else {
+            val existingTypes = selectedCardTypes.map { it.cardType }.toSet()
+            val missing = available.filterNot { existingTypes.contains(it) }
+            selectedCardTypes.addAll(missing.map { CardTypeConditionArgs(cardType = it, enabled = false) })
         }
     }
 
     private fun updateCardTypeSummary() {
         val binding = _binding ?: return
-        val summary = if (selectedCardTypes.isEmpty()) {
+        val activeTypes = selectedCardTypes.filter { it.enabled }.map { it.cardType }
+        val summary = if (activeTypes.isEmpty()) {
             getString(R.string.collection_card_type_empty)
         } else {
-            selectedCardTypes
+            activeTypes
                 .sortedBy { it.ordinal }
                 .joinToString(separator = ", ") { it.titleRu }
         }
@@ -227,8 +249,22 @@ class CollectionAddFragment : Fragment() {
                 selectedDictionaries.addAll(dictionaries.sortedBy { it.word.lowercase() })
 
                 val cardTypes = lessonCardTypeViewModel.getByCollectionId(id)
+                val byType = cardTypes.associateBy { it.cardType }
+                val available = CardTypeEnum.values().filter { it.use }
                 selectedCardTypes.clear()
-                selectedCardTypes.addAll(cardTypes.map { it.cardType })
+                selectedCardTypes.addAll(
+                    available.map { cardType ->
+                        val stored = byType[cardType]
+                        CardTypeConditionArgs(
+                            cardType = cardType,
+                            enabled = stored != null,
+                            conditionOnType = stored?.conditionOnCardType,
+                            conditionOnValue = stored?.conditionOnValue,
+                            conditionOffType = stored?.conditionOffCardType,
+                            conditionOffValue = stored?.conditionOffValue
+                        )
+                    }
+                )
             }
 
             isCollectionLoaded = true
@@ -291,7 +327,10 @@ class CollectionAddFragment : Fragment() {
         val description = binding.collectionDescriptionEditText.text?.toString()?.trim()
             ?.takeIf { it.isNotBlank() }
 
-        if (selectedCardTypes.isEmpty()) {
+        val activeCardTypes = selectedCardTypes
+            .filter { it.enabled }
+            .map { it.withDefaults() }
+        if (activeCardTypes.isEmpty()) {
             Toast.makeText(requireContext(), R.string.collection_card_type_error_required, Toast.LENGTH_SHORT).show()
             return
         }
@@ -317,11 +356,18 @@ class CollectionAddFragment : Fragment() {
                 )
                 lessonCardTypeViewModel.replaceForCollection(
                     targetCollectionId,
-                    selectedCardTypes
-                        .sortedBy { it.ordinal }
+                    activeCardTypes
+                        .sortedBy { it.cardType.ordinal }
                         .map { cardType ->
-                        LessonCardType(collectionId = targetCollectionId, cardType = cardType)
-                    }
+                            LessonCardType(
+                                collectionId = targetCollectionId,
+                                cardType = cardType.cardType,
+                                conditionOnCardType = cardType.conditionOnType,
+                                conditionOnValue = cardType.conditionOnValue,
+                                conditionOffCardType = cardType.conditionOffType,
+                                conditionOffValue = cardType.conditionOffValue
+                            )
+                        }
                 )
             }.isSuccess
 
@@ -354,6 +400,12 @@ class CollectionAddFragment : Fragment() {
         }
     }
 
+    private fun CardTypeConditionArgs.withDefaults(): CardTypeConditionArgs {
+        val onValue = if (conditionOnType != null) conditionOnValue ?: DEFAULT_CONDITION_THRESHOLD else null
+        val offValue = if (conditionOffType != null) conditionOffValue ?: DEFAULT_CONDITION_THRESHOLD else null
+        return copy(conditionOnValue = onValue, conditionOffValue = offValue)
+    }
+
     private fun applyDraftsToInputs() {
         if (binding.collectionNameEditText.text?.toString() != nameDraft) {
             binding.collectionNameEditText.setText(nameDraft)
@@ -371,6 +423,7 @@ class CollectionAddFragment : Fragment() {
     companion object {
         private const val ARG_COLLECTION_ID = "collection_id"
         private const val SELECT_WORD_REQUEST_KEY = "collection_select_word"
+        private const val DEFAULT_CONDITION_THRESHOLD = 10
 
         fun newInstance(collectionId: Int? = null): CollectionAddFragment {
             val fragment = CollectionAddFragment()

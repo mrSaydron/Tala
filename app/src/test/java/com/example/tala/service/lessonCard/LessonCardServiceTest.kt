@@ -34,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 class LessonCardServiceTest {
 
@@ -121,18 +122,19 @@ class LessonCardServiceTest {
         cardHistoryRepository = CardHistoryRepository(cardHistoryDao)
 
         translateService = TranslateLessonCardTypeService(
-            lessonProgressRepository,
-            dictionaryRepository
+            lessonProgressRepository = lessonProgressRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository
         )
 
         lessonCardService = LessonCardService(
-            lessonRepository,
-            lessonCardTypeRepository,
-            dictionaryCollectionRepository,
-            dictionaryRepository,
-            lessonProgressRepository,
-            cardHistoryRepository,
-            mapOf(CardTypeEnum.TRANSLATE to translateService)
+            lessonRepository = lessonRepository,
+            lessonCardTypeRepository = lessonCardTypeRepository,
+            dictionaryCollectionRepository = dictionaryCollectionRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
+            lessonProgressRepository = lessonProgressRepository,
+            typeServices = mapOf(CardTypeEnum.TRANSLATE to translateService)
         )
     }
 
@@ -204,6 +206,182 @@ class LessonCardServiceTest {
     }
 
     @Test
+    fun getCards_filtersOutNotReadyCards() = runBlocking {
+        val now = System.currentTimeMillis()
+        lessonProgressDao.storage.add(
+            LessonProgress(
+                id = 101,
+                lessonId = LESSON_ID,
+                cardType = CardTypeEnum.TRANSLATE,
+                dictionaryId = 1,
+                nextReviewDate = now - 1_000L,
+                intervalMinutes = 10,
+                ef = 2.5,
+                status = StatusEnum.IN_PROGRESS,
+                info = null
+            )
+        )
+        lessonProgressDao.storage.add(
+            LessonProgress(
+                id = 102,
+                lessonId = LESSON_ID,
+                cardType = CardTypeEnum.TRANSLATE,
+                dictionaryId = 2,
+                nextReviewDate = now + TimeUnit.DAYS.toMillis(1),
+                intervalMinutes = 20,
+                ef = 2.5,
+                status = StatusEnum.IN_PROGRESS,
+                info = null
+            )
+        )
+
+        val cards = lessonCardService.getCards(LESSON_ID)
+
+        assertEquals(1, cards.size)
+        val translateCard = cards.first() as TranslateLessonCardDto
+        assertEquals(101, translateCard.progressId)
+    }
+
+    @Test
+    fun getCards_conditionOnEnablesTypeWhenThresholdReached() = runBlocking {
+        val originalTypes = lessonCardTypeDao.cardTypes[COLLECTION_ID]?.map { it.copy() } ?: emptyList()
+        try {
+            lessonCardTypeDao.cardTypes[COLLECTION_ID] = mutableListOf(
+                LessonCardType(collectionId = COLLECTION_ID, cardType = CardTypeEnum.TRANSLATE),
+                LessonCardType(
+                    collectionId = COLLECTION_ID,
+                    cardType = CardTypeEnum.REVERSE_TRANSLATE,
+                    conditionOnCardType = CardTypeEnum.TRANSLATE,
+                    conditionOnValue = 2
+                )
+            )
+
+            val reverseService = FakeLessonCardTypeService(
+                listOf(DummyLessonCardDto("reverse", CardTypeEnum.REVERSE_TRANSLATE))
+            )
+            val conditionalService = LessonCardService(
+                lessonRepository = lessonRepository,
+                lessonCardTypeRepository = lessonCardTypeRepository,
+                dictionaryCollectionRepository = dictionaryCollectionRepository,
+                dictionaryRepository = dictionaryRepository,
+                cardHistoryRepository = cardHistoryRepository,
+                lessonProgressRepository = lessonProgressRepository,
+                typeServices = mapOf(
+                    CardTypeEnum.TRANSLATE to translateService,
+                    CardTypeEnum.REVERSE_TRANSLATE to reverseService
+                )
+            )
+
+            lessonProgressDao.storage.add(
+                LessonProgress(
+                    id = 201,
+                    lessonId = LESSON_ID,
+                    cardType = CardTypeEnum.TRANSLATE,
+                    dictionaryId = 1,
+                    nextReviewDate = System.currentTimeMillis() - 500L,
+                    intervalMinutes = 10,
+                    ef = 2.5,
+                    status = StatusEnum.NEW,
+                    info = null
+                )
+            )
+
+            val withoutHistory = conditionalService.getCards(LESSON_ID)
+            assertTrue(withoutHistory.none { it is DummyLessonCardDto })
+
+            cardHistoryDao.storage.addAll(
+                listOf(
+                    CardHistory(
+                        lessonId = LESSON_ID,
+                        cardType = CardTypeEnum.TRANSLATE,
+                        dictionaryId = 1,
+                        quality = 1,
+                        date = 10L
+                    ),
+                    CardHistory(
+                        lessonId = LESSON_ID,
+                        cardType = CardTypeEnum.TRANSLATE,
+                        dictionaryId = 2,
+                        quality = 3,
+                        date = 20L
+                    )
+                )
+            )
+
+            val withHistory = conditionalService.getCards(LESSON_ID)
+            assertTrue(withHistory.any { it is DummyLessonCardDto })
+        } finally {
+            lessonCardTypeDao.cardTypes[COLLECTION_ID] = originalTypes.toMutableList()
+            cardHistoryDao.storage.clear()
+        }
+    }
+
+    @Test
+    fun getCards_conditionOffDisablesTypeWhenThresholdReached() = runBlocking {
+        val originalTypes = lessonCardTypeDao.cardTypes[COLLECTION_ID]?.map { it.copy() } ?: emptyList()
+        try {
+            lessonCardTypeDao.cardTypes[COLLECTION_ID] = mutableListOf(
+                LessonCardType(collectionId = COLLECTION_ID, cardType = CardTypeEnum.TRANSLATE),
+                LessonCardType(
+                    collectionId = COLLECTION_ID,
+                    cardType = CardTypeEnum.REVERSE_TRANSLATE,
+                    conditionOffCardType = CardTypeEnum.TRANSLATE,
+                    conditionOffValue = 1
+                )
+            )
+
+            val reverseService = FakeLessonCardTypeService(
+                listOf(DummyLessonCardDto("reverse", CardTypeEnum.REVERSE_TRANSLATE))
+            )
+            val conditionalService = LessonCardService(
+                lessonRepository = lessonRepository,
+                lessonCardTypeRepository = lessonCardTypeRepository,
+                dictionaryCollectionRepository = dictionaryCollectionRepository,
+                dictionaryRepository = dictionaryRepository,
+                cardHistoryRepository = cardHistoryRepository,
+                lessonProgressRepository = lessonProgressRepository,
+                typeServices = mapOf(
+                    CardTypeEnum.TRANSLATE to translateService,
+                    CardTypeEnum.REVERSE_TRANSLATE to reverseService
+                )
+            )
+
+            lessonProgressDao.storage.add(
+                LessonProgress(
+                    id = 301,
+                    lessonId = LESSON_ID,
+                    cardType = CardTypeEnum.TRANSLATE,
+                    dictionaryId = 1,
+                    nextReviewDate = System.currentTimeMillis() - 500L,
+                    intervalMinutes = 10,
+                    ef = 2.5,
+                    status = StatusEnum.NEW,
+                    info = null
+                )
+            )
+
+            val initial = conditionalService.getCards(LESSON_ID)
+            assertTrue(initial.any { it is DummyLessonCardDto })
+
+            cardHistoryDao.storage.add(
+                CardHistory(
+                    lessonId = LESSON_ID,
+                    cardType = CardTypeEnum.TRANSLATE,
+                    dictionaryId = 1,
+                    quality = 4,
+                    date = 30L
+                )
+            )
+
+            val afterThreshold = conditionalService.getCards(LESSON_ID)
+            assertTrue(afterThreshold.none { it is DummyLessonCardDto })
+        } finally {
+            lessonCardTypeDao.cardTypes[COLLECTION_ID] = originalTypes.toMutableList()
+            cardHistoryDao.storage.clear()
+        }
+    }
+
+    @Test
     fun getCards_combinesAllRegisteredTypeServices() = runBlocking {
         lessonCardTypeDao.cardTypes[COLLECTION_ID] = mutableListOf(
             LessonCardType(collectionId = COLLECTION_ID, cardType = CardTypeEnum.TRANSLATE),
@@ -214,13 +392,13 @@ class LessonCardServiceTest {
             listOf(DummyLessonCardDto("reverse", CardTypeEnum.REVERSE_TRANSLATE))
         )
         val aggregatorService = LessonCardService(
-            lessonRepository,
-            lessonCardTypeRepository,
-            dictionaryCollectionRepository,
-            dictionaryRepository,
-            lessonProgressRepository,
-            cardHistoryRepository,
-            mapOf(
+            lessonRepository = lessonRepository,
+            lessonCardTypeRepository = lessonCardTypeRepository,
+            dictionaryCollectionRepository = dictionaryCollectionRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
+            lessonProgressRepository = lessonProgressRepository,
+            typeServices = mapOf(
                 CardTypeEnum.TRANSLATE to translateService,
                 CardTypeEnum.REVERSE_TRANSLATE to reverseService
             )
@@ -280,13 +458,13 @@ class LessonCardServiceTest {
             onAnswerResult = { _, _, _, _ -> expectedResultCard }
         )
         val delegatingService = LessonCardService(
-            lessonRepository,
-            lessonCardTypeRepository,
-            dictionaryCollectionRepository,
-            dictionaryRepository,
-            lessonProgressRepository,
-            cardHistoryRepository,
-            mapOf(CardTypeEnum.TRANSLATE to recordingService),
+            lessonRepository = lessonRepository,
+            lessonCardTypeRepository = lessonCardTypeRepository,
+            dictionaryCollectionRepository = dictionaryCollectionRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
+            lessonProgressRepository = lessonProgressRepository,
+            typeServices = mapOf(CardTypeEnum.TRANSLATE to recordingService),
             timeProvider = { 1234L }
         )
 
@@ -352,13 +530,13 @@ class LessonCardServiceTest {
             onAnswerResult = { _, _, _, _ -> null }
         )
         val comparisonLessonCardService = LessonCardService(
-            lessonRepository,
-            lessonCardTypeRepository,
-            dictionaryCollectionRepository,
-            dictionaryRepository,
-            lessonProgressRepository,
-            cardHistoryRepository,
-            mapOf(CardTypeEnum.TRANSLATION_COMPARISON to comparisonService),
+            lessonRepository = lessonRepository,
+            lessonCardTypeRepository = lessonCardTypeRepository,
+            dictionaryCollectionRepository = dictionaryCollectionRepository,
+            dictionaryRepository = dictionaryRepository,
+            cardHistoryRepository = cardHistoryRepository,
+            lessonProgressRepository = lessonProgressRepository,
+            typeServices = mapOf(CardTypeEnum.TRANSLATION_COMPARISON to comparisonService),
             timeProvider = { 9999L }
         )
 

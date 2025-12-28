@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import com.example.tala.R
 import com.example.tala.databinding.FragmentCollectionCardTypeBinding
 import com.example.tala.fragment.adapter.CollectionCardTypeSelectionAdapter
+import com.example.tala.fragment.model.CardTypeConditionArgs
 import com.example.tala.model.enums.CardTypeEnum
 
 class CollectionCardTypeFragment : Fragment() {
@@ -21,18 +22,22 @@ class CollectionCardTypeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var adapter: CollectionCardTypeSelectionAdapter
-    private val selectedCardTypes: MutableSet<CardTypeEnum> = mutableSetOf()
+    private val state: MutableMap<CardTypeEnum, CardTypeConditionArgs> = mutableMapOf()
     private val availableCardTypes: List<CardTypeEnum> =
         CardTypeEnum.values().filter { it.use }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val initial = arguments?.getStringArrayList(ARG_SELECTED_CARD_TYPES).orEmpty()
-        selectedCardTypes.addAll(
-            initial.mapNotNull { value ->
-                runCatching { CardTypeEnum.valueOf(value) }.getOrNull()
-            }
-        )
+        val initial = arguments?.getParcelableArrayList<CardTypeConditionArgs>(ARG_SELECTED_CARD_TYPES).orEmpty()
+        val initialByType = initial.associateBy { it.cardType }
+
+        availableCardTypes.forEach { type ->
+            val existing = initialByType[type]
+            state[type] = existing ?: CardTypeConditionArgs(
+                cardType = type,
+                enabled = false
+            )
+        }
     }
 
     override fun onCreateView(
@@ -64,16 +69,22 @@ class CollectionCardTypeFragment : Fragment() {
     }
 
     private fun setupRecycler() {
-        adapter = CollectionCardTypeSelectionAdapter { type, isChecked ->
-            if (isChecked) {
-                selectedCardTypes.add(type)
-            } else {
-                selectedCardTypes.remove(type)
+        adapter = CollectionCardTypeSelectionAdapter(
+            availableCardTypes = availableCardTypes,
+            activeTypesProvider = { activeTypes() },
+            onToggle = { type, isChecked ->
+                val current = state[type] ?: CardTypeConditionArgs(cardType = type)
+                state[type] = current.copy(enabled = isChecked)
+                refreshList()
+            },
+            onUpdate = { updated ->
+                val current = state[updated.cardType] ?: updated
+                // preserve enabled flag from current state
+                state[updated.cardType] = updated.copy(enabled = current.enabled)
             }
-            adapter.updateSelection(selectedCardTypes)
-        }
+        )
         binding.collectionCardTypeRecyclerView.adapter = adapter
-        adapter.submit(availableCardTypes, selectedCardTypes)
+        refreshList()
     }
 
     private fun setupButtons() {
@@ -83,18 +94,19 @@ class CollectionCardTypeFragment : Fragment() {
     }
 
     private fun handleSave() {
-        if (selectedCardTypes.isEmpty()) {
+        val selected = state.values.filter { it.enabled }
+        if (selected.isEmpty()) {
             Toast.makeText(requireContext(), R.string.collection_card_type_error_required, Toast.LENGTH_SHORT).show()
             return
         }
+
         parentFragmentManager.setFragmentResult(
             RESULT_KEY_CARD_TYPES,
             bundleOf(
                 RESULT_SELECTED_CARD_TYPES to ArrayList(
-                    selectedCardTypes
-                        .sortedBy { it.ordinal }
-                        .map { it.name }
-                )
+                    selected.sortedBy { it.cardType.ordinal }.map { it.cardType.name }
+                ),
+                RESULT_SELECTED_CARD_TYPES_DETAIL to ArrayList(selected.sortedBy { it.cardType.ordinal })
             )
         )
         parentFragmentManager.popBackStack()
@@ -123,6 +135,13 @@ class CollectionCardTypeFragment : Fragment() {
         binding.collectionCardTypeEmptyStateTextView.isVisible = isEmpty
     }
 
+    private fun refreshList() {
+        adapter.submit(state.values.toList())
+    }
+
+    private fun activeTypes(): List<CardTypeEnum> =
+        state.values.filter { it.enabled }.map { it.cardType }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -133,11 +152,12 @@ class CollectionCardTypeFragment : Fragment() {
 
         const val RESULT_KEY_CARD_TYPES = "collection_card_types_result"
         const val RESULT_SELECTED_CARD_TYPES = "collection_card_types_selected"
+        const val RESULT_SELECTED_CARD_TYPES_DETAIL = "collection_card_types_selected_detail"
 
-        fun newInstance(selectedCardTypes: List<CardTypeEnum>): CollectionCardTypeFragment {
+        fun newInstance(selectedCardTypes: List<CardTypeConditionArgs>): CollectionCardTypeFragment {
             return CollectionCardTypeFragment().apply {
                 arguments = bundleOf(
-                    ARG_SELECTED_CARD_TYPES to ArrayList(selectedCardTypes.map { it.name })
+                    ARG_SELECTED_CARD_TYPES to ArrayList(selectedCardTypes)
                 )
             }
         }

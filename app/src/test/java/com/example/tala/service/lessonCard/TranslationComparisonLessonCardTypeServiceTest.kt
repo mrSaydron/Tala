@@ -1,5 +1,8 @@
 package com.example.tala.service.lessonCard
 
+import com.example.tala.entity.cardhistory.CardHistory
+import com.example.tala.entity.cardhistory.CardHistoryDao
+import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.dictionary.Dictionary
 import com.example.tala.entity.dictionary.DictionaryDao
 import com.example.tala.entity.dictionary.DictionaryRepository
@@ -25,6 +28,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
     private lateinit var progressDao: RecordingLessonProgressDao
     private lateinit var progressRepository: LessonProgressRepository
     private lateinit var dictionaryRepository: DictionaryRepository
+    private lateinit var cardHistoryRepository: CardHistoryRepository
     private lateinit var service: TranslationComparisonLessonCardTypeService
 
     @Before
@@ -32,9 +36,11 @@ class TranslationComparisonLessonCardTypeServiceTest {
         progressDao = RecordingLessonProgressDao()
         progressRepository = LessonProgressRepository(progressDao)
         dictionaryRepository = DictionaryRepository(FakeDictionaryDao())
+        cardHistoryRepository = CardHistoryRepository(FakeCardHistoryDao())
         service = TranslationComparisonLessonCardTypeService(
             progressRepository,
-            dictionaryRepository
+            dictionaryRepository,
+            cardHistoryRepository
         )
     }
 
@@ -187,6 +193,35 @@ class TranslationComparisonLessonCardTypeServiceTest {
 
         override suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> = emptyList()
         override suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> = emptyList()
+    }
+
+    private class FakeCardHistoryDao : CardHistoryDao {
+        val storage = mutableListOf<CardHistory>()
+
+        override suspend fun insert(entry: CardHistory) {
+            storage.add(entry)
+        }
+
+        override suspend fun insertAll(entries: List<CardHistory>) {
+            storage.addAll(entries)
+        }
+
+        override suspend fun getByLesson(lessonId: Int): List<CardHistory> =
+            storage.filter { it.lessonId == lessonId }
+
+        override suspend fun getByLessonAndType(lessonId: Int, cardType: CardTypeEnum): List<CardHistory> =
+            storage.filter { it.lessonId == lessonId && it.cardType == cardType }
+
+        override suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> =
+            storage.filter { it.dictionaryId == dictionaryId }
+
+        override suspend fun clearAll() {
+            storage.clear()
+        }
+
+        override suspend fun clearByLesson(lessonId: Int) {
+            storage.removeIf { it.lessonId == lessonId }
+        }
     }
 
     companion object {

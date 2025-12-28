@@ -28,7 +28,15 @@ data class LessonCardType(
     @ColumnInfo(name = "collection_id")
     val collectionId: Int,
     @ColumnInfo(name = "card_type")
-    val cardType: CardTypeEnum
+    val cardType: CardTypeEnum,
+    @ColumnInfo(name = "condition_on_card_type")
+    val conditionOnCardType: CardTypeEnum? = null,
+    @ColumnInfo(name = "condition_on_value")
+    val conditionOnValue: Int? = null,
+    @ColumnInfo(name = "condition_off_card_type")
+    val conditionOffCardType: CardTypeEnum? = null,
+    @ColumnInfo(name = "condition_off_value")
+    val conditionOffValue: Int? = null
 )
 
 
