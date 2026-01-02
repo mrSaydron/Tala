@@ -14,6 +14,9 @@ import com.example.tala.R
 import com.example.tala.databinding.FragmentLessonListBinding
 import com.example.tala.entity.lesson.LessonViewModel
 import com.example.tala.fragment.adapter.LessonListAdapter
+import com.example.tala.fragment.CollectionListFragment
+import com.example.tala.fragment.DictionaryListFragment
+import com.example.tala.fragment.SettingsFragment
 import kotlinx.coroutines.launch
 
 class LessonListFragment : Fragment() {
@@ -50,6 +53,18 @@ class LessonListFragment : Fragment() {
                 .replace(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit()
+        }
+
+        binding.dictionaryNavButton.setOnClickListener {
+            openDictionary()
+        }
+
+        binding.collectionNavButton.setOnClickListener {
+            openCollections()
+        }
+
+        binding.settingsNavButton.setOnClickListener {
+            openSettings()
         }
 
         val initialPaddingLeft = binding.root.paddingLeft
@@ -102,6 +117,30 @@ class LessonListFragment : Fragment() {
 
     private fun openLesson(lessonId: Int) {
         val fragment = LessonFragment.newInstance(lessonId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openDictionary() {
+        val fragment = DictionaryListFragment.newInstance()
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openCollections() {
+        val fragment = CollectionListFragment()
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openSettings() {
+        val fragment = SettingsFragment()
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)

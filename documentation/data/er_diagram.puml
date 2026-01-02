@@ -28,25 +28,6 @@ entity dictionary_collection_entries {
   *dictionary_id : INT
 }
 
-entity card {
-  *id : INT
-  --
-  common_id : STRING
-  next_review_date : LONG
-  collection_id : INT
-  info : STRING
-  card_type : STRING
-  interval_minutes : INT
-  ef : DOUBLE
-  status : STRING
-}
-
-entity collections {
-  *id : INT
-  --
-  name : STRING
-}
-
 entity lessons {
   *id : INT
   --
@@ -95,7 +76,6 @@ dictionary_collections ||--o{ lessons : "уроки"
 dictionary_collections ||--o{ lesson_card_types : "доступные типы карточек"
 lessons ||--o{ lesson_progress : "прогресс по уроку"
 dictionary ||--o{ lesson_progress : "словарная привязка (nullable)"
-collections ||--o{ card : "карточки коллекции"
 lessons ||--o{ card_history : "история ответов по уроку"
 dictionary ||--o{ card_history : "словарная привязка к истории"
 @enduml

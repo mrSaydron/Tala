@@ -98,17 +98,4 @@
         android:textColor="?attr/colorOnSecondaryContainer"
         app:iconTint="?attr/colorOnSecondaryContainer" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/clearDataButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Очистить данные"
-        android:layout_marginTop="16dp"
-        app:icon="@drawable/ic_delete"
-        app:iconPadding="8dp"
-        app:iconGravity="textStart"
-        app:backgroundTint="?attr/colorErrorContainer"
-        android:textColor="?attr/colorOnErrorContainer"
-        app:iconTint="?attr/colorOnErrorContainer" />
-
 </LinearLayout>

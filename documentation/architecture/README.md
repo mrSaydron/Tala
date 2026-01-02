@@ -12,20 +12,20 @@
 
 - Приложение реализовано по схеме single activity: `MainActivity` управляет навигацией между фрагментами через `FragmentManager`.
 - UI строится на ViewBinding; состояние экрана хранится во `ViewModel`, а фрагменты выступают как тонкие контроллеры.
-- Для хранения данных используется Room (`TalaDatabase`) с сущностями `Card`, `CardCollection`, `LessonProgress`, `Dictionary` и вспомогательными таблицами.
+- Для хранения данных используется Room (`TalaDatabase`) с сущностями `Dictionary`, `DictionaryCollection`, `DictionaryCollectionEntry`, `Lesson`, `LessonCardType`, `LessonProgress`, `CardHistory` и вспомогательными таблицами.
 - Сетевой слой реализован на Retrofit-клиентах (`ApiClient`) для Yandex Dictionary, Unsplash и Mistral; вызовы выполняются из репозиториев с корутинами.
 
 ## Слоистая структура
 
-- **UI слой**: `MainActivity` и фрагменты из `fragment/`. Отвечают за отображение, подписаны на `ViewModel`.
-- **ViewModel слой**: управляет состоянием, координирует работу репозиториев, содержит бизнес-логику планирования повторений (`CardViewModel`).
+- **UI слой**: `MainActivity` и фрагменты из `fragment/` (ключевые: `LessonListFragment`, `LessonFragment`, `DictionaryListFragment`, `CollectionListFragment`, `SettingsFragment`). Отвечают за отображение, подписаны на `ViewModel`.
+- **ViewModel слой**: управляет состоянием, координирует работу репозиториев, содержит бизнес-логику планирования повторений (`LessonViewModel`, `DictionaryCollectionViewModel`, `LessonCardTypeViewModel` и др.).
 - **Repository слой**: инкапсулирует доступ к данным (Room и сети), выполняет корутины и трансформации.
 - **Data слой**: сущности Room, DAO и база `TalaDatabase`.
 
 ## Навигация и экраны
 
-- Навигация управляется вручную через `FragmentManager`; каждый тип карточки — отдельный фрагмент (`*_card_type`).
-- Списки слов и коллекций отображаются через RecyclerView-адаптеры; добавление/редактирование карточек реализовано в `AddWordFragment`.
+- Навигация управляется вручную через `FragmentManager`; стартовый экран — `LessonListFragment`, переходы ведут к урокам, словарю, коллекциям и настройкам.
+- Списки слов и коллекций отображаются через RecyclerView-адаптеры; добавление/редактирование слов реализовано в `DictionaryAddFragment`, коллекций — в `CollectionAddFragment`; уроков — в `LessonAddFragment`.
 - В дальнейшем планируются дополнительные сценарии (фразы, правила) — для них следует повторять структуру «экран + ViewModel + репозиторий».
 
 ## Конфигурация и зависимости

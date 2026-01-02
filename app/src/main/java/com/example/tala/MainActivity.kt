@@ -13,7 +13,7 @@ import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.lesson.LessonRepository
 import com.example.tala.entity.lessoncardtype.LessonCardTypeRepository
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
-import com.example.tala.fragment.HomeFragment
+import com.example.tala.fragment.LessonListFragment
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.service.TextToSpeechHelper
 import com.example.tala.service.lessonCard.LessonCardService
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
-            replaceFragment(HomeFragment())
+            replaceFragment(LessonListFragment())
         }
     }
 

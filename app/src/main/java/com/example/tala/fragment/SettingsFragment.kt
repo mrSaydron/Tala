@@ -7,15 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
 import com.example.tala.ReviewSettings
 import com.example.tala.databinding.FragmentSettingsBinding
-import com.example.tala.entity.collection.CollectionViewModel
-import com.example.tala.entity.card.CardViewModel
 import com.example.tala.model.enums.CardTypeEnum
-import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
 
@@ -61,11 +56,6 @@ class SettingsFragment : Fragment() {
         binding.saveSettingsButton.setOnClickListener {
             saveSettings()
         }
-
-        // Обработка нажатия на кнопку "Очистить данные"
-        binding.clearDataButton.setOnClickListener {
-            clearDatabase()
-        }
     }
 
     private fun saveSettings() {
@@ -84,15 +74,5 @@ class SettingsFragment : Fragment() {
         reviewSettings.englishLevel = englishLevel
 
         Toast.makeText(requireContext(), "Настройки сохранены", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun clearDatabase() {
-        lifecycleScope.launch {
-            val cardViewModel = ViewModelProvider(requireActivity())[CardViewModel::class.java]
-            val collectionViewModel = ViewModelProvider(requireActivity())[CollectionViewModel::class.java]
-            cardViewModel.deleteAllWords()
-            collectionViewModel.deleteAllCollections()
-            Toast.makeText(requireContext(), "Данные очищены", Toast.LENGTH_SHORT).show()
-        }
     }
 }

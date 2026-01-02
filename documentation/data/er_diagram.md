@@ -23,21 +23,6 @@ erDiagram
         INT collection_id PK, FK
         INT dictionary_id PK, FK
     }
-    card {
-        INT id PK
-        STRING common_id
-        LONG next_review_date
-        INT collection_id
-        STRING info
-        STRING card_type
-        INT interval_minutes
-        DOUBLE ef
-        STRING status
-    }
-    collections {
-        INT id PK
-        STRING name
-    }
     lessons {
         INT id PK
         STRING name
@@ -75,8 +60,6 @@ erDiagram
     dictionary_collections ||--o{ lesson_card_types : "доступные типы карточек"
     lessons ||--o{ lesson_progress : "прогресс по уроку"
     dictionary ||--o{ lesson_progress : "словарная привязка (nullable)"
-    collections ||--o{ card : "карточки коллекции"
-    collections ||--o{ card : "карточки коллекции"
     lessons ||--o{ card_history : "история ответов по уроку"
     dictionary ||--o{ card_history : "словарная привязка к истории"
     ```

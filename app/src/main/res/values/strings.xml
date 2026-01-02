@@ -111,6 +111,9 @@
     <string name="lesson_list_empty_state">Уроков пока нет</string>
     <string name="lesson_list_error_state">Не удалось загрузить уроки</string>
     <string name="lesson_list_add_button">Создать урок</string>
+    <string name="lesson_nav_dictionary">Словарь</string>
+    <string name="lesson_nav_collections">Коллекции</string>
+    <string name="lesson_nav_settings">Настройки</string>
     <string name="lesson_add_save_button">Сохранить</string>
     <string name="lesson_add_name_hint">Название урока</string>
     <string name="lesson_add_full_name_hint">Полное название</string>

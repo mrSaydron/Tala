@@ -7,10 +7,6 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.tala.entity.collection.CollectionDao
-import com.example.tala.entity.collection.CardCollection
-import com.example.tala.entity.card.Card
-import com.example.tala.entity.card.CardDao
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryDao
 import com.example.tala.entity.dictionary.Dictionary
@@ -31,8 +27,6 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
 
 @Database(
     entities = [
-        Card::class,
-        CardCollection::class,
         Dictionary::class,
         DictionaryCollection::class,
         DictionaryCollectionEntry::class,
@@ -41,7 +35,7 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
         LessonProgress::class,
         CardHistory::class
     ],
-    version = 28,
+    version = 29,
     exportSchema = false
 )
 @TypeConverters(
@@ -52,8 +46,6 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
     ]
 )
 abstract class TalaDatabase : RoomDatabase() {
-    abstract fun cardDao(): CardDao
-    abstract fun collectionsDao(): CollectionDao
     abstract fun dictionaryDao(): DictionaryDao
     abstract fun dictionaryCollectionDao(): DictionaryCollectionDao
     abstract fun dictionaryCollectionEntryDao(): DictionaryCollectionEntryDao
@@ -86,29 +78,9 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_24_25,
                         MIGRATION_25_26,
                         MIGRATION_26_27,
-                        MIGRATION_27_28
+                        MIGRATION_27_28,
+                        MIGRATION_28_29
                     )
-                    .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            // Предзаполнение коллекцией по умолчанию при первом создании БД
-                            db.execSQL("INSERT INTO collections(name) VALUES('Default')")
-                        }
-                        override fun onOpen(db: SupportSQLiteDatabase) {
-                            super.onOpen(db)
-                            try {
-                                val cursor = db.query("SELECT COUNT(*) FROM collections WHERE name = 'Default'")
-                                cursor.use {
-                                    if (it.moveToFirst()) {
-                                        val cnt = it.getLong(0)
-                                        if (cnt == 0L) {
-                                            db.execSQL("INSERT INTO collections(name) VALUES('Default')")
-                                        }
-                                    }
-                                }
-                            } catch (_: Exception) { }
-                        }
-                    })
                     .build()
                 INSTANCE = instance
                 instance
@@ -306,6 +278,13 @@ abstract class TalaDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_on_value` INTEGER")
                 db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_off_card_type` TEXT")
                 db.execSQL("ALTER TABLE `lesson_card_types` ADD COLUMN `condition_off_value` INTEGER")
+            }
+        }
+
+        private val MIGRATION_28_29 = object : Migration(28, 29) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `card`")
+                db.execSQL("DROP TABLE IF EXISTS `collections`")
             }
         }
 
