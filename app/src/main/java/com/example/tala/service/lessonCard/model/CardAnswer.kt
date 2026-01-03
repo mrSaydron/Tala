@@ -5,7 +5,7 @@ sealed interface CardAnswer {
     data class Comparison(val matches: List<Match>) : CardAnswer {
         data class Match(
             val progressId: Int,
-            val selectedDictionaryId: Int?
+            val selectedWordId: Int?
         )
     }
 }

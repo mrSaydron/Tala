@@ -14,8 +14,8 @@ import androidx.lifecycle.lifecycleScope
 import com.example.tala.MainActivity
 import com.example.tala.R
 import com.example.tala.databinding.FragmentLessonAddBinding
-import com.example.tala.entity.dictionaryCollection.DictionaryCollection
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionViewModel
+import com.example.tala.entity.wordCollection.WordCollection
+import com.example.tala.entity.wordCollection.WordCollectionViewModel
 import com.example.tala.entity.lesson.Lesson
 import com.example.tala.entity.lesson.LessonViewModel
 import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
@@ -34,13 +34,13 @@ class LessonAddFragment : Fragment() {
 
     private lateinit var lessonViewModel: LessonViewModel
     private lateinit var lessonCardTypeViewModel: LessonCardTypeViewModel
-    private lateinit var dictionaryCollectionViewModel: DictionaryCollectionViewModel
+    private lateinit var wordCollectionViewModel: WordCollectionViewModel
 
     private lateinit var adapter: LessonCardTypeAdapter
     private var collectionCardTypes: List<CardTypeEnum> = emptyList()
 
-    private var collections: List<DictionaryCollection> = emptyList()
-    private var selectedCollection: DictionaryCollection? = null
+    private var collections: List<WordCollection> = emptyList()
+    private var selectedCollection: WordCollection? = null
         set(value) {
             field = value
             updateCollectionState()
@@ -64,8 +64,8 @@ class LessonAddFragment : Fragment() {
 
         lessonViewModel = ViewModelProvider(requireActivity())[LessonViewModel::class.java]
         lessonCardTypeViewModel = ViewModelProvider(requireActivity())[LessonCardTypeViewModel::class.java]
-        dictionaryCollectionViewModel =
-            ViewModelProvider(requireActivity())[DictionaryCollectionViewModel::class.java]
+        wordCollectionViewModel =
+            ViewModelProvider(requireActivity())[WordCollectionViewModel::class.java]
 
         setupToolbar()
         setupRecycler()
@@ -119,7 +119,7 @@ class LessonAddFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             setLoading(true)
             val loaded = runCatching {
-                dictionaryCollectionViewModel.getAll()
+                wordCollectionViewModel.getAll()
             }.getOrElse {
                 emptyList()
             }

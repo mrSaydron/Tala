@@ -2,8 +2,8 @@ package com.example.tala.service.lessonCard
 
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryRepository
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryRepository
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
@@ -20,16 +20,16 @@ import kotlin.math.roundToLong
 
 class EnterWordLessonCardTypeService(
     private val lessonProgressRepository: LessonProgressRepository,
-    private val dictionaryRepository: DictionaryRepository,
+    private val wordRepository: WordRepository,
     private val cardHistoryRepository: CardHistoryRepository,
     private val timeProvider: () -> Long = System::currentTimeMillis
 ) : LessonCardTypeService {
 
-    override suspend fun createProgress(lessonId: Int, words: List<Dictionary>) {
+    override suspend fun createProgress(lessonId: Int, words: List<Word>) {
         withContext(Dispatchers.IO) {
             val existingDictionaryIds = lessonProgressRepository
                 .getByLessonCardType(lessonId, CardTypeEnum.ENTER_WORD)
-                .mapNotNull { it.dictionaryId }
+                .mapNotNull { it.wordId }
                 .toSet()
 
             val candidates = words
@@ -47,7 +47,7 @@ class EnterWordLessonCardTypeService(
                 LessonProgress(
                     lessonId = lessonId,
                     cardType = CardTypeEnum.ENTER_WORD,
-                    dictionaryId = dictionary.id,
+                    wordId = dictionary.id,
                     nextReviewDate = createdAt,
                     intervalMinutes = MINUTES_IN_DAY,
                     ef = DEFAULT_EF,
@@ -68,12 +68,12 @@ class EnterWordLessonCardTypeService(
         val readyProgress = cardProgress.filter { isProgressReady(it, now) }
         if (readyProgress.isEmpty()) return emptyList()
 
-        val dictionaryIds = readyProgress.mapNotNull { it.dictionaryId }.distinct()
-        val dictionaries = dictionaryRepository.getByIds(dictionaryIds)
+        val wordIds = readyProgress.mapNotNull { it.wordId }.distinct()
+        val words = wordRepository.getByIds(wordIds)
             .associateBy { it.id }
 
         return readyProgress.map { progress ->
-            val dictionary = progress.dictionaryId?.let { dictionaries[it] }
+            val dictionary = progress.wordId?.let { words[it] }
             EnterWordLessonCardDto.fromProgress(progress, dictionary)
         }
     }
@@ -112,7 +112,7 @@ class EnterWordLessonCardTypeService(
                 buildEntry(
                     lessonId = card.lessonId,
                     cardType = card.type,
-                    dictionaryId = card.dictionaryId,
+                    wordId = card.wordId,
                     quality = quality,
                     timestamp = timestamp
                 )
@@ -124,7 +124,7 @@ class EnterWordLessonCardTypeService(
     }
 
     private suspend fun buildCardFromProgress(progress: LessonProgress): EnterWordLessonCardDto {
-        val dictionary = progress.dictionaryId?.let { dictionaryRepository.getById(it) }
+        val dictionary = progress.wordId?.let { wordRepository.getById(it) }
         return EnterWordLessonCardDto.fromProgress(progress, dictionary)
     }
 

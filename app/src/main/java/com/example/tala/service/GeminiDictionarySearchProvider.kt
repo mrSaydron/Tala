@@ -1,9 +1,9 @@
 package com.example.tala.service
 
 import android.util.Log
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.PartOfSpeech
-import com.example.tala.entity.dictionary.TagType
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.PartOfSpeech
+import com.example.tala.entity.word.TagType
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
@@ -50,13 +50,13 @@ class GeminiDictionarySearchProvider(
         }
     }
 
-    override suspend fun searchByRussian(term: String): List<List<Dictionary>> {
+    override suspend fun searchByRussian(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
         return fetchWithFallback(normalized, DictionarySearchLanguage.RUSSIAN)
     }
 
-    override suspend fun searchByEnglish(term: String): List<List<Dictionary>> {
+    override suspend fun searchByEnglish(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
         return fetchWithFallback(normalized, DictionarySearchLanguage.ENGLISH)
@@ -65,7 +65,7 @@ class GeminiDictionarySearchProvider(
     private suspend fun fetchWithFallback(
         term: String,
         language: DictionarySearchLanguage,
-    ): List<List<Dictionary>> {
+    ): List<List<Word>> {
         val geminiResult = runCatching { requestEntries(term, language) }
             .onFailure { error ->
                 Log.e(TAG, "Gemini request failed: ${error.message}", error)
@@ -87,7 +87,7 @@ class GeminiDictionarySearchProvider(
     private suspend fun requestEntries(
         term: String,
         language: DictionarySearchLanguage,
-    ): List<List<Dictionary>> {
+    ): List<List<Word>> {
         val response = model.generateContent(buildPrompt(term, language))
 
         val rawContent = response.text
@@ -142,8 +142,8 @@ class GeminiDictionarySearchProvider(
         return raw.substring(start, end + 1)
     }
 
-    private fun mapEntries(response: GeminiDictionaryResponse): List<Dictionary> {
-        val results = mutableListOf<Dictionary>()
+    private fun mapEntries(response: GeminiDictionaryResponse): List<Word> {
+        val results = mutableListOf<Word>()
 
         response.entries.forEach { entry ->
             val word = entry.word?.takeIf { it.isNotBlank() } ?: return@forEach
@@ -169,7 +169,7 @@ class GeminiDictionarySearchProvider(
         return results
     }
 
-    private fun groupByBaseWord(entries: List<Dictionary>): List<List<Dictionary>> {
+    private fun groupByBaseWord(entries: List<Word>): List<List<Word>> {
         if (entries.isEmpty()) return emptyList()
 
         val grouped = entries.groupBy { dictionary ->
@@ -242,8 +242,8 @@ class GeminiDictionarySearchProvider(
         frequency: Double?,
         tags: Set<TagType>,
         level: String?,
-    ): Dictionary {
-        return Dictionary(
+    ): Word {
+        return Word(
             id = id ?: 0,
             word = word,
             translation = translation,
@@ -252,7 +252,7 @@ class GeminiDictionarySearchProvider(
             hint = hint,
             baseWordId = baseWordId,
             frequency = frequency,
-            level = level?.let { runCatching { com.example.tala.entity.dictionary.DictionaryLevel.valueOf(it) }.getOrNull() },
+            level = level?.let { runCatching { com.example.tala.entity.word.DictionaryLevel.valueOf(it) }.getOrNull() },
             tags = tags,
         )
     }
@@ -321,7 +321,7 @@ class GeminiDictionarySearchProvider(
     )
 
     companion object {
-        private const val TAG = "GeminiDictionary"
+        private const val TAG = "GeminiWord"
         private const val DEFAULT_MODEL = "gemini-2.5-pro"
         private const val DEFAULT_TEMPERATURE = 0.2f
         private const val APPLICATION_JSON = "application/json"
@@ -356,12 +356,12 @@ class GeminiDictionarySearchProvider(
                                 nullable = true
                             ),
                             "level" to Schema.enumeration(
-                                values = com.example.tala.entity.dictionary.DictionaryLevel.values().map { it.name },
+                                values = com.example.tala.entity.word.DictionaryLevel.values().map { it.name },
                                 nullable = true
                             )
                         ),
                         optionalProperties = listOf("id", "baseWordId", "partOfSpeech", "ipa", "hint", "tags"),
-                        description = "Dictionary entry"
+                        description = "Word entry"
                     ),
                     description = "List of dictionary entries",
                     minItems = 1

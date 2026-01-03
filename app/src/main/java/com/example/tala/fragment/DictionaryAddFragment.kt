@@ -14,11 +14,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tala.R
-import com.example.tala.databinding.FragmentDictionaryAddBinding
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryLevel
-import com.example.tala.entity.dictionary.DictionaryViewModel
-import com.example.tala.entity.dictionary.PartOfSpeech
+import com.example.tala.databinding.FragmentWordAddBinding
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.WordViewModel
+import com.example.tala.entity.word.PartOfSpeech
 import com.example.tala.fragment.adapter.DictionaryEditGroup
 import com.example.tala.fragment.adapter.DictionaryEditItem
 import com.example.tala.fragment.adapter.DictionaryEditorAdapter
@@ -37,10 +37,10 @@ private data class ImageTarget(val groupIndex: Int, val itemIndex: Int)
 
 class DictionaryAddFragment : Fragment() {
 
-    private var _binding: FragmentDictionaryAddBinding? = null
+    private var _binding: FragmentWordAddBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var dictionaryViewModel: DictionaryViewModel
+    private lateinit var dictionaryViewModel: WordViewModel
     private lateinit var groupAdapter: DictionaryEditorAdapter
 
     private val groups: MutableList<DictionaryEditGroup> = mutableListOf()
@@ -51,7 +51,7 @@ class DictionaryAddFragment : Fragment() {
     private val levelItems = listOf<DictionaryLevel?>(null) + DictionaryLevel.values().toList()
 
     private var entryId: Int? = null
-    private var existingEntry: Dictionary? = null
+    private var existingEntry: Word? = null
     private val imageRepo by lazy { ImageRepository() }
     private var pendingPickerTarget: ImageTarget? = null
     private var pendingCropTarget: ImageTarget? = null
@@ -79,14 +79,14 @@ class DictionaryAddFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentDictionaryAddBinding.inflate(inflater, container, false)
+        _binding = FragmentWordAddBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
+        dictionaryViewModel = ViewModelProvider(requireActivity())[WordViewModel::class.java]
 
         setupToolbar()
         setupRecycler()
@@ -94,12 +94,12 @@ class DictionaryAddFragment : Fragment() {
         setupImagePickerListener()
 
         if (entryId != null) {
-            binding.dictionarySearchContainer.isVisible = false
+            binding.wordSearchContainer.isVisible = false
             binding.addGroupButton.isVisible = false
-            binding.saveDictionaryButton.text = getString(R.string.dictionary_update_button)
+            binding.saveWordButton.text = getString(R.string.dictionary_update_button)
             loadEntry(entryId!!)
         } else {
-            binding.deleteDictionaryButton.isVisible = false
+            binding.deleteWordButton.isVisible = false
             addGroup()
         }
 
@@ -107,7 +107,7 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.dictionaryToolbar.setNavigationOnClickListener {
+        binding.wordToolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
     }
@@ -157,16 +157,16 @@ class DictionaryAddFragment : Fragment() {
                 }
             }
         )
-        binding.dictionaryGroupsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        binding.dictionaryGroupsRecyclerView.adapter = groupAdapter
-        binding.dictionaryGroupsRecyclerView.itemAnimator = null
+        binding.wordGroupsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.wordGroupsRecyclerView.adapter = groupAdapter
+        binding.wordGroupsRecyclerView.itemAnimator = null
     }
 
     private fun setupButtons() {
-        binding.dictionarySearchButton.setOnClickListener { handleSearch() }
+        binding.wordSearchButton.setOnClickListener { handleSearch() }
         binding.addGroupButton.setOnClickListener { addGroup() }
-        binding.saveDictionaryButton.setOnClickListener { handleSave() }
-        binding.deleteDictionaryButton.setOnClickListener { handleDelete() }
+        binding.saveWordButton.setOnClickListener { handleSave() }
+        binding.deleteWordButton.setOnClickListener { handleDelete() }
     }
 
     private fun loadEntry(id: Int) {
@@ -181,17 +181,17 @@ class DictionaryAddFragment : Fragment() {
         }
     }
 
-    private fun populateEntry(entries: List<Dictionary>) {
+    private fun populateEntry(entries: List<Word>) {
         if (entries.isEmpty()) return
         existingEntry = entries.first()
-        binding.deleteDictionaryButton.isVisible = true
+        binding.deleteWordButton.isVisible = true
 
         groups.clear()
         val first = entries.first()
         groups += DictionaryEditGroup(
             baseWordId = first.baseWordId ?: first.id,
             level = first.level,
-            items = entries.map { DictionaryEditItem.fromDictionary(it) }.toMutableList(),
+            items = entries.map { DictionaryEditItem.fromWord(it) }.toMutableList(),
             isExpanded = true
         )
         refreshGroups()
@@ -378,12 +378,12 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun handleSearch() {
-        val query = binding.dictionarySearchEditText.text?.toString()?.trim().orEmpty()
+        val query = binding.wordSearchEditText.text?.toString()?.trim().orEmpty()
         if (query.isBlank()) {
-            binding.dictionarySearchInputLayout.error = getString(R.string.dictionary_error_required)
+            binding.wordSearchInputLayout.error = getString(R.string.dictionary_error_required)
             return
         }
-        binding.dictionarySearchInputLayout.error = null
+        binding.wordSearchInputLayout.error = null
 
         viewLifecycleOwner.lifecycleScope.launch {
             showLoading(true)
@@ -398,12 +398,12 @@ class DictionaryAddFragment : Fragment() {
                     updateEmptyState(getString(R.string.dictionary_empty_results))
                 } else {
                     existingEntry = null
-                    binding.deleteDictionaryButton.isVisible = false
+                    binding.deleteWordButton.isVisible = false
                     groups.clear()
                     grouped.filter { it.isNotEmpty() }.forEachIndexed { index, dictionaries ->
                         val baseEntry = dictionaries.first()
                         val items = dictionaries.map { dictionary ->
-                            DictionaryEditItem.fromDictionary(dictionary.copy(id = 0))
+                            DictionaryEditItem.fromWord(dictionary.copy(id = 0))
                         }.toMutableList()
                         groups += DictionaryEditGroup(
                             baseWordId = baseEntry.baseWordId,
@@ -416,7 +416,7 @@ class DictionaryAddFragment : Fragment() {
                         updateEmptyState(getString(R.string.dictionary_empty_results))
                     } else {
                         refreshGroups()
-                        binding.dictionaryGroupsRecyclerView.scrollToPosition(0)
+                        binding.wordGroupsRecyclerView.scrollToPosition(0)
                     }
                 }
             }.onFailure {
@@ -437,28 +437,28 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun showLoading(show: Boolean) {
-        binding.dictionaryProgressBar.isVisible = show
-        binding.dictionarySearchButton.isEnabled = !show
-        binding.dictionarySearchInputLayout.isEnabled = !show
-        binding.saveDictionaryButton.isEnabled = !show
-        binding.deleteDictionaryButton.isEnabled = !show
+        binding.wordProgressBar.isVisible = show
+        binding.wordSearchButton.isEnabled = !show
+        binding.wordSearchInputLayout.isEnabled = !show
+        binding.saveWordButton.isEnabled = !show
+        binding.deleteWordButton.isEnabled = !show
         binding.addGroupButton.isEnabled = !show
 
         if (show) {
-            binding.dictionaryGroupsRecyclerView.isVisible = false
-            binding.dictionaryEmptyStateTextView.isVisible = false
+            binding.wordGroupsRecyclerView.isVisible = false
+            binding.wordEmptyStateTextView.isVisible = false
         } else {
             updateEmptyState()
         }
     }
 
     private fun updateEmptyState(message: String? = null) {
-        val isLoading = binding.dictionaryProgressBar.isVisible
+        val isLoading = binding.wordProgressBar.isVisible
         val isEmpty = !isLoading && groups.isEmpty()
-        binding.dictionaryGroupsRecyclerView.isVisible = !isLoading && groups.isNotEmpty()
-        binding.dictionaryEmptyStateTextView.isVisible = isEmpty
+        binding.wordGroupsRecyclerView.isVisible = !isLoading && groups.isNotEmpty()
+        binding.wordEmptyStateTextView.isVisible = isEmpty
         if (isEmpty) {
-            binding.dictionaryEmptyStateTextView.text = message ?: getString(R.string.dictionary_empty_results)
+            binding.wordEmptyStateTextView.text = message ?: getString(R.string.dictionary_empty_results)
         }
         if (entryId == null) {
             binding.addGroupButton.isVisible = !isLoading
@@ -472,10 +472,10 @@ class DictionaryAddFragment : Fragment() {
 
     private fun scrollToGroup(groupIndex: Int) {
         if (groupIndex < 0) return
-        binding.dictionaryGroupsRecyclerView.post {
+        binding.wordGroupsRecyclerView.post {
             val lastPosition = groupAdapter.itemCount - 1
             if (lastPosition >= 0) {
-                binding.dictionaryGroupsRecyclerView.smoothScrollToPosition(lastPosition)
+                binding.wordGroupsRecyclerView.smoothScrollToPosition(lastPosition)
             }
         }
     }

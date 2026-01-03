@@ -3,10 +3,10 @@ package com.example.tala.service.lessonCard
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryDao
 import com.example.tala.entity.cardhistory.CardHistoryRepository
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryDao
-import com.example.tala.entity.dictionary.DictionaryRepository
-import com.example.tala.entity.dictionary.DictionaryWithDependentCount
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordDao
+import com.example.tala.entity.word.WordRepository
+import com.example.tala.entity.word.WordWithDependentCount
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressDao
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
@@ -27,7 +27,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
 
     private lateinit var progressDao: RecordingLessonProgressDao
     private lateinit var progressRepository: LessonProgressRepository
-    private lateinit var dictionaryRepository: DictionaryRepository
+    private lateinit var dictionaryRepository: WordRepository
     private lateinit var cardHistoryRepository: CardHistoryRepository
     private lateinit var service: TranslationComparisonLessonCardTypeService
 
@@ -35,7 +35,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
     fun setUp() {
         progressDao = RecordingLessonProgressDao()
         progressRepository = LessonProgressRepository(progressDao)
-        dictionaryRepository = DictionaryRepository(FakeDictionaryDao())
+        dictionaryRepository = WordRepository(FakeWordDao())
         cardHistoryRepository = CardHistoryRepository(FakeCardHistoryDao())
         service = TranslationComparisonLessonCardTypeService(
             progressRepository,
@@ -47,7 +47,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
     @Test
     fun getCards_returnsChunkedGroups() = runBlocking {
         val progresses = (1..5).map { idx ->
-            createProgress(id = idx, dictionaryId = idx)
+            createProgress(id = idx, wordId = idx)
         }
         progressDao.storage.addAll(progresses)
 
@@ -63,7 +63,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
     @Test
     fun answerResult_allCorrect_returnsNullAndAdvancesProgress() = runBlocking {
         val progresses = (1..3).map { idx ->
-            createProgress(id = idx, dictionaryId = idx, status = StatusEnum.NEW)
+            createProgress(id = idx, wordId = idx, status = StatusEnum.NEW)
         }
         progressDao.storage.addAll(progresses)
 
@@ -72,7 +72,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
             progresses = progresses,
             dictionaries = emptyMap()
         )
-        val matches = card.items.map { CardAnswer.Comparison.Match(it.progressId, it.dictionaryId) }
+        val matches = card.items.map { CardAnswer.Comparison.Match(it.progressId, it.wordId) }
         val result = service.answerResult(card, CardAnswer.Comparison(matches), 5, NOW)
 
         assertNull(result)
@@ -85,7 +85,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
     @Test
     fun answerResult_withMistake_returnsCardToRepeat() = runBlocking {
         val progresses = (1..3).map { idx ->
-            createProgress(id = idx, dictionaryId = idx, status = StatusEnum.IN_PROGRESS)
+            createProgress(id = idx, wordId = idx, status = StatusEnum.IN_PROGRESS)
         }
         progressDao.storage.addAll(progresses)
 
@@ -95,7 +95,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
             dictionaries = emptyMap()
         )
         val matches = card.items.mapIndexed { index, item ->
-            val selected = if (index == 0) item.dictionaryId?.plus(100) else item.dictionaryId
+            val selected = if (index == 0) item.wordId?.plus(100) else item.wordId
             CardAnswer.Comparison.Match(item.progressId, selected)
         }
         val result = service.answerResult(card, CardAnswer.Comparison(matches), 5, NOW)
@@ -112,14 +112,14 @@ class TranslationComparisonLessonCardTypeServiceTest {
 
     private fun createProgress(
         id: Int,
-        dictionaryId: Int,
+        wordId: Int,
         status: StatusEnum = StatusEnum.NEW,
         interval: Long = TimeUnit.DAYS.toMinutes(1)
     ): LessonProgress = LessonProgress(
         id = id,
         lessonId = 1,
         cardType = CardTypeEnum.TRANSLATION_COMPARISON,
-        dictionaryId = dictionaryId,
+        wordId = wordId,
         nextReviewDate = NOW,
         intervalMinutes = interval,
         ef = 2.5,
@@ -160,8 +160,8 @@ class TranslationComparisonLessonCardTypeServiceTest {
         override suspend fun getByLessonCardType(lessonId: Int, cardType: CardTypeEnum): List<LessonProgress> =
             storage.filter { it.lessonId == lessonId && it.cardType == cardType }
 
-        override suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress> =
-            storage.filter { it.dictionaryId == dictionaryId }
+        override suspend fun getByWordId(wordId: Int): List<LessonProgress> =
+            storage.filter { it.wordId == wordId }
 
         override suspend fun getById(id: Int): LessonProgress? =
             storage.firstOrNull { it.id == id }
@@ -173,26 +173,26 @@ class TranslationComparisonLessonCardTypeServiceTest {
         }
     }
 
-    private class FakeDictionaryDao : DictionaryDao {
-        override suspend fun insert(entry: Dictionary): Long = entry.id.toLong()
-        override suspend fun delete(entry: Dictionary) = Unit
-        override suspend fun getAll(): List<Dictionary> = emptyList()
-        override suspend fun getBaseEntries(): List<Dictionary> = emptyList()
-        override suspend fun getById(id: Int): Dictionary? = Dictionary(
+    private class FakeWordDao : WordDao {
+        override suspend fun insert(entry: Word): Long = entry.id.toLong()
+        override suspend fun delete(entry: Word) = Unit
+        override suspend fun getAll(): List<Word> = emptyList()
+        override suspend fun getBaseEntries(): List<Word> = emptyList()
+        override suspend fun getById(id: Int): Word? = Word(
             id = id,
             word = "word$id",
             translation = "translation$id",
-            partOfSpeech = com.example.tala.entity.dictionary.PartOfSpeech.NOUN
+            partOfSpeech = com.example.tala.entity.word.PartOfSpeech.NOUN
         )
 
-        override suspend fun getByWord(word: String): List<Dictionary> = emptyList()
-        override suspend fun getByBaseWordId(baseWordId: Int): List<Dictionary> = emptyList()
-        override suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> = emptyList()
-        override suspend fun getByIds(ids: List<Int>): List<Dictionary> =
+        override suspend fun getByWord(word: String): List<Word> = emptyList()
+        override suspend fun getByBaseWordId(baseWordId: Int): List<Word> = emptyList()
+        override suspend fun getGroupByBaseId(baseWordId: Int): List<Word> = emptyList()
+        override suspend fun getByIds(ids: List<Int>): List<Word> =
             ids.mapNotNull { getById(it) }
 
-        override suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> = emptyList()
-        override suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> = emptyList()
+        override suspend fun getBaseEntriesWithDependentCount(): List<WordWithDependentCount> = emptyList()
+        override suspend fun getGroupByEntryId(entryId: Int): List<Word> = emptyList()
     }
 
     private class FakeCardHistoryDao : CardHistoryDao {
@@ -212,8 +212,8 @@ class TranslationComparisonLessonCardTypeServiceTest {
         override suspend fun getByLessonAndType(lessonId: Int, cardType: CardTypeEnum): List<CardHistory> =
             storage.filter { it.lessonId == lessonId && it.cardType == cardType }
 
-        override suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> =
-            storage.filter { it.dictionaryId == dictionaryId }
+        override suspend fun getByWord(wordId: Int): List<CardHistory> =
+            storage.filter { it.wordId == wordId }
 
         override suspend fun clearAll() {
             storage.clear()

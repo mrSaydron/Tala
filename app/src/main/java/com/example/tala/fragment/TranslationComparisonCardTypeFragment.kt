@@ -77,7 +77,7 @@ class TranslationComparisonCardTypeFragment : Fragment() {
 
         val shuffledOptions = dto.items.map {
             ComparisonTranslationAdapter.OptionItem(
-                dictionaryId = it.dictionaryId,
+                wordId = it.wordId,
                 translation = it.translation
             )
         }.shuffled()
@@ -176,13 +176,13 @@ class TranslationComparisonCardTypeFragment : Fragment() {
             val selected = currentOptions.getOrNull(index)
             CardAnswer.Comparison.Match(
                 progressId = item.progressId,
-                selectedDictionaryId = selected?.dictionaryId
+                selectedWordId = selected?.wordId
             )
         }
         currentAnswer = CardAnswer.Comparison(matches)
 
         val correctness = matches.mapIndexed { index, match ->
-            match.selectedDictionaryId == currentWords[index].dictionaryId
+            match.selectedWordId == currentWords[index].wordId
         }
         wasAnswerFullyCorrect = correctness.all { it }
 
@@ -191,7 +191,7 @@ class TranslationComparisonCardTypeFragment : Fragment() {
             correctTranslations = currentWords.map { it.translation },
             userTranslations = currentOptions.map { it.translation },
             correctness = correctness,
-            correctDictionaryIds = currentWords.map { it.dictionaryId }
+            correctWordIds = currentWords.map { it.wordId }
         )
 
         answerRevealed = true
@@ -355,13 +355,13 @@ class TranslationComparisonCardTypeFragment : Fragment() {
             correctTranslations: List<String>,
             userTranslations: List<String>,
             correctness: List<Boolean>,
-            correctDictionaryIds: List<Int?>
+            correctWordIds: List<Int?>
         ) {
             state = State.RESULT
             val newItems = correctTranslations.mapIndexed { index, translation ->
                 val userAnswer = userTranslations.getOrNull(index)
                 OptionItem(
-                    dictionaryId = correctDictionaryIds.getOrNull(index),
+                    wordId = correctWordIds.getOrNull(index),
                     translation = translation,
                     userTranslation = userAnswer,
                     isCorrect = correctness.getOrElse(index) { false }
@@ -400,7 +400,7 @@ class TranslationComparisonCardTypeFragment : Fragment() {
         }
 
         data class OptionItem(
-            val dictionaryId: Int?,
+            val wordId: Int?,
             val translation: String,
             val userTranslation: String? = null,
             val isCorrect: Boolean = false

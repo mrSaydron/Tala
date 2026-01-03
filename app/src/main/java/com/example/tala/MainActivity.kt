@@ -7,8 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import com.example.tala.entity.dictionary.DictionaryRepository
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionRepository
+import com.example.tala.entity.word.WordRepository
+import com.example.tala.entity.wordCollection.WordCollectionRepository
 import com.example.tala.entity.cardhistory.CardHistoryRepository
 import com.example.tala.entity.lesson.LessonRepository
 import com.example.tala.entity.lessoncardtype.LessonCardTypeRepository
@@ -71,32 +71,32 @@ class MainActivity : AppCompatActivity() {
         val database = TalaDatabase.getDatabase(this)
         val lessonRepository = LessonRepository(database.lessonDao())
         val lessonCardTypeRepository = LessonCardTypeRepository(database.lessonCardTypeDao())
-        val dictionaryRepository = DictionaryRepository(database.dictionaryDao())
-        val dictionaryCollectionRepository = DictionaryCollectionRepository(
-            database.dictionaryCollectionDao(),
-            database.dictionaryCollectionEntryDao()
+        val wordRepository = WordRepository(database.wordDao())
+        val wordCollectionRepository = WordCollectionRepository(
+            database.wordCollectionDao(),
+            database.wordCollectionEntryDao()
         )
         val lessonProgressRepository = LessonProgressRepository(database.lessonProgressDao())
         val cardHistoryRepository = CardHistoryRepository(database.cardHistoryDao())
 
         val translateService = TranslateLessonCardTypeService(
             lessonProgressRepository = lessonProgressRepository,
-            dictionaryRepository = dictionaryRepository,
+            wordRepository = wordRepository,
             cardHistoryRepository = cardHistoryRepository,
         )
         val reverseTranslateService = ReverseTranslateLessonCardTypeService(
             lessonProgressRepository = lessonProgressRepository,
-            dictionaryRepository = dictionaryRepository,
+            wordRepository = wordRepository,
             cardHistoryRepository = cardHistoryRepository,
         )
         val enterWordService = EnterWordLessonCardTypeService(
             lessonProgressRepository = lessonProgressRepository,
-            dictionaryRepository = dictionaryRepository,
+            wordRepository = wordRepository,
             cardHistoryRepository = cardHistoryRepository,
         )
         val comparisonService = TranslationComparisonLessonCardTypeService(
             lessonProgressRepository = lessonProgressRepository,
-            dictionaryRepository = dictionaryRepository,
+            wordRepository = wordRepository,
             cardHistoryRepository = cardHistoryRepository,
         )
 
@@ -110,8 +110,8 @@ class MainActivity : AppCompatActivity() {
         return LessonCardService(
             lessonRepository = lessonRepository,
             lessonCardTypeRepository = lessonCardTypeRepository,
-            dictionaryCollectionRepository = dictionaryCollectionRepository,
-            dictionaryRepository = dictionaryRepository,
+            wordCollectionRepository = wordCollectionRepository,
+            wordRepository = wordRepository,
             cardHistoryRepository = cardHistoryRepository,
             lessonProgressRepository = lessonProgressRepository,
             typeServices = services

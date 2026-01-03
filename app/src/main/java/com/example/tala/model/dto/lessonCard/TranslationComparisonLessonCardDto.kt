@@ -1,7 +1,7 @@
 package com.example.tala.model.dto.lessonCard
 
 import android.os.Parcelable
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -20,7 +20,7 @@ data class TranslationComparisonLessonCardDto(
     @Parcelize
     data class Item(
         val progressId: Int,
-        val dictionaryId: Int?,
+        val wordId: Int?,
         val word: String,
         val translation: String,
         val hint: String?,
@@ -36,13 +36,13 @@ data class TranslationComparisonLessonCardDto(
         fun fromProgress(
             lessonId: Int,
             progresses: List<LessonProgress>,
-            dictionaries: Map<Int, Dictionary?>
+            dictionaries: Map<Int, Word?>
         ): TranslationComparisonLessonCardDto {
             val items = progresses.map { progress ->
-                val dictionary = progress.dictionaryId?.let { dictionaries[it] }
+                val dictionary = progress.wordId?.let { dictionaries[it] }
                 Item(
                     progressId = progress.id,
-                    dictionaryId = progress.dictionaryId,
+                    wordId = progress.wordId,
                     word = dictionary?.word.orEmpty(),
                     translation = dictionary?.translation.orEmpty(),
                     hint = dictionary?.hint,

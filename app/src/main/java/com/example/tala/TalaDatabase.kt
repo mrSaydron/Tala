@@ -9,13 +9,13 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryDao
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryDao
-import com.example.tala.entity.dictionary.DictionaryTypeConverters
-import com.example.tala.entity.dictionaryCollection.DictionaryCollection
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionDao
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntry
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntryDao
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordDao
+import com.example.tala.entity.word.WordTypeConverters
+import com.example.tala.entity.wordCollection.WordCollection
+import com.example.tala.entity.wordCollection.WordCollectionDao
+import com.example.tala.entity.wordCollection.WordCollectionEntry
+import com.example.tala.entity.wordCollection.WordCollectionEntryDao
 import com.example.tala.entity.lessoncardtype.LessonCardType
 import com.example.tala.entity.lessoncardtype.LessonCardTypeDao
 import com.example.tala.entity.lesson.LessonDao
@@ -27,28 +27,28 @@ import com.example.tala.entity.lessonprogress.LessonProgressTypeConverters
 
 @Database(
     entities = [
-        Dictionary::class,
-        DictionaryCollection::class,
-        DictionaryCollectionEntry::class,
+        Word::class,
+        WordCollection::class,
+        WordCollectionEntry::class,
         Lesson::class,
         LessonCardType::class,
         LessonProgress::class,
         CardHistory::class
     ],
-    version = 29,
+    version = 30,
     exportSchema = false
 )
 @TypeConverters(
     value = [
-        DictionaryTypeConverters::class,
+        WordTypeConverters::class,
         LessonTypeConverters::class,
         LessonProgressTypeConverters::class
     ]
 )
 abstract class TalaDatabase : RoomDatabase() {
-    abstract fun dictionaryDao(): DictionaryDao
-    abstract fun dictionaryCollectionDao(): DictionaryCollectionDao
-    abstract fun dictionaryCollectionEntryDao(): DictionaryCollectionEntryDao
+    abstract fun wordDao(): WordDao
+    abstract fun wordCollectionDao(): WordCollectionDao
+    abstract fun wordCollectionEntryDao(): WordCollectionEntryDao
     abstract fun lessonDao(): LessonDao
     abstract fun lessonCardTypeDao(): LessonCardTypeDao
     abstract fun lessonProgressDao(): LessonProgressDao
@@ -79,7 +79,8 @@ abstract class TalaDatabase : RoomDatabase() {
                         MIGRATION_25_26,
                         MIGRATION_26_27,
                         MIGRATION_27_28,
-                        MIGRATION_28_29
+                        MIGRATION_28_29,
+                        MIGRATION_29_30
                     )
                     .build()
                 INSTANCE = instance
@@ -288,6 +289,117 @@ abstract class TalaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_29_30 = object : Migration(29, 30) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `dictionary` RENAME TO `dictionary_old`")
+                createWordsTable(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `words` (
+                        id, word, translation, part_of_speech, ipa, hint, image_path, base_word_id, frequency, level, tags
+                    )
+                    SELECT id, word, translation, part_of_speech, ipa, hint, image_path, base_word_id, frequency, level, tags
+                    FROM `dictionary_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `dictionary_old`")
+
+                db.execSQL("ALTER TABLE `dictionary_collections` RENAME TO `dictionary_collections_old`")
+                createWordCollectionTable(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `word_collection` (id, name, description)
+                    SELECT id, name, description FROM `dictionary_collections_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `dictionary_collections_old`")
+
+                db.execSQL("ALTER TABLE `dictionary_collection_entries` RENAME TO `dictionary_collection_entries_old`")
+                createWordCollectionEntriesTable(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `word_collection_entries` (collection_id, word_id)
+                    SELECT collection_id, dictionary_id FROM `dictionary_collection_entries_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `dictionary_collection_entries_old`")
+
+                db.execSQL("ALTER TABLE `lessons` RENAME TO `lessons_old`")
+                createLessonsTableV30(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `lessons` (id, name, full_name, collection_id)
+                    SELECT id, name, full_name, collection_id FROM `lessons_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `lessons_old`")
+
+                db.execSQL("ALTER TABLE `lesson_card_types` RENAME TO `lesson_card_types_old`")
+                createLessonCardTypesTableV30(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `lesson_card_types` (
+                        collection_id,
+                        card_type,
+                        condition_on_card_type,
+                        condition_on_value,
+                        condition_off_card_type,
+                        condition_off_value
+                    )
+                    SELECT
+                        collection_id,
+                        card_type,
+                        condition_on_card_type,
+                        condition_on_value,
+                        condition_off_card_type,
+                        condition_off_value
+                    FROM `lesson_card_types_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `lesson_card_types_old`")
+
+                db.execSQL("ALTER TABLE `lesson_progress` RENAME TO `lesson_progress_old`")
+                createLessonProgressTableV30(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `lesson_progress` (
+                        id,
+                        lesson_id,
+                        card_type,
+                        word_id,
+                        next_review_date,
+                        interval_minutes,
+                        ef,
+                        status,
+                        info
+                    )
+                    SELECT
+                        id,
+                        lesson_id,
+                        card_type,
+                        dictionary_id,
+                        next_review_date,
+                        interval_minutes,
+                        ef,
+                        status,
+                        info
+                    FROM `lesson_progress_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `lesson_progress_old`")
+
+                db.execSQL("ALTER TABLE `card_history` RENAME TO `card_history_old`")
+                createCardHistoryTableV30(db)
+                db.execSQL(
+                    """
+                    INSERT INTO `card_history` (id, lesson_id, card_type, word_id, quality, date)
+                    SELECT id, lesson_id, card_type, dictionary_id, quality, date FROM `card_history_old`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `card_history_old`")
+            }
+        }
+
         private fun recreateDictionaryTable(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `dictionary`")
             db.execSQL(
@@ -411,6 +523,158 @@ abstract class TalaDatabase : RoomDatabase() {
             )
             db.execSQL(
                 "CREATE INDEX IF NOT EXISTS `index_lesson_progress_next_review_date` ON `lesson_progress` (`next_review_date`)"
+            )
+        }
+
+        private fun createWordsTable(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `words` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `word` TEXT NOT NULL,
+                    `translation` TEXT NOT NULL,
+                    `part_of_speech` TEXT NOT NULL,
+                    `ipa` TEXT,
+                    `hint` TEXT,
+                    `image_path` TEXT,
+                    `base_word_id` INTEGER,
+                    `frequency` REAL,
+                    `level` TEXT,
+                    `tags` TEXT NOT NULL DEFAULT '',
+                    FOREIGN KEY(`base_word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_words_word` ON `words` (`word`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_words_base_word_id` ON `words` (`base_word_id`)")
+        }
+
+        private fun createWordCollectionTable(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `word_collection` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `description` TEXT
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_word_collection_name` ON `word_collection` (`name`)"
+            )
+        }
+
+        private fun createWordCollectionEntriesTable(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `word_collection_entries` (
+                    `collection_id` INTEGER NOT NULL,
+                    `word_id` INTEGER NOT NULL,
+                    PRIMARY KEY(`collection_id`, `word_id`),
+                    FOREIGN KEY(`collection_id`) REFERENCES `word_collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(`word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_word_collection_entries_collection` ON `word_collection_entries` (`collection_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_word_collection_entries_word` ON `word_collection_entries` (`word_id`)"
+            )
+        }
+
+        private fun createLessonsTableV30(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `lessons` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `full_name` TEXT NOT NULL,
+                    `collection_id` INTEGER NOT NULL,
+                    FOREIGN KEY(`collection_id`) REFERENCES `word_collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_lessons_name` ON `lessons` (`name`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_lessons_collection_id` ON `lessons` (`collection_id`)")
+        }
+
+        private fun createLessonCardTypesTableV30(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `lesson_card_types` (
+                    `collection_id` INTEGER NOT NULL,
+                    `card_type` TEXT NOT NULL,
+                    `condition_on_card_type` TEXT,
+                    `condition_on_value` INTEGER,
+                    `condition_off_card_type` TEXT,
+                    `condition_off_value` INTEGER,
+                    PRIMARY KEY(`collection_id`, `card_type`),
+                    FOREIGN KEY(`collection_id`) REFERENCES `word_collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_collection_id` ON `lesson_card_types` (`collection_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_card_types_card_type` ON `lesson_card_types` (`card_type`)"
+            )
+        }
+
+        private fun createLessonProgressTableV30(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `lesson_progress` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `lesson_id` INTEGER NOT NULL,
+                    `card_type` TEXT NOT NULL,
+                    `word_id` INTEGER,
+                    `next_review_date` INTEGER,
+                    `interval_minutes` INTEGER NOT NULL,
+                    `ef` REAL NOT NULL,
+                    `status` TEXT NOT NULL,
+                    `info` TEXT,
+                    FOREIGN KEY(`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(`word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_lesson_card` ON `lesson_progress` (`lesson_id`, `card_type`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_word` ON `lesson_progress` (`word_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_next_review_date` ON `lesson_progress` (`next_review_date`)"
+            )
+        }
+
+        private fun createCardHistoryTableV30(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `card_history` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `lesson_id` INTEGER NOT NULL,
+                    `card_type` TEXT NOT NULL,
+                    `word_id` INTEGER,
+                    `quality` INTEGER NOT NULL,
+                    `date` INTEGER NOT NULL,
+                    FOREIGN KEY(`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(`word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_card_history_lesson_id` ON `card_history` (`lesson_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_card_history_word_id` ON `card_history` (`word_id`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_card_history_date` ON `card_history` (`date`)"
             )
         }
     }

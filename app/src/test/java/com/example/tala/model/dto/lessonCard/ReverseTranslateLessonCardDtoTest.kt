@@ -1,6 +1,6 @@
 package com.example.tala.model.dto.lessonCard
 
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -15,18 +15,18 @@ class ReverseTranslateLessonCardDtoTest {
             id = 21,
             lessonId = 52,
             cardType = CardTypeEnum.REVERSE_TRANSLATE,
-            dictionaryId = 9,
+            wordId = 9,
             nextReviewDate = 987654321L,
             intervalMinutes = 35,
             ef = 2.45,
             status = StatusEnum.PROGRESS_RESET,
             info = """{"hint":"подсказка"}"""
         )
-        val dictionary = Dictionary(
+        val dictionary = Word(
             id = 9,
             word = "example",
             translation = "пример",
-            partOfSpeech = com.example.tala.entity.dictionary.PartOfSpeech.NOUN,
+            partOfSpeech = com.example.tala.entity.word.PartOfSpeech.NOUN,
             hint = "слово-подсказка",
             imagePath = "https://example.com/image.jpg",
             baseWordId = null
@@ -36,7 +36,7 @@ class ReverseTranslateLessonCardDtoTest {
 
         assertEquals(21, dto.progressId)
         assertEquals(52, dto.lessonId)
-        assertEquals(9, dto.dictionaryId)
+        assertEquals(9, dto.wordId)
         assertEquals("example", dto.word)
         assertEquals("пример", dto.translation)
         assertEquals("слово-подсказка", dto.hint)

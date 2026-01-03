@@ -1,9 +1,9 @@
 package com.example.tala.service
 
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryLevel
-import com.example.tala.entity.dictionary.PartOfSpeech
-import com.example.tala.entity.dictionary.TagType
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.PartOfSpeech
+import com.example.tala.entity.word.TagType
 import com.example.tala.integration.dictionary.YandexDictionaryApi
 import com.example.tala.integration.dictionary.dto.Definition
 import com.example.tala.integration.dictionary.dto.Translation
@@ -30,7 +30,7 @@ class YandexDictionarySearchProvider(
         }
     }
 
-    override suspend fun searchByRussian(term: String): List<List<Dictionary>> {
+    override suspend fun searchByRussian(term: String): List<List<Word>> {
         val normalizedQuery = term.trim()
         if (normalizedQuery.isEmpty()) return emptyList()
 
@@ -59,7 +59,7 @@ class YandexDictionarySearchProvider(
         return wrapAsSingleGroup(dictionaries)
     }
 
-    override suspend fun searchByEnglish(term: String): List<List<Dictionary>> {
+    override suspend fun searchByEnglish(term: String): List<List<Word>> {
         if (term.isBlank()) return emptyList()
         val response = api.getTranslation(
             text = term.trim(),
@@ -73,7 +73,7 @@ class YandexDictionarySearchProvider(
         return wrapAsSingleGroup(dictionaries)
     }
 
-    private fun mapEnglishDefinition(definition: Definition): List<Dictionary> {
+    private fun mapEnglishDefinition(definition: Definition): List<Word> {
         if (definition.tr.isEmpty()) return emptyList()
 
         return definition.tr.map { translation ->
@@ -90,7 +90,7 @@ class YandexDictionarySearchProvider(
         }
     }
 
-    private fun mapRussianDefinition(definition: Definition): List<Dictionary> {
+    private fun mapRussianDefinition(definition: Definition): List<Word> {
         if (definition.tr.isEmpty()) return emptyList()
 
         return definition.tr.map { translation ->
@@ -115,8 +115,8 @@ class YandexDictionarySearchProvider(
         hint: String?,
         frequency: Double?,
         tags: Set<TagType>,
-    ): Dictionary {
-        return Dictionary(
+    ): Word {
+        return Word(
             word = word,
             translation = translation,
             partOfSpeech = partOfSpeech,
@@ -166,7 +166,7 @@ class YandexDictionarySearchProvider(
         return parts.takeIf { it.isNotEmpty() }?.joinToString("\n")
     }
 
-    private fun wrapAsSingleGroup(dictionaries: List<Dictionary>): List<List<Dictionary>> {
+    private fun wrapAsSingleGroup(dictionaries: List<Word>): List<List<Word>> {
         if (dictionaries.isEmpty()) return emptyList()
         return listOf(dictionaries)
     }

@@ -1,10 +1,10 @@
 package com.example.tala.service
 
 import android.util.Log
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryLevel
-import com.example.tala.entity.dictionary.PartOfSpeech
-import com.example.tala.entity.dictionary.TagType
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.PartOfSpeech
+import com.example.tala.entity.word.TagType
 import com.example.tala.integration.mistral.MistralApi
 import com.example.tala.integration.mistral.MistralRequest
 import com.example.tala.integration.mistral.MistralRequestMessage
@@ -37,13 +37,13 @@ class MistralDictionarySearchProvider(
         }
     }
 
-    override suspend fun searchByRussian(term: String): List<List<Dictionary>> {
+    override suspend fun searchByRussian(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
         return fetchWithFallback(normalized, DictionarySearchLanguage.RUSSIAN)
     }
 
-    override suspend fun searchByEnglish(term: String): List<List<Dictionary>> {
+    override suspend fun searchByEnglish(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
         return fetchWithFallback(normalized, DictionarySearchLanguage.ENGLISH)
@@ -52,7 +52,7 @@ class MistralDictionarySearchProvider(
     private suspend fun fetchWithFallback(
         term: String,
         language: DictionarySearchLanguage,
-    ): List<List<Dictionary>> {
+    ): List<List<Word>> {
         val mistralResult = runCatching { requestEntries(term, language) }
             .onFailure { error ->
                 Log.e(TAG, "Mistral request failed: ${error.message}", error)
@@ -73,7 +73,7 @@ class MistralDictionarySearchProvider(
     private suspend fun requestEntries(
         term: String,
         language: DictionarySearchLanguage,
-    ): List<Dictionary> {
+    ): List<Word> {
         val response = api.generateText(
             apiKey = apiKey,
             request = MistralRequest(
@@ -141,8 +141,8 @@ class MistralDictionarySearchProvider(
         return raw.substring(start, end + 1)
     }
 
-    private fun mapEntries(response: LlmDictionaryResponse): List<Dictionary> {
-        val result = mutableListOf<Dictionary>()
+    private fun mapEntries(response: LlmDictionaryResponse): List<Word> {
+        val result = mutableListOf<Word>()
         response.entries.forEach { entry ->
             val word = entry.word?.takeIf { it.isNotBlank() } ?: return@forEach
             val translation = entry.translation?.takeIf { it.isNotBlank() } ?: return@forEach
@@ -269,8 +269,8 @@ class MistralDictionarySearchProvider(
         hint: String?,
         frequency: Double?,
         tags: Set<TagType>,
-    ): Dictionary {
-        return Dictionary(
+    ): Word {
+        return Word(
             word = word,
             translation = translation,
             partOfSpeech = partOfSpeech,
@@ -332,7 +332,7 @@ class MistralDictionarySearchProvider(
         }
     }
 
-    private fun wrapAsSingleGroup(dictionaries: List<Dictionary>): List<List<Dictionary>> {
+    private fun wrapAsSingleGroup(dictionaries: List<Word>): List<List<Word>> {
         if (dictionaries.isEmpty()) return emptyList()
         return listOf(dictionaries)
     }
@@ -389,7 +389,7 @@ class MistralDictionarySearchProvider(
     )
 
     companion object {
-        private const val TAG = "MistralDictionary"
+        private const val TAG = "MistralWord"
         private const val DEFAULT_MODEL = "mistral-small-latest"
         private const val MAX_ENTRIES = 15
 

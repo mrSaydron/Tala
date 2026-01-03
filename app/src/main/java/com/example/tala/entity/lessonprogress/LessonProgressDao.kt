@@ -32,8 +32,8 @@ interface LessonProgressDao {
     @Query("SELECT * FROM lesson_progress WHERE lesson_id = :lessonId AND card_type = :cardType")
     suspend fun getByLessonCardType(lessonId: Int, cardType: CardTypeEnum): List<LessonProgress>
 
-    @Query("SELECT * FROM lesson_progress WHERE dictionary_id = :dictionaryId")
-    suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress>
+    @Query("SELECT * FROM lesson_progress WHERE word_id = :wordId")
+    suspend fun getByWordId(wordId: Int): List<LessonProgress>
 
     @Query("SELECT * FROM lesson_progress WHERE id = :id LIMIT 1")
     suspend fun getById(id: Int): LessonProgress?

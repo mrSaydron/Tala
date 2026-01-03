@@ -3,10 +3,10 @@ package com.example.tala.service.lessonCard
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryDao
 import com.example.tala.entity.cardhistory.CardHistoryRepository
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryDao
-import com.example.tala.entity.dictionary.DictionaryRepository
-import com.example.tala.entity.dictionary.DictionaryWithDependentCount
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordDao
+import com.example.tala.entity.word.WordRepository
+import com.example.tala.entity.word.WordWithDependentCount
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressDao
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
@@ -35,7 +35,7 @@ class ReverseTranslateLessonCardTypeServiceTest {
         cardHistoryRepository = CardHistoryRepository(FakeCardHistoryDao())
         service = ReverseTranslateLessonCardTypeService(
             progressRepository,
-            DictionaryRepository(FakeDictionaryDao()),
+            WordRepository(FakeWordDao()),
             cardHistoryRepository
         )
     }
@@ -122,7 +122,7 @@ class ReverseTranslateLessonCardTypeServiceTest {
         id = progressDao.nextId(),
         lessonId = 1,
         cardType = CardTypeEnum.REVERSE_TRANSLATE,
-        dictionaryId = 1,
+        wordId = 1,
         nextReviewDate = nextReview,
         intervalMinutes = interval,
         ef = ef,
@@ -170,25 +170,25 @@ class ReverseTranslateLessonCardTypeServiceTest {
         override suspend fun getByLessonCardType(lessonId: Int, cardType: CardTypeEnum): List<LessonProgress> =
             storage.filter { it.lessonId == lessonId && it.cardType == cardType }
 
-        override suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress> =
-            storage.filter { it.dictionaryId == dictionaryId }
+        override suspend fun getByWordId(wordId: Int): List<LessonProgress> =
+            storage.filter { it.wordId == wordId }
 
         override suspend fun getById(id: Int): LessonProgress? =
             storage.firstOrNull { it.id == id }
     }
 
-    private class FakeDictionaryDao : DictionaryDao {
-        override suspend fun insert(entry: Dictionary): Long = error("Not used")
-        override suspend fun delete(entry: Dictionary) = error("Not used")
-        override suspend fun getAll(): List<Dictionary> = emptyList()
-        override suspend fun getBaseEntries(): List<Dictionary> = emptyList()
-        override suspend fun getById(id: Int): Dictionary? = null
-        override suspend fun getByWord(word: String): List<Dictionary> = emptyList()
-        override suspend fun getByBaseWordId(baseWordId: Int): List<Dictionary> = emptyList()
-        override suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> = emptyList()
-        override suspend fun getByIds(ids: List<Int>): List<Dictionary> = emptyList()
-        override suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> = emptyList()
-        override suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> = emptyList()
+    private class FakeWordDao : WordDao {
+        override suspend fun insert(entry: Word): Long = error("Not used")
+        override suspend fun delete(entry: Word) = error("Not used")
+        override suspend fun getAll(): List<Word> = emptyList()
+        override suspend fun getBaseEntries(): List<Word> = emptyList()
+        override suspend fun getById(id: Int): Word? = null
+        override suspend fun getByWord(word: String): List<Word> = emptyList()
+        override suspend fun getByBaseWordId(baseWordId: Int): List<Word> = emptyList()
+        override suspend fun getGroupByBaseId(baseWordId: Int): List<Word> = emptyList()
+        override suspend fun getByIds(ids: List<Int>): List<Word> = emptyList()
+        override suspend fun getBaseEntriesWithDependentCount(): List<WordWithDependentCount> = emptyList()
+        override suspend fun getGroupByEntryId(entryId: Int): List<Word> = emptyList()
     }
 
     private class FakeCardHistoryDao : CardHistoryDao {
@@ -208,8 +208,8 @@ class ReverseTranslateLessonCardTypeServiceTest {
         override suspend fun getByLessonAndType(lessonId: Int, cardType: CardTypeEnum): List<CardHistory> =
             storage.filter { it.lessonId == lessonId && it.cardType == cardType }
 
-        override suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> =
-            storage.filter { it.dictionaryId == dictionaryId }
+        override suspend fun getByWord(wordId: Int): List<CardHistory> =
+            storage.filter { it.wordId == wordId }
 
         override suspend fun clearAll() {
             storage.clear()

@@ -13,10 +13,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
 import com.example.tala.databinding.FragmentCollectionAddBinding
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryViewModel
-import com.example.tala.entity.dictionaryCollection.DictionaryCollection
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionViewModel
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordViewModel
+import com.example.tala.entity.wordCollection.WordCollection
+import com.example.tala.entity.wordCollection.WordCollectionViewModel
 import com.example.tala.entity.lessoncardtype.LessonCardType
 import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
 import com.example.tala.fragment.adapter.DictionaryAdapter
@@ -32,14 +32,14 @@ class CollectionAddFragment : Fragment() {
     private var _binding: FragmentCollectionAddBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var dictionaryCollectionViewModel: DictionaryCollectionViewModel
-    private lateinit var dictionaryViewModel: DictionaryViewModel
+    private lateinit var wordCollectionViewModel: WordCollectionViewModel
+    private lateinit var wordViewModel: WordViewModel
     private lateinit var lessonCardTypeViewModel: LessonCardTypeViewModel
     private val wordsAdapter = DictionaryAdapter(
         onItemClick = { _ -> },
         onAddToCollectionClick = null
     )
-    private val selectedDictionaries: MutableList<Dictionary> = mutableListOf()
+    private val selectedWords: MutableList<Word> = mutableListOf()
     private val selectedCardTypes: MutableList<CardTypeConditionArgs> = mutableListOf()
 
     private var collectionId: Int? = null
@@ -52,9 +52,9 @@ class CollectionAddFragment : Fragment() {
         collectionId = arguments?.getInt(ARG_COLLECTION_ID)?.takeIf { it > 0 }
 
         parentFragmentManager.setFragmentResultListener(SELECT_WORD_REQUEST_KEY, this) { _, bundle ->
-            val dictionaryId = bundle.getInt(DictionaryListFragment.RESULT_SELECTED_DICTIONARY_ID, -1)
-            if (dictionaryId > 0) {
-                onDictionaryChosen(dictionaryId)
+            val wordId = bundle.getInt(DictionaryListFragment.RESULT_SELECTED_DICTIONARY_ID, -1)
+            if (wordId > 0) {
+                onDictionaryChosen(wordId)
             }
         }
 
@@ -92,9 +92,9 @@ class CollectionAddFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dictionaryCollectionViewModel =
-            ViewModelProvider(requireActivity())[DictionaryCollectionViewModel::class.java]
-        dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
+        wordCollectionViewModel =
+            ViewModelProvider(requireActivity())[WordCollectionViewModel::class.java]
+        wordViewModel = ViewModelProvider(requireActivity())[WordViewModel::class.java]
         lessonCardTypeViewModel =
             ViewModelProvider(requireActivity())[LessonCardTypeViewModel::class.java]
 
@@ -205,8 +205,8 @@ class CollectionAddFragment : Fragment() {
             .commit()
     }
 
-    private fun onDictionaryChosen(dictionaryId: Int) {
-        if (selectedDictionaries.any { it.id == dictionaryId }) {
+    private fun onDictionaryChosen(wordId: Int) {
+        if (selectedWords.any { it.id == wordId }) {
             Toast.makeText(
                 requireContext(),
                 R.string.collection_list_word_already_added,
@@ -217,10 +217,10 @@ class CollectionAddFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             setLoading(true)
-            val dictionary = runCatching { dictionaryViewModel.getById(dictionaryId) }
+            val dictionary = runCatching { wordViewModel.getById(wordId) }
                 .getOrNull()
             if (dictionary != null) {
-                selectedDictionaries.add(dictionary)
+                selectedWords.add(dictionary)
                 updateWordsList()
             }
             setLoading(false)
@@ -231,7 +231,7 @@ class CollectionAddFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             setLoading(true)
             val collectionWithEntries = runCatching {
-                dictionaryCollectionViewModel.getByIdWithEntries(id)
+                wordCollectionViewModel.getByIdWithEntries(id)
             }.getOrNull()
 
             if (collectionWithEntries != null) {
@@ -239,14 +239,14 @@ class CollectionAddFragment : Fragment() {
                 descriptionDraft = collectionWithEntries.collection.description.orEmpty()
                 applyDraftsToInputs()
 
-                val dictionaryIds = collectionWithEntries.entries.map { it.dictionaryId }
-                val dictionaries = if (dictionaryIds.isEmpty()) {
+                val wordIds = collectionWithEntries.entries.map { it.wordId }
+                val dictionaries = if (wordIds.isEmpty()) {
                     emptyList()
                 } else {
-                    dictionaryViewModel.getByIds(dictionaryIds)
+                    wordViewModel.getByIds(wordIds)
                 }
-                selectedDictionaries.clear()
-                selectedDictionaries.addAll(dictionaries.sortedBy { it.word.lowercase() })
+                selectedWords.clear()
+                selectedWords.addAll(dictionaries.sortedBy { it.word.lowercase() })
 
                 val cardTypes = lessonCardTypeViewModel.getByCollectionId(id)
                 val byType = cardTypes.associateBy { it.cardType }
@@ -284,21 +284,21 @@ class CollectionAddFragment : Fragment() {
     }
 
     private suspend fun buildDisplayGroups(): List<DictionaryAdapter.Group> = withContext(Dispatchers.Default) {
-        if (selectedDictionaries.isEmpty()) {
+        if (selectedWords.isEmpty()) {
             return@withContext emptyList()
         }
 
-        selectedDictionaries
+        selectedWords
             .groupBy { it.baseWordId ?: it.id }
             .map { (_, dictionaries) ->
                 val sortedById = dictionaries.sortedWith(
-                    compareBy<Dictionary> { it.id }
+                    compareBy<Word> { it.id }
                         .thenBy { it.word.lowercase() }
                         .thenBy { it.translation.lowercase() }
                 )
                 val primary = sortedById.first()
                 val words = sortedById.sortedWith(
-                    compareBy<Dictionary> { if (it.id == primary.id) 0 else 1 }
+                    compareBy<Word> { if (it.id == primary.id) 0 else 1 }
                         .thenBy { it.word.lowercase() }
                         .thenBy { it.translation.lowercase() }
                 )
@@ -339,20 +339,20 @@ class CollectionAddFragment : Fragment() {
             setLoading(true)
             val saved = runCatching {
                 val targetCollectionId = collectionId?.let {
-                    dictionaryCollectionViewModel.updateSync(
-                        DictionaryCollection(id = it, name = name, description = description)
+                    wordCollectionViewModel.updateSync(
+                        WordCollection(id = it, name = name, description = description)
                     )
                     it
                 } ?: run {
-                    val newId = dictionaryCollectionViewModel.insertSync(
-                        DictionaryCollection(name = name, description = description)
+                    val newId = wordCollectionViewModel.insertSync(
+                        WordCollection(name = name, description = description)
                     ).toInt()
                     collectionId = newId
                     newId
                 }
-                dictionaryCollectionViewModel.replaceCollectionDictionariesSync(
+                wordCollectionViewModel.replaceCollectionWordsSync(
                     targetCollectionId,
-                    selectedDictionaries.map { it.id }.distinct()
+                    selectedWords.map { it.id }.distinct()
                 )
                 lessonCardTypeViewModel.replaceForCollection(
                     targetCollectionId,

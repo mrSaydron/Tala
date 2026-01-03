@@ -1,9 +1,9 @@
 package com.example.tala.fragment.adapter
 
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryLevel
-import com.example.tala.entity.dictionary.PartOfSpeech
-import com.example.tala.entity.dictionary.TagType
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.PartOfSpeech
+import com.example.tala.entity.word.TagType
 import java.util.UUID
 
 data class DictionaryEditItem(
@@ -20,14 +20,14 @@ data class DictionaryEditItem(
     var level: DictionaryLevel? = null,
     val tags: MutableSet<TagType> = mutableSetOf(),
 ) {
-    fun toDictionaryOrNull(): Dictionary? {
+    fun toDictionaryOrNull(): Word? {
         val cleanedWord = word.trim()
         val cleanedTranslation = translation.trim()
         if (cleanedWord.isEmpty() || cleanedTranslation.isEmpty()) {
             return null
         }
 
-        return Dictionary(
+        return Word(
             id = id,
             word = cleanedWord,
             translation = cleanedTranslation,
@@ -46,7 +46,7 @@ data class DictionaryEditItem(
     }
 
     companion object {
-        fun fromDictionary(dictionary: Dictionary): DictionaryEditItem {
+        fun fromWord(dictionary: Word): DictionaryEditItem {
             val key = if (dictionary.id != 0) {
                 "existing_${dictionary.id}"
             } else {

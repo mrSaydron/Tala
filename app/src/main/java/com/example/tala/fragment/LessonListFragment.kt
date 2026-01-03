@@ -55,8 +55,8 @@ class LessonListFragment : Fragment() {
                 .commit()
         }
 
-        binding.dictionaryNavButton.setOnClickListener {
-            openDictionary()
+        binding.wordNavButton.setOnClickListener {
+            openWord()
         }
 
         binding.collectionNavButton.setOnClickListener {
@@ -123,7 +123,7 @@ class LessonListFragment : Fragment() {
             .commit()
     }
 
-    private fun openDictionary() {
+    private fun openWord() {
         val fragment = DictionaryListFragment.newInstance()
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)

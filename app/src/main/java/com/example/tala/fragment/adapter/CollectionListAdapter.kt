@@ -7,15 +7,15 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tala.R
-import com.example.tala.entity.dictionaryCollection.DictionaryCollection
+import com.example.tala.entity.wordCollection.WordCollection
 
 class CollectionListAdapter(
-    private val onItemClick: (DictionaryCollection) -> Unit
+    private val onItemClick: (WordCollection) -> Unit
 ) : RecyclerView.Adapter<CollectionListAdapter.CollectionViewHolder>() {
 
-    private val items: MutableList<DictionaryCollection> = mutableListOf()
+    private val items: MutableList<WordCollection> = mutableListOf()
 
-    fun submitList(collections: List<DictionaryCollection>) {
+    fun submitList(collections: List<WordCollection>) {
         items.clear()
         items.addAll(collections)
         notifyDataSetChanged()
@@ -38,7 +38,7 @@ class CollectionListAdapter(
         private val nameTextView: TextView = itemView.findViewById(R.id.collectionNameTextView)
         private val descriptionTextView: TextView = itemView.findViewById(R.id.collectionDescriptionTextView)
 
-        fun bind(item: DictionaryCollection) {
+        fun bind(item: WordCollection) {
             nameTextView.text = item.name
 
             val description = item.description

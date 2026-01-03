@@ -1,7 +1,7 @@
 ```mermaid
 
 erDiagram
-    dictionary {
+    words {
         INT id PK
         STRING word
         STRING translation
@@ -14,14 +14,14 @@ erDiagram
         STRING level
         STRING tags
     }
-    dictionary_collections {
+    word_collection {
         INT id PK
         STRING name
         STRING description
     }
-    dictionary_collection_entries {
+    word_collection_entries {
         INT collection_id PK, FK
-        INT dictionary_id PK, FK
+        INT word_id PK, FK
     }
     lessons {
         INT id PK
@@ -37,7 +37,7 @@ erDiagram
         INT id PK
         INT lesson_id FK
         STRING card_type
-        INT dictionary_id FK
+        INT word_id FK
         LONG next_review_date
         LONG interval_minutes
         DOUBLE ef
@@ -48,18 +48,18 @@ erDiagram
         INT id PK
         INT lesson_id FK
         STRING card_type
-        INT dictionary_id FK
+        INT word_id FK
         INT quality
         LONG date
     }
 
-    dictionary ||--o{ dictionary : "base_word_id (самоссылка)"
-    dictionary ||--o{ dictionary_collection_entries : "слова в коллекциях"
-    dictionary_collections ||--o{ dictionary_collection_entries : "подборки → слова"
-    dictionary_collections ||--o{ lessons : "уроки"
-    dictionary_collections ||--o{ lesson_card_types : "доступные типы карточек"
+    words ||--o{ words : "base_word_id (самоссылка)"
+    words ||--o{ word_collection_entries : "слова в коллекциях"
+    word_collection ||--o{ word_collection_entries : "подборки → слова"
+    word_collection ||--o{ lessons : "уроки"
+    word_collection ||--o{ lesson_card_types : "доступные типы карточек"
     lessons ||--o{ lesson_progress : "прогресс по уроку"
-    dictionary ||--o{ lesson_progress : "словарная привязка (nullable)"
+    words ||--o{ lesson_progress : "словарная привязка (nullable)"
     lessons ||--o{ card_history : "история ответов по уроку"
-    dictionary ||--o{ card_history : "словарная привязка к истории"
+    words ||--o{ card_history : "словарная привязка к истории"
     ```

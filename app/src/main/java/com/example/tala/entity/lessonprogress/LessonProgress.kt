@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 import com.example.tala.entity.lesson.Lesson
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -21,16 +21,16 @@ import com.example.tala.model.enums.StatusEnum
             onUpdate = ForeignKey.NO_ACTION
         ),
         ForeignKey(
-            entity = Dictionary::class,
+            entity = Word::class,
             parentColumns = ["id"],
-            childColumns = ["dictionary_id"],
+            childColumns = ["word_id"],
             onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.NO_ACTION
         )
     ],
     indices = [
         Index(value = ["lesson_id", "card_type"]),
-        Index(value = ["dictionary_id"]),
+        Index(value = ["word_id"]),
         Index(value = ["next_review_date"])
     ]
 )
@@ -41,8 +41,8 @@ data class LessonProgress(
     val lessonId: Int,
     @ColumnInfo(name = "card_type")
     val cardType: CardTypeEnum,
-    @ColumnInfo(name = "dictionary_id")
-    val dictionaryId: Int? = null,
+    @ColumnInfo(name = "word_id")
+    val wordId: Int? = null,
     @ColumnInfo(name = "next_review_date")
     val nextReviewDate: Long?,
     @ColumnInfo(name = "interval_minutes")

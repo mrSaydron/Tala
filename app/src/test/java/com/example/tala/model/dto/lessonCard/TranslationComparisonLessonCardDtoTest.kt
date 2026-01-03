@@ -1,6 +1,6 @@
 package com.example.tala.model.dto.lessonCard
 
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -15,7 +15,7 @@ class TranslationComparisonLessonCardDtoTest {
             id = 1,
             lessonId = 42,
             cardType = CardTypeEnum.TRANSLATION_COMPARISON,
-            dictionaryId = 10,
+            wordId = 10,
             nextReviewDate = 111L,
             intervalMinutes = 20,
             ef = 2.4,
@@ -24,26 +24,26 @@ class TranslationComparisonLessonCardDtoTest {
         )
         val progressTwo = progressOne.copy(
             id = 2,
-            dictionaryId = 11,
+            wordId = 11,
             nextReviewDate = 222L,
             status = StatusEnum.IN_PROGRESS,
             info = "info2"
         )
 
         val dictionaries = mapOf(
-            10 to Dictionary(
+            10 to Word(
                 id = 10,
                 word = "apple",
                 translation = "яблоко",
-                partOfSpeech = com.example.tala.entity.dictionary.PartOfSpeech.NOUN,
+                partOfSpeech = com.example.tala.entity.word.PartOfSpeech.NOUN,
                 hint = "фрукт",
                 imagePath = "apple.jpg"
             ),
-            11 to Dictionary(
+            11 to Word(
                 id = 11,
                 word = "train",
                 translation = "поезд",
-                partOfSpeech = com.example.tala.entity.dictionary.PartOfSpeech.NOUN,
+                partOfSpeech = com.example.tala.entity.word.PartOfSpeech.NOUN,
                 hint = "транспорт",
                 imagePath = "train.jpg"
             )

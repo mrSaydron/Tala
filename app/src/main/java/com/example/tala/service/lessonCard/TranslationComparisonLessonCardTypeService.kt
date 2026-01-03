@@ -2,8 +2,8 @@ package com.example.tala.service.lessonCard
 
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryRepository
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryRepository
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
@@ -20,16 +20,16 @@ import kotlin.math.roundToLong
 
 class TranslationComparisonLessonCardTypeService(
     private val lessonProgressRepository: LessonProgressRepository,
-    private val dictionaryRepository: DictionaryRepository,
+    private val wordRepository: WordRepository,
     private val cardHistoryRepository: CardHistoryRepository,
     private val timeProvider: () -> Long = System::currentTimeMillis
 ) : LessonCardTypeService {
 
-    override suspend fun createProgress(lessonId: Int, words: List<Dictionary>) {
+    override suspend fun createProgress(lessonId: Int, words: List<Word>) {
         withContext(Dispatchers.IO) {
             val existingDictionaryIds = lessonProgressRepository
                 .getByLessonCardType(lessonId, CardTypeEnum.TRANSLATION_COMPARISON)
-                .mapNotNull { it.dictionaryId }
+                .mapNotNull { it.wordId }
                 .toSet()
 
             val candidates = words
@@ -47,7 +47,7 @@ class TranslationComparisonLessonCardTypeService(
                 LessonProgress(
                     lessonId = lessonId,
                     cardType = CardTypeEnum.TRANSLATION_COMPARISON,
-                    dictionaryId = dictionary.id,
+                    wordId = dictionary.id,
                     nextReviewDate = createdAt,
                     intervalMinutes = MINUTES_IN_DAY,
                     ef = DEFAULT_EF,
@@ -69,15 +69,15 @@ class TranslationComparisonLessonCardTypeService(
         if (readyProgress.size < MIN_ITEMS_PER_CARD) return emptyList()
 
         val shuffled = readyProgress.shuffled()
-        val dictionaryIds = shuffled.mapNotNull { it.dictionaryId }.distinct()
-        val dictionaries = dictionaryRepository.getByIds(dictionaryIds).associateBy { it.id }
+        val wordIds = shuffled.mapNotNull { it.wordId }.distinct()
+        val words = wordRepository.getByIds(wordIds).associateBy { it.id }
 
         val groups = shuffled.chunked(MAX_ITEMS_PER_CARD).filter { it.size >= MIN_ITEMS_PER_CARD }
         return groups.map { group ->
             TranslationComparisonLessonCardDto.fromProgress(
                 lessonId = group.first().lessonId,
                 progresses = group,
-                dictionaries = dictionaries
+                dictionaries = words
             )
         }
     }
@@ -95,15 +95,15 @@ class TranslationComparisonLessonCardTypeService(
         if (progressList.isEmpty()) return null
 
         val answerMap = (answer as? CardAnswer.Comparison)?.matches?.associateBy { it.progressId } ?: emptyMap()
-        val dictionaries = dictionaryRepository
-            .getByIds(progressList.mapNotNull { it.dictionaryId })
+        val words = wordRepository
+            .getByIds(progressList.mapNotNull { it.wordId })
             .associateBy { it.id }
 
         val updatedProgresses = mutableListOf<LessonProgress>()
         var shouldRepeat = false
         progressList.forEach { progress ->
             val match = answerMap[progress.id]
-            val isCorrect = match != null && match.selectedDictionaryId == progress.dictionaryId
+            val isCorrect = match != null && match.selectedWordId == progress.wordId
             if (!isCorrect) {
                 shouldRepeat = true
             }
@@ -117,7 +117,7 @@ class TranslationComparisonLessonCardTypeService(
             TranslationComparisonLessonCardDto.fromProgress(
                 lessonId = dto.lessonId,
                 progresses = updatedProgresses,
-                dictionaries = dictionaries
+                dictionaries = words
             )
         } else {
             null
@@ -135,7 +135,7 @@ class TranslationComparisonLessonCardTypeService(
             ?: emptyMap()
         val entries: List<CardHistory> = card.items.map { item ->
             val match = matches[item.progressId]
-            val itemQuality = if (match != null && match.selectedDictionaryId == item.dictionaryId) {
+            val itemQuality = if (match != null && match.selectedWordId == item.wordId) {
                 MAX_QUALITY
             } else {
                 MIN_QUALITY
@@ -143,7 +143,7 @@ class TranslationComparisonLessonCardTypeService(
             buildEntry(
                 lessonId = card.lessonId,
                 cardType = card.type,
-                dictionaryId = item.dictionaryId,
+                wordId = item.wordId,
                 quality = itemQuality,
                 timestamp = timestamp
             )

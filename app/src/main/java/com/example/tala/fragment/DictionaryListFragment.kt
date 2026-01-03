@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
-import com.example.tala.databinding.FragmentDictionaryListBinding
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryViewModel
+import com.example.tala.databinding.FragmentWordListBinding
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordViewModel
 import com.example.tala.fragment.adapter.DictionaryAdapter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -22,10 +22,10 @@ import kotlinx.coroutines.withContext
 
 class DictionaryListFragment : Fragment() {
 
-    private var _binding: FragmentDictionaryListBinding? = null
+    private var _binding: FragmentWordListBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var dictionaryViewModel: DictionaryViewModel
+    private lateinit var dictionaryViewModel: WordViewModel
     private lateinit var dictionaryAdapter: DictionaryAdapter
     private var selectionMode: Boolean = false
     private var selectionResultKey: String? = null
@@ -35,7 +35,7 @@ class DictionaryListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentDictionaryListBinding.inflate(inflater, container, false)
+        _binding = FragmentWordListBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -48,7 +48,7 @@ class DictionaryListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dictionaryViewModel = ViewModelProvider(requireActivity())[DictionaryViewModel::class.java]
+        dictionaryViewModel = ViewModelProvider(requireActivity())[WordViewModel::class.java]
 
         dictionaryAdapter = DictionaryAdapter(
             onItemClick = { entry ->
@@ -61,15 +61,15 @@ class DictionaryListFragment : Fragment() {
             }
         )
 
-        binding.dictionaryRecyclerView.adapter = dictionaryAdapter
-        binding.dictionaryRecyclerView.itemAnimator = null
+        binding.wordRecyclerView.adapter = dictionaryAdapter
+        binding.wordRecyclerView.itemAnimator = null
 
-        binding.dictionaryAddButton.setOnClickListener {
+        binding.wordAddButton.setOnClickListener {
             openDictionaryEntry(null)
         }
 
         if (selectionMode) {
-            binding.dictionaryTitleTextView.setText(R.string.dictionary_list_title_selection)
+            binding.wordTitleTextView.setText(R.string.dictionary_list_title_selection)
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -86,27 +86,27 @@ class DictionaryListFragment : Fragment() {
 
     private fun loadDictionaryEntries() {
         viewLifecycleOwner.lifecycleScope.launch {
-            binding.dictionaryProgressBar.isVisible = true
-            binding.dictionaryEmptyStateTextView.isVisible = false
+            binding.wordProgressBar.isVisible = true
+            binding.wordEmptyStateTextView.isVisible = false
 
             runCatching {
                 val entries = dictionaryViewModel.getAll()
                 buildGroupedEntries(entries)
             }.onSuccess { groups ->
                 dictionaryAdapter.submitGroups(groups)
-                binding.dictionaryRecyclerView.isVisible = groups.isNotEmpty()
-                binding.dictionaryEmptyStateTextView.isVisible = groups.isEmpty()
+                binding.wordRecyclerView.isVisible = groups.isNotEmpty()
+                binding.wordEmptyStateTextView.isVisible = groups.isEmpty()
                 if (groups.isEmpty()) {
-                    binding.dictionaryEmptyStateTextView.text = getString(R.string.dictionary_empty_state)
+                    binding.wordEmptyStateTextView.text = getString(R.string.dictionary_empty_state)
                 } 
             }.onFailure {
                 dictionaryAdapter.submitGroups(emptyList())
-                binding.dictionaryRecyclerView.isVisible = false
-                binding.dictionaryEmptyStateTextView.isVisible = true
-                binding.dictionaryEmptyStateTextView.text = getString(R.string.dictionary_error_state)
+                binding.wordRecyclerView.isVisible = false
+                binding.wordEmptyStateTextView.isVisible = true
+                binding.wordEmptyStateTextView.text = getString(R.string.dictionary_error_state)
             }
 
-            binding.dictionaryProgressBar.isVisible = false
+            binding.wordProgressBar.isVisible = false
         }
     }
 
@@ -141,19 +141,19 @@ class DictionaryListFragment : Fragment() {
         }
     }
 
-    private fun onAddDictionaryToCollection(dictionaryId: Int) {
+    private fun onAddDictionaryToCollection(wordId: Int) {
         val resultKey = selectionResultKey
         if (!resultKey.isNullOrEmpty()) {
             parentFragmentManager.setFragmentResult(
                 resultKey,
-                bundleOf(RESULT_SELECTED_DICTIONARY_ID to dictionaryId)
+                bundleOf(RESULT_SELECTED_DICTIONARY_ID to wordId)
             )
             parentFragmentManager.popBackStack()
         }
     }
 
     private suspend fun buildGroupedEntries(
-        entries: List<Dictionary>
+        entries: List<Word>
     ): List<DictionaryAdapter.Group> = withContext(Dispatchers.Default) {
         if (entries.isEmpty()) {
             return@withContext emptyList()
@@ -182,7 +182,7 @@ class DictionaryListFragment : Fragment() {
                 val allWords = (groupEntries + baseEntry).distinctBy { it.id }
 
                 val sortedWords = allWords.sortedWith(
-                    compareBy<Dictionary> { if (it.id == baseEntry.id) 0 else 1 }
+                    compareBy<Word> { if (it.id == baseEntry.id) 0 else 1 }
                         .thenBy { it.word.lowercase() }
                         .thenBy { it.translation.lowercase() }
                 )

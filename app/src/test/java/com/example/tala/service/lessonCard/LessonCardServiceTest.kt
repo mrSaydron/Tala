@@ -3,17 +3,17 @@ package com.example.tala.service.lessonCard
 import com.example.tala.entity.cardhistory.CardHistory
 import com.example.tala.entity.cardhistory.CardHistoryDao
 import com.example.tala.entity.cardhistory.CardHistoryRepository
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryDao
-import com.example.tala.entity.dictionary.DictionaryRepository
-import com.example.tala.entity.dictionary.DictionaryWithDependentCount
-import com.example.tala.entity.dictionary.PartOfSpeech
-import com.example.tala.entity.dictionaryCollection.DictionaryCollection
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionDao
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntry
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionEntryDao
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionRepository
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionWithEntries
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.WordDao
+import com.example.tala.entity.word.WordRepository
+import com.example.tala.entity.word.WordWithDependentCount
+import com.example.tala.entity.word.PartOfSpeech
+import com.example.tala.entity.wordCollection.WordCollection
+import com.example.tala.entity.wordCollection.WordCollectionDao
+import com.example.tala.entity.wordCollection.WordCollectionEntry
+import com.example.tala.entity.wordCollection.WordCollectionEntryDao
+import com.example.tala.entity.wordCollection.WordCollectionRepository
+import com.example.tala.entity.wordCollection.WordCollectionWithEntries
 import com.example.tala.entity.lesson.Lesson
 import com.example.tala.entity.lesson.LessonDao
 import com.example.tala.entity.lesson.LessonRepository
@@ -40,16 +40,16 @@ class LessonCardServiceTest {
 
     private lateinit var lessonDao: FakeLessonDao
     private lateinit var lessonCardTypeDao: FakeLessonCardTypeDao
-    private lateinit var dictionaryCollectionDao: FakeDictionaryCollectionDao
-    private lateinit var dictionaryCollectionEntryDao: FakeDictionaryCollectionEntryDao
-    private lateinit var dictionaryDao: FakeDictionaryDao
+    private lateinit var dictionaryCollectionDao: FakeWordCollectionDao
+    private lateinit var dictionaryCollectionEntryDao: FakeWordCollectionEntryDao
+    private lateinit var dictionaryDao: FakeWordDao
     private lateinit var lessonProgressDao: FakeLessonProgressDao
     private lateinit var cardHistoryDao: FakeCardHistoryDao
 
     private lateinit var lessonRepository: LessonRepository
     private lateinit var lessonCardTypeRepository: LessonCardTypeRepository
-    private lateinit var dictionaryCollectionRepository: DictionaryCollectionRepository
-    private lateinit var dictionaryRepository: DictionaryRepository
+    private lateinit var dictionaryCollectionRepository: WordCollectionRepository
+    private lateinit var dictionaryRepository: WordRepository
     private lateinit var lessonProgressRepository: LessonProgressRepository
     private lateinit var cardHistoryRepository: CardHistoryRepository
 
@@ -75,37 +75,37 @@ class LessonCardServiceTest {
         }
         lessonCardTypeRepository = LessonCardTypeRepository(lessonCardTypeDao)
 
-        dictionaryCollectionDao = FakeDictionaryCollectionDao()
+        dictionaryCollectionDao = FakeWordCollectionDao()
 
-        dictionaryCollectionEntryDao = FakeDictionaryCollectionEntryDao().apply {
+        dictionaryCollectionEntryDao = FakeWordCollectionEntryDao().apply {
             entries[COLLECTION_ID] = mutableListOf(
-                DictionaryCollectionEntry(COLLECTION_ID, 1),
-                DictionaryCollectionEntry(COLLECTION_ID, 2),
-                DictionaryCollectionEntry(COLLECTION_ID, 3)
+                WordCollectionEntry(COLLECTION_ID, 1),
+                WordCollectionEntry(COLLECTION_ID, 2),
+                WordCollectionEntry(COLLECTION_ID, 3)
             )
         }
-        dictionaryCollectionRepository = DictionaryCollectionRepository(
+        dictionaryCollectionRepository = WordCollectionRepository(
             dictionaryCollectionDao,
             dictionaryCollectionEntryDao
         )
 
-        dictionaryDao = FakeDictionaryDao(
+        dictionaryDao = FakeWordDao(
             mutableMapOf(
-                1 to Dictionary(
+                1 to Word(
                     id = 1,
                     word = "base-one",
                     translation = "перевод один",
                     partOfSpeech = PartOfSpeech.NOUN,
                     baseWordId = null
                 ),
-                2 to Dictionary(
+                2 to Word(
                     id = 2,
                     word = "base-two",
                     translation = "перевод два",
                     partOfSpeech = PartOfSpeech.NOUN,
                     baseWordId = 2
                 ),
-                3 to Dictionary(
+                3 to Word(
                     id = 3,
                     word = "derived",
                     translation = "перевод производное",
@@ -114,7 +114,7 @@ class LessonCardServiceTest {
                 )
             )
         )
-        dictionaryRepository = DictionaryRepository(dictionaryDao)
+        dictionaryRepository = WordRepository(dictionaryDao)
 
         lessonProgressDao = FakeLessonProgressDao()
         lessonProgressRepository = LessonProgressRepository(lessonProgressDao)
@@ -145,7 +145,7 @@ class LessonCardServiceTest {
                 id = 42,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 2,
+                wordId = 2,
                 nextReviewDate = 1_000L,
                 intervalMinutes = 15,
                 ef = 2.6,
@@ -157,12 +157,12 @@ class LessonCardServiceTest {
         lessonCardService.createProgress(LESSON_ID)
 
         val progress = lessonProgressDao.getByLessonCardType(LESSON_ID, CardTypeEnum.TRANSLATE)
-        val dictionaryIds = progress.mapNotNull { it.dictionaryId }
+        val wordIds = progress.mapNotNull { it.wordId }
 
-        assertEquals("Should keep existing entries and add only new base words", 2, dictionaryIds.size)
-        assertEquals(1, dictionaryIds.count { it == 1 })
-        assertEquals("Existing entry must not be duplicated", 1, dictionaryIds.count { it == 2 })
-        val newEntry = progress.first { it.dictionaryId == 1 }
+        assertEquals("Should keep existing entries and add only new base words", 2, wordIds.size)
+        assertEquals(1, wordIds.count { it == 1 })
+        assertEquals("Existing entry must not be duplicated", 1, wordIds.count { it == 2 })
+        val newEntry = progress.first { it.wordId == 1 }
         assertEquals(StatusEnum.NEW, newEntry.status)
     }
 
@@ -173,7 +173,7 @@ class LessonCardServiceTest {
                 id = 1,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 1,
+                wordId = 1,
                 nextReviewDate = 123L,
                 intervalMinutes = 10,
                 ef = 2.5,
@@ -186,7 +186,7 @@ class LessonCardServiceTest {
                 id = 2,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 2,
+                wordId = 2,
                 nextReviewDate = 456L,
                 intervalMinutes = 20,
                 ef = 2.7,
@@ -200,7 +200,7 @@ class LessonCardServiceTest {
         assertEquals(2, cards.size)
         val translateCards = cards.filterIsInstance<TranslateLessonCardDto>()
         assertEquals(2, translateCards.size)
-        assertEquals(setOf(1, 2), translateCards.mapNotNull { it.dictionaryId }.toSet())
+        assertEquals(setOf(1, 2), translateCards.mapNotNull { it.wordId }.toSet())
         val words = translateCards.map { it.word }.toSet()
         assertEquals(setOf("base-one", "base-two"), words)
     }
@@ -213,7 +213,7 @@ class LessonCardServiceTest {
                 id = 101,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 1,
+                wordId = 1,
                 nextReviewDate = now - 1_000L,
                 intervalMinutes = 10,
                 ef = 2.5,
@@ -226,7 +226,7 @@ class LessonCardServiceTest {
                 id = 102,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 2,
+                wordId = 2,
                 nextReviewDate = now + TimeUnit.DAYS.toMillis(1),
                 intervalMinutes = 20,
                 ef = 2.5,
@@ -277,7 +277,7 @@ class LessonCardServiceTest {
                     id = 201,
                     lessonId = LESSON_ID,
                     cardType = CardTypeEnum.TRANSLATE,
-                    dictionaryId = 1,
+                    wordId = 1,
                     nextReviewDate = System.currentTimeMillis() - 500L,
                     intervalMinutes = 10,
                     ef = 2.5,
@@ -294,14 +294,14 @@ class LessonCardServiceTest {
                     CardHistory(
                         lessonId = LESSON_ID,
                         cardType = CardTypeEnum.TRANSLATE,
-                        dictionaryId = 1,
+                        wordId = 1,
                         quality = 1,
                         date = 10L
                     ),
                     CardHistory(
                         lessonId = LESSON_ID,
                         cardType = CardTypeEnum.TRANSLATE,
-                        dictionaryId = 2,
+                        wordId = 2,
                         quality = 3,
                         date = 20L
                     )
@@ -351,7 +351,7 @@ class LessonCardServiceTest {
                     id = 301,
                     lessonId = LESSON_ID,
                     cardType = CardTypeEnum.TRANSLATE,
-                    dictionaryId = 1,
+                    wordId = 1,
                     nextReviewDate = System.currentTimeMillis() - 500L,
                     intervalMinutes = 10,
                     ef = 2.5,
@@ -367,7 +367,7 @@ class LessonCardServiceTest {
                 CardHistory(
                     lessonId = LESSON_ID,
                     cardType = CardTypeEnum.TRANSLATE,
-                    dictionaryId = 1,
+                    wordId = 1,
                     quality = 4,
                     date = 30L
                 )
@@ -409,7 +409,7 @@ class LessonCardServiceTest {
                 id = 10,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 1,
+                wordId = 1,
                 nextReviewDate = 100L,
                 intervalMinutes = 0,
                 ef = 2.5,
@@ -422,7 +422,7 @@ class LessonCardServiceTest {
                 id = 11,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.REVERSE_TRANSLATE,
-                dictionaryId = 2,
+                wordId = 2,
                 nextReviewDate = 200L,
                 intervalMinutes = 0,
                 ef = 2.4,
@@ -444,7 +444,7 @@ class LessonCardServiceTest {
             id = 501,
             lessonId = LESSON_ID,
             cardType = CardTypeEnum.TRANSLATE,
-            dictionaryId = 1,
+            wordId = 1,
             nextReviewDate = 0L,
             intervalMinutes = 1440,
             ef = 2.5,
@@ -486,7 +486,7 @@ class LessonCardServiceTest {
                 id = progressId,
                 lessonId = LESSON_ID,
                 cardType = CardTypeEnum.TRANSLATE,
-                dictionaryId = 1,
+                wordId = 1,
                 nextReviewDate = 0L,
                 intervalMinutes = 1440,
                 ef = 2.5,
@@ -498,7 +498,7 @@ class LessonCardServiceTest {
         val card = TranslateLessonCardDto(
             progressId = progressId,
             lessonId = LESSON_ID,
-            dictionaryId = 1,
+            wordId = 1,
             word = "word",
             translation = "перевод",
             hint = null,
@@ -518,7 +518,7 @@ class LessonCardServiceTest {
         val entry = history.first()
         assertEquals(LESSON_ID, entry.lessonId)
         assertEquals(CardTypeEnum.TRANSLATE, entry.cardType)
-        assertEquals(1, entry.dictionaryId)
+        assertEquals(1, entry.wordId)
         assertEquals(5, entry.quality)
         assertTrue(entry.date > 0)
     }
@@ -545,7 +545,7 @@ class LessonCardServiceTest {
             items = listOf(
                 TranslationComparisonLessonCardDto.Item(
                     progressId = 1,
-                    dictionaryId = 1,
+                    wordId = 1,
                     word = "one",
                     translation = "раз",
                     hint = null,
@@ -558,7 +558,7 @@ class LessonCardServiceTest {
                 ),
                 TranslationComparisonLessonCardDto.Item(
                     progressId = 2,
-                    dictionaryId = 2,
+                    wordId = 2,
                     word = "two",
                     translation = "два",
                     hint = null,
@@ -573,19 +573,19 @@ class LessonCardServiceTest {
         )
         val answer = CardAnswer.Comparison(
             matches = listOf(
-                CardAnswer.Comparison.Match(progressId = 1, selectedDictionaryId = 1),
-                CardAnswer.Comparison.Match(progressId = 2, selectedDictionaryId = 42)
+                CardAnswer.Comparison.Match(progressId = 1, selectedWordId = 1),
+                CardAnswer.Comparison.Match(progressId = 2, selectedWordId = 42)
             )
         )
 
         val result = comparisonLessonCardService.answerResult(card, answer, 5)
 
         assertEquals(null, result)
-        val historyByDictionary = cardHistoryDao.storage.associateBy { it.dictionaryId }
-        assertEquals(2, historyByDictionary.size)
-        assertEquals(5, historyByDictionary[1]?.quality)
-        assertEquals(0, historyByDictionary[2]?.quality)
-        assertEquals(9999L, historyByDictionary.values.firstOrNull()?.date)
+        val historyByWord = cardHistoryDao.storage.associateBy { it.wordId }
+        assertEquals(2, historyByWord.size)
+        assertEquals(5, historyByWord[1]?.quality)
+        assertEquals(0, historyByWord[2]?.quality)
+        assertEquals(9999L, historyByWord.values.firstOrNull()?.date)
     }
 
     private class FakeLessonDao : LessonDao {
@@ -645,92 +645,92 @@ class LessonCardServiceTest {
         }
     }
 
-    private class FakeDictionaryCollectionDao : DictionaryCollectionDao {
-        override suspend fun insert(collection: DictionaryCollection): Long = collection.id.toLong()
-        override suspend fun delete(collection: DictionaryCollection) = Unit
-        override suspend fun getAll(): List<DictionaryCollection> = emptyList()
-        override suspend fun getById(id: Int): DictionaryCollection? = null
-        override suspend fun getByName(name: String): DictionaryCollection? = null
-        override suspend fun getAllWithEntries(): List<DictionaryCollectionWithEntries> = emptyList()
-        override suspend fun getByIdWithEntries(id: Int): DictionaryCollectionWithEntries? = null
+    private class FakeWordCollectionDao : WordCollectionDao {
+        override suspend fun insert(collection: WordCollection): Long = collection.id.toLong()
+        override suspend fun delete(collection: WordCollection) = Unit
+        override suspend fun getAll(): List<WordCollection> = emptyList()
+        override suspend fun getById(id: Int): WordCollection? = null
+        override suspend fun getByName(name: String): WordCollection? = null
+        override suspend fun getAllWithEntries(): List<WordCollectionWithEntries> = emptyList()
+        override suspend fun getByIdWithEntries(id: Int): WordCollectionWithEntries? = null
     }
 
-    private class FakeDictionaryCollectionEntryDao : DictionaryCollectionEntryDao {
-        val entries = mutableMapOf<Int, MutableList<DictionaryCollectionEntry>>()
+    private class FakeWordCollectionEntryDao : WordCollectionEntryDao {
+        val entries = mutableMapOf<Int, MutableList<WordCollectionEntry>>()
 
-        override suspend fun insert(entry: DictionaryCollectionEntry): Long {
+        override suspend fun insert(entry: WordCollectionEntry): Long {
             entries.getOrPut(entry.collectionId) { mutableListOf() }.add(entry)
             return 0L
         }
 
-        override suspend fun insertAll(entries: List<DictionaryCollectionEntry>): List<Long> {
+        override suspend fun insertAll(entries: List<WordCollectionEntry>): List<Long> {
             entries.forEach { insert(it) }
             return emptyList()
         }
 
-        override suspend fun delete(entry: DictionaryCollectionEntry) {
-            entries[entry.collectionId]?.removeIf { it.dictionaryId == entry.dictionaryId }
+        override suspend fun delete(entry: WordCollectionEntry) {
+            entries[entry.collectionId]?.removeIf { it.wordId == entry.wordId }
         }
 
         override suspend fun deleteByCollectionId(collectionId: Int) {
             entries.remove(collectionId)
         }
 
-        override suspend fun deleteByCollectionAndDictionary(collectionId: Int, dictionaryId: Int) {
-            entries[collectionId]?.removeIf { it.dictionaryId == dictionaryId }
+        override suspend fun deleteByCollectionAndWord(collectionId: Int, wordId: Int) {
+            entries[collectionId]?.removeIf { it.wordId == wordId }
         }
 
-        override suspend fun getByCollectionId(collectionId: Int): List<DictionaryCollectionEntry> =
+        override suspend fun getByCollectionId(collectionId: Int): List<WordCollectionEntry> =
             entries[collectionId]?.toList() ?: emptyList()
     }
 
-    private class FakeDictionaryDao(
-        initialData: MutableMap<Int, Dictionary>
-    ) : DictionaryDao {
+    private class FakeWordDao(
+        initialData: MutableMap<Int, Word>
+    ) : WordDao {
 
-        val dictionaries: MutableMap<Int, Dictionary> = initialData
+        val dictionaries: MutableMap<Int, Word> = initialData
         private var nextId = (initialData.keys.maxOrNull() ?: 0) + 1
 
-        override suspend fun insert(entry: Dictionary): Long {
+        override suspend fun insert(entry: Word): Long {
             val id = if (entry.id == 0) nextId++ else entry.id
             dictionaries[id] = entry.copy(id = id)
             return id.toLong()
         }
 
-        override suspend fun delete(entry: Dictionary) {
+        override suspend fun delete(entry: Word) {
             dictionaries.remove(entry.id)
         }
 
-        override suspend fun getAll(): List<Dictionary> = dictionaries.values.toList()
+        override suspend fun getAll(): List<Word> = dictionaries.values.toList()
 
-        override suspend fun getBaseEntries(): List<Dictionary> =
+        override suspend fun getBaseEntries(): List<Word> =
             dictionaries.values.filter { it.baseWordId == null || it.baseWordId == it.id }
 
-        override suspend fun getById(id: Int): Dictionary? = dictionaries[id]
+        override suspend fun getById(id: Int): Word? = dictionaries[id]
 
-        override suspend fun getByWord(word: String): List<Dictionary> =
+        override suspend fun getByWord(word: String): List<Word> =
             dictionaries.values.filter { it.word.equals(word, ignoreCase = true) }
 
-        override suspend fun getByBaseWordId(baseWordId: Int): List<Dictionary> =
+        override suspend fun getByBaseWordId(baseWordId: Int): List<Word> =
             dictionaries.values.filter { it.baseWordId == baseWordId }
 
-        override suspend fun getGroupByBaseId(baseWordId: Int): List<Dictionary> =
+        override suspend fun getGroupByBaseId(baseWordId: Int): List<Word> =
             dictionaries.values.filter { it.baseWordId == baseWordId || it.id == baseWordId }
 
-        override suspend fun getByIds(ids: List<Int>): List<Dictionary> =
+        override suspend fun getByIds(ids: List<Int>): List<Word> =
             ids.mapNotNull { dictionaries[it] }
 
-        override suspend fun getBaseEntriesWithDependentCount(): List<DictionaryWithDependentCount> {
+        override suspend fun getBaseEntriesWithDependentCount(): List<WordWithDependentCount> {
             val baseEntries = getBaseEntries()
             return baseEntries.map { base ->
                 val dependentCount = dictionaries.values.count { entry ->
                     entry.baseWordId == base.id && entry.id != base.id
                 }
-                DictionaryWithDependentCount(base, dependentCount)
+                WordWithDependentCount(base, dependentCount)
             }
         }
 
-        override suspend fun getGroupByEntryId(entryId: Int): List<Dictionary> {
+        override suspend fun getGroupByEntryId(entryId: Int): List<Word> {
             val baseId = dictionaries[entryId]?.baseWordId ?: entryId
             val resolvedBaseId = if (baseId == 0) entryId else baseId
             return dictionaries.values.filter { entry ->
@@ -770,8 +770,8 @@ class LessonCardServiceTest {
         override suspend fun getByLessonCardType(lessonId: Int, cardType: CardTypeEnum): List<LessonProgress> =
             storage.filter { it.lessonId == lessonId && it.cardType == cardType }
 
-        override suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress> =
-            storage.filter { it.dictionaryId == dictionaryId }
+        override suspend fun getByWordId(wordId: Int): List<LessonProgress> =
+            storage.filter { it.wordId == wordId }
 
         override suspend fun getById(id: Int): LessonProgress? =
             storage.firstOrNull { it.id == id }
@@ -802,8 +802,8 @@ class LessonCardServiceTest {
             storage.filter { it.lessonId == lessonId && it.cardType == cardType }
                 .sortedByDescending { it.date }
 
-        override suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> =
-            storage.filter { it.dictionaryId == dictionaryId }.sortedByDescending { it.date }
+        override suspend fun getByWord(wordId: Int): List<CardHistory> =
+            storage.filter { it.wordId == wordId }.sortedByDescending { it.date }
 
         override suspend fun clearAll() {
             storage.clear()
@@ -824,7 +824,7 @@ class LessonCardServiceTest {
     ) : LessonCardTypeService {
         override suspend fun createProgress(
             lessonId: Int,
-            words: List<Dictionary>
+            words: List<Word>
         ) {
             // no-op for tests
         }
@@ -850,7 +850,7 @@ class LessonCardServiceTest {
         var lastQuality: Int? = null
         var lastTimestamp: Long? = null
 
-        override suspend fun createProgress(lessonId: Int, words: List<Dictionary>) {
+        override suspend fun createProgress(lessonId: Int, words: List<Word>) {
             // no-op
         }
 

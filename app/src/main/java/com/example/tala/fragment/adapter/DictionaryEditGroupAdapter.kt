@@ -13,13 +13,13 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.tala.R
-import com.example.tala.databinding.ItemDictionaryEditBinding
-import com.example.tala.databinding.ItemDictionaryGroupAddBinding
-import com.example.tala.databinding.ItemDictionaryGroupHeaderBinding
-import com.example.tala.entity.dictionary.Dictionary
-import com.example.tala.entity.dictionary.DictionaryLevel
-import com.example.tala.entity.dictionary.PartOfSpeech
-import com.example.tala.entity.dictionary.TagType
+import com.example.tala.databinding.ItemWordEditBinding
+import com.example.tala.databinding.ItemWordGroupAddBinding
+import com.example.tala.databinding.ItemWordGroupHeaderBinding
+import com.example.tala.entity.word.Word
+import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.PartOfSpeech
+import com.example.tala.entity.word.TagType
 import com.google.android.material.chip.Chip
 
 class DictionaryEditorAdapter(
@@ -56,15 +56,15 @@ class DictionaryEditorAdapter(
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             VIEW_TYPE_HEADER -> {
-                val binding = ItemDictionaryGroupHeaderBinding.inflate(inflater, parent, false)
+                val binding = ItemWordGroupHeaderBinding.inflate(inflater, parent, false)
                 GroupHeaderViewHolder(binding)
             }
             VIEW_TYPE_WORD -> {
-                val binding = ItemDictionaryEditBinding.inflate(inflater, parent, false)
+                val binding = ItemWordEditBinding.inflate(inflater, parent, false)
                 WordViewHolder(binding)
             }
             else -> {
-                val binding = ItemDictionaryGroupAddBinding.inflate(inflater, parent, false)
+                val binding = ItemWordGroupAddBinding.inflate(inflater, parent, false)
                 AddWordViewHolder(binding)
             }
         }
@@ -167,7 +167,7 @@ class DictionaryEditorAdapter(
     }
 
     inner class GroupHeaderViewHolder(
-        private val binding: ItemDictionaryGroupHeaderBinding
+        private val binding: ItemWordGroupHeaderBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: Item.GroupHeader) {
@@ -214,7 +214,7 @@ class DictionaryEditorAdapter(
     }
 
     inner class WordViewHolder(
-        private val binding: ItemDictionaryEditBinding
+        private val binding: ItemWordEditBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private var currentItem: DictionaryEditItem? = null
@@ -467,7 +467,7 @@ class DictionaryEditorAdapter(
     }
 
     inner class AddWordViewHolder(
-        private val binding: ItemDictionaryGroupAddBinding
+        private val binding: ItemWordGroupAddBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: Item.AddWord) {
@@ -503,7 +503,7 @@ class DictionaryEditorAdapter(
 
     data class DictionaryGroupPayload(
         val baseWordId: Int?,
-        val dictionaries: List<Dictionary>,
+        val dictionaries: List<Word>,
     )
 
     companion object {

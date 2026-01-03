@@ -35,8 +35,8 @@ class CardHistoryViewModel(application: Application) : AndroidViewModel(applicat
             repository.getByLessonAndType(lessonId, cardType)
         }
 
-    suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> = withContext(Dispatchers.IO) {
-        repository.getByDictionary(dictionaryId)
+    suspend fun getByWord(wordId: Int): List<CardHistory> = withContext(Dispatchers.IO) {
+        repository.getByWord(wordId)
     }
 
     fun clearAll() = viewModelScope.launch(Dispatchers.IO) {

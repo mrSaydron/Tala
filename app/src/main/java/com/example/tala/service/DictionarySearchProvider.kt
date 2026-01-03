@@ -1,6 +1,6 @@
 package com.example.tala.service
 
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 
 /**
  * Контракт для источников словарных данных. Реализации могут использовать разные API или локальные источники.
@@ -15,17 +15,17 @@ interface DictionarySearchProvider {
     /**
      * Возвращает варианты словаря для запроса на русском языке.
      */
-    suspend fun searchByRussian(term: String): List<List<Dictionary>>
+    suspend fun searchByRussian(term: String): List<List<Word>>
 
     /**
      * Возвращает варианты словаря для запроса на английском языке.
      */
-    suspend fun searchByEnglish(term: String): List<List<Dictionary>>
+    suspend fun searchByEnglish(term: String): List<List<Word>>
 
     /**
      * Универсальный поиск: определяет язык и вызывает соответствующий метод.
      */
-    suspend fun search(term: String): List<List<Dictionary>> {
+    suspend fun search(term: String): List<List<Word>> {
         return when (detectLanguage(term)) {
             DictionarySearchLanguage.RUSSIAN -> searchByRussian(term)
             DictionarySearchLanguage.ENGLISH -> searchByEnglish(term)

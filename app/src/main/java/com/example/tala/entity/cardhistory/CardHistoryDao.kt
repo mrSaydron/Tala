@@ -28,8 +28,8 @@ interface CardHistoryDao {
     )
     suspend fun getByLessonAndType(lessonId: Int, cardType: CardTypeEnum): List<CardHistory>
 
-    @Query("SELECT * FROM card_history WHERE dictionary_id = :dictionaryId ORDER BY date DESC")
-    suspend fun getByDictionary(dictionaryId: Int): List<CardHistory>
+    @Query("SELECT * FROM card_history WHERE word_id = :wordId ORDER BY date DESC")
+    suspend fun getByWord(wordId: Int): List<CardHistory>
 
     @Query("DELETE FROM card_history")
     suspend fun clearAll()

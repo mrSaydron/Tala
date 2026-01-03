@@ -22,7 +22,7 @@ class LessonProgressRepository(private val dao: LessonProgressDao) {
     suspend fun getByLessonCardType(lessonId: Int, cardType: CardTypeEnum): List<LessonProgress> =
         dao.getByLessonCardType(lessonId, cardType)
 
-    suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress> =
-        dao.getByDictionaryId(dictionaryId)
+    suspend fun getByWordId(wordId: Int): List<LessonProgress> =
+        dao.getByWordId(wordId)
 }
 

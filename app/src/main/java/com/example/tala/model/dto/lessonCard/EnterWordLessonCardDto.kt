@@ -1,7 +1,7 @@
 package com.example.tala.model.dto.lessonCard
 
 import android.os.Parcelable
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.model.dto.info.WordCardInfo
 import com.example.tala.model.enums.CardTypeEnum
@@ -13,7 +13,7 @@ import kotlinx.parcelize.Parcelize
 data class EnterWordLessonCardDto(
     val progressId: Int,
     val lessonId: Int,
-    val dictionaryId: Int?,
+    val wordId: Int?,
     val word: String,
     val translation: String,
     val hint: String?,
@@ -42,11 +42,11 @@ data class EnterWordLessonCardDto(
     companion object {
         fun fromProgress(
             progress: LessonProgress,
-            dictionary: Dictionary?
+            dictionary: Word?
         ): EnterWordLessonCardDto = EnterWordLessonCardDto(
             progressId = progress.id,
             lessonId = progress.lessonId,
-            dictionaryId = progress.dictionaryId,
+            wordId = progress.wordId,
             word = dictionary?.word ?: "",
             translation = dictionary?.translation ?: "",
             hint = dictionary?.hint,

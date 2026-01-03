@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.example.tala.entity.dictionaryCollection.DictionaryCollection
+import com.example.tala.entity.wordCollection.WordCollection
 import com.example.tala.model.enums.CardTypeEnum
 
 @Entity(
@@ -12,7 +12,7 @@ import com.example.tala.model.enums.CardTypeEnum
     primaryKeys = ["collection_id", "card_type"],
     foreignKeys = [
         ForeignKey(
-            entity = DictionaryCollection::class,
+            entity = WordCollection::class,
             parentColumns = ["id"],
             childColumns = ["collection_id"],
             onDelete = ForeignKey.CASCADE,

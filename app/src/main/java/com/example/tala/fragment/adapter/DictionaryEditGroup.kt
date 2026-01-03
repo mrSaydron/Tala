@@ -1,6 +1,6 @@
 package com.example.tala.fragment.adapter
 
-import com.example.tala.entity.dictionary.DictionaryLevel
+import com.example.tala.entity.word.DictionaryLevel
 import java.util.UUID
 
 data class DictionaryEditGroup(

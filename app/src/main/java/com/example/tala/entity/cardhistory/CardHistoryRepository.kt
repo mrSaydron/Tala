@@ -23,8 +23,8 @@ class CardHistoryRepository(
         return cardHistoryDao.getByLessonAndType(lessonId, cardType)
     }
 
-    suspend fun getByDictionary(dictionaryId: Int): List<CardHistory> {
-        return cardHistoryDao.getByDictionary(dictionaryId)
+    suspend fun getByWord(wordId: Int): List<CardHistory> {
+        return cardHistoryDao.getByWord(wordId)
     }
 
     suspend fun clearAll() {

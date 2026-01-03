@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.tala.R
 import com.example.tala.databinding.FragmentCollectionListBinding
-import com.example.tala.entity.dictionaryCollection.DictionaryCollectionViewModel
+import com.example.tala.entity.wordCollection.WordCollectionViewModel
 import com.example.tala.fragment.adapter.CollectionListAdapter
 import kotlinx.coroutines.launch
 
@@ -21,7 +21,7 @@ class CollectionListFragment : Fragment() {
     private var _binding: FragmentCollectionListBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var collectionViewModel: DictionaryCollectionViewModel
+    private lateinit var collectionViewModel: WordCollectionViewModel
     private lateinit var collectionAdapter: CollectionListAdapter
 
     override fun onCreateView(
@@ -36,7 +36,7 @@ class CollectionListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        collectionViewModel = ViewModelProvider(requireActivity())[DictionaryCollectionViewModel::class.java]
+        collectionViewModel = ViewModelProvider(requireActivity())[WordCollectionViewModel::class.java]
 
         collectionAdapter = CollectionListAdapter { collection ->
             openCollection(collection.id)

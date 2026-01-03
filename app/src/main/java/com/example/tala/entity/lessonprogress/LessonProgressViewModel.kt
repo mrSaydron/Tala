@@ -53,8 +53,8 @@ class LessonProgressViewModel(application: Application) : AndroidViewModel(appli
             repository.getByLessonCardType(lessonId, cardType)
         }
 
-    suspend fun getByDictionaryId(dictionaryId: Int): List<LessonProgress> = withContext(Dispatchers.IO) {
-        repository.getByDictionaryId(dictionaryId)
+    suspend fun getByWordId(wordId: Int): List<LessonProgress> = withContext(Dispatchers.IO) {
+        repository.getByWordId(wordId)
     }
 }
 

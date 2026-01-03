@@ -10,7 +10,7 @@
 ## Основные сущности
 
 - `Dictionary` — словарь слов с переводами, подсказками, частями речи, изображениями.
-- `DictionaryCollection` / `dictionary_collections` — группы словаря для уроков.
+- `WordCollection` / `word_collection` — группы слов для уроков.
 - `DictionaryCollectionEntry` — связи слов и коллекций словаря.
 - `Lesson` — сущность урока, ссылается на коллекцию словаря.
 - `LessonCardTypes` — доступные типы карточек для урока.

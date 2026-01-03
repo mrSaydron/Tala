@@ -10,18 +10,18 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.tala.R
-import com.example.tala.entity.dictionary.Dictionary
+import com.example.tala.entity.word.Word
 import com.example.tala.fragment.adapter.DictionaryAdapter.ListItem.GroupHeader
 import com.example.tala.fragment.adapter.DictionaryAdapter.ListItem.GroupWord
 
 class DictionaryAdapter(
-    private val onItemClick: (Dictionary) -> Unit,
-    private val onAddToCollectionClick: ((Dictionary) -> Unit)? = null
+    private val onItemClick: (Word) -> Unit,
+    private val onAddToCollectionClick: ((Word) -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     data class Group(
-        val base: Dictionary,
-        val words: List<Dictionary>
+        val base: Word,
+        val words: List<Word>
     )
 
     private val groups: MutableList<Group> = mutableListOf()
@@ -48,7 +48,7 @@ class DictionaryAdapter(
             if (isExpanded) {
                 group.words
                     .sortedWith(
-                        compareBy<Dictionary> { if (it.id == group.base.id) 0 else 1 }
+                        compareBy<Word> { if (it.id == group.base.id) 0 else 1 }
                             .thenBy { it.word.lowercase() }
                             .thenBy { it.translation.lowercase() }
                     )
@@ -69,11 +69,11 @@ class DictionaryAdapter(
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             VIEW_TYPE_GROUP_HEADER -> {
-                val view = inflater.inflate(R.layout.item_dictionary_entry, parent, false)
+                val view = inflater.inflate(R.layout.item_word_entry, parent, false)
                 GroupViewHolder(view)
             }
             else -> {
-                val view = inflater.inflate(R.layout.item_dictionary_group_word, parent, false)
+                val view = inflater.inflate(R.layout.item_word_group_word, parent, false)
                 GroupWordViewHolder(view)
             }
         }
@@ -99,7 +99,7 @@ class DictionaryAdapter(
 
     inner class GroupViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        private val dictionaryImageView: ImageView = itemView.findViewById(R.id.dictionaryImageView)
+        private val dictionaryImageView: ImageView = itemView.findViewById(R.id.wordImageView)
         private val wordTextView: TextView = itemView.findViewById(R.id.wordTextView)
         private val translationTextView: TextView = itemView.findViewById(R.id.translationTextView)
         private val dependentCountTextView: TextView = itemView.findViewById(R.id.dependentCountTextView)
@@ -155,8 +155,8 @@ class DictionaryAdapter(
         }
 
         private fun setupAddToCollectionButton(
-            addClick: ((Dictionary) -> Unit)?,
-            entry: Dictionary,
+            addClick: ((Word) -> Unit)?,
+            entry: Word,
             isExpanded: Boolean
         ) {
             if (addClick != null && !isExpanded) {
@@ -196,12 +196,12 @@ class DictionaryAdapter(
 
     inner class GroupWordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        private val wordImageView: ImageView = itemView.findViewById(R.id.dictionaryGroupWordImageView)
-        private val wordTextView: TextView = itemView.findViewById(R.id.dictionaryGroupWordTextView)
-        private val translationTextView: TextView = itemView.findViewById(R.id.dictionaryGroupWordTranslationTextView)
-        private val addButton: ImageButton = itemView.findViewById(R.id.dictionaryGroupWordAddButton)
+        private val wordImageView: ImageView = itemView.findViewById(R.id.wordGroupWordImageView)
+        private val wordTextView: TextView = itemView.findViewById(R.id.wordGroupWordTextView)
+        private val translationTextView: TextView = itemView.findViewById(R.id.wordGroupWordTranslationTextView)
+        private val addButton: ImageButton = itemView.findViewById(R.id.wordGroupWordAddButton)
 
-        fun bind(dictionary: Dictionary) {
+        fun bind(dictionary: Word) {
             wordTextView.text = dictionary.word
             translationTextView.text = dictionary.translation
 
@@ -235,7 +235,7 @@ class DictionaryAdapter(
 
     sealed class ListItem {
         data class GroupHeader(val group: Group, val isExpanded: Boolean) : ListItem()
-        data class GroupWord(val dictionary: Dictionary) : ListItem()
+        data class GroupWord(val dictionary: Word) : ListItem()
     }
 
     companion object {
