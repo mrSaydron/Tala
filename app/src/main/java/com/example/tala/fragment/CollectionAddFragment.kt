@@ -19,7 +19,7 @@ import com.example.tala.entity.wordCollection.WordCollection
 import com.example.tala.entity.wordCollection.WordCollectionViewModel
 import com.example.tala.entity.lessoncardtype.LessonCardType
 import com.example.tala.entity.lessoncardtype.LessonCardTypeViewModel
-import com.example.tala.fragment.adapter.DictionaryAdapter
+import com.example.tala.fragment.adapter.WordAdapter
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.fragment.model.CardTypeConditionArgs
 import androidx.core.widget.doAfterTextChanged
@@ -35,7 +35,7 @@ class CollectionAddFragment : Fragment() {
     private lateinit var wordCollectionViewModel: WordCollectionViewModel
     private lateinit var wordViewModel: WordViewModel
     private lateinit var lessonCardTypeViewModel: LessonCardTypeViewModel
-    private val wordsAdapter = DictionaryAdapter(
+    private val wordsAdapter = WordAdapter(
         onItemClick = { _ -> },
         onAddToCollectionClick = null
     )
@@ -52,9 +52,9 @@ class CollectionAddFragment : Fragment() {
         collectionId = arguments?.getInt(ARG_COLLECTION_ID)?.takeIf { it > 0 }
 
         parentFragmentManager.setFragmentResultListener(SELECT_WORD_REQUEST_KEY, this) { _, bundle ->
-            val wordId = bundle.getInt(DictionaryListFragment.RESULT_SELECTED_DICTIONARY_ID, -1)
+            val wordId = bundle.getInt(WordListFragment.RESULT_SELECTED_WORD_ID, -1)
             if (wordId > 0) {
-                onDictionaryChosen(wordId)
+                onWordChosen(wordId)
             }
         }
 
@@ -136,7 +136,7 @@ class CollectionAddFragment : Fragment() {
 
     private fun setupButtons() {
         binding.collectionAddWordsButton.setOnClickListener {
-            openDictionarySelection()
+            openWordSelection()
         }
         binding.collectionSaveButton.setOnClickListener {
             saveCollection()
@@ -194,8 +194,8 @@ class CollectionAddFragment : Fragment() {
         binding.collectionCardTypeValueTextView.text = summary
     }
 
-    private fun openDictionarySelection() {
-        val fragment = DictionaryListFragment.newInstance(
+    private fun openWordSelection() {
+        val fragment = WordListFragment.newInstance(
             selectionMode = true,
             selectionResultKey = SELECT_WORD_REQUEST_KEY
         )
@@ -205,7 +205,7 @@ class CollectionAddFragment : Fragment() {
             .commit()
     }
 
-    private fun onDictionaryChosen(wordId: Int) {
+    private fun onWordChosen(wordId: Int) {
         if (selectedWords.any { it.id == wordId }) {
             Toast.makeText(
                 requireContext(),
@@ -217,10 +217,10 @@ class CollectionAddFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             setLoading(true)
-            val dictionary = runCatching { wordViewModel.getById(wordId) }
+            val word = runCatching { wordViewModel.getById(wordId) }
                 .getOrNull()
-            if (dictionary != null) {
-                selectedWords.add(dictionary)
+            if (word != null) {
+                selectedWords.add(word)
                 updateWordsList()
             }
             setLoading(false)
@@ -240,13 +240,13 @@ class CollectionAddFragment : Fragment() {
                 applyDraftsToInputs()
 
                 val wordIds = collectionWithEntries.entries.map { it.wordId }
-                val dictionaries = if (wordIds.isEmpty()) {
+                val words = if (wordIds.isEmpty()) {
                     emptyList()
                 } else {
                     wordViewModel.getByIds(wordIds)
                 }
                 selectedWords.clear()
-                selectedWords.addAll(dictionaries.sortedBy { it.word.lowercase() })
+                selectedWords.addAll(words.sortedBy { it.word.lowercase() })
 
                 val cardTypes = lessonCardTypeViewModel.getByCollectionId(id)
                 val byType = cardTypes.associateBy { it.cardType }
@@ -283,15 +283,15 @@ class CollectionAddFragment : Fragment() {
         }
     }
 
-    private suspend fun buildDisplayGroups(): List<DictionaryAdapter.Group> = withContext(Dispatchers.Default) {
+    private suspend fun buildDisplayGroups(): List<WordAdapter.Group> = withContext(Dispatchers.Default) {
         if (selectedWords.isEmpty()) {
             return@withContext emptyList()
         }
 
         selectedWords
             .groupBy { it.baseWordId ?: it.id }
-            .map { (_, dictionaries) ->
-                val sortedById = dictionaries.sortedWith(
+            .map { (_, words) ->
+                val sortedById = words.sortedWith(
                     compareBy<Word> { it.id }
                         .thenBy { it.word.lowercase() }
                         .thenBy { it.translation.lowercase() }
@@ -302,7 +302,7 @@ class CollectionAddFragment : Fragment() {
                         .thenBy { it.word.lowercase() }
                         .thenBy { it.translation.lowercase() }
                 )
-                DictionaryAdapter.Group(
+                WordAdapter.Group(
                     base = primary,
                     words = words
                 )

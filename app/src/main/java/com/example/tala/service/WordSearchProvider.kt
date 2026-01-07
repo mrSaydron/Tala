@@ -5,12 +5,12 @@ import com.example.tala.entity.word.Word
 /**
  * Контракт для источников словарных данных. Реализации могут использовать разные API или локальные источники.
  */
-interface DictionarySearchProvider {
+interface WordSearchProvider {
 
     /**
      * Простейшее определение языка запроса. Реализации могут использовать эвристику или сторонние сервисы.
      */
-    fun detectLanguage(term: String): DictionarySearchLanguage
+    fun detectLanguage(term: String): WordSearchLanguage
 
     /**
      * Возвращает варианты словаря для запроса на русском языке.
@@ -27,14 +27,14 @@ interface DictionarySearchProvider {
      */
     suspend fun search(term: String): List<List<Word>> {
         return when (detectLanguage(term)) {
-            DictionarySearchLanguage.RUSSIAN -> searchByRussian(term)
-            DictionarySearchLanguage.ENGLISH -> searchByEnglish(term)
-            DictionarySearchLanguage.UNKNOWN -> searchByEnglish(term)
+            WordSearchLanguage.RUSSIAN -> searchByRussian(term)
+            WordSearchLanguage.ENGLISH -> searchByEnglish(term)
+            WordSearchLanguage.UNKNOWN -> searchByEnglish(term)
         }
     }
 }
 
-enum class DictionarySearchLanguage {
+enum class WordSearchLanguage {
     RUSSIAN,
     ENGLISH,
     UNKNOWN

@@ -6,11 +6,8 @@ import com.example.tala.entity.word.Word
 import com.example.tala.entity.word.WordRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
-import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.LessonCardDto
 import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
-import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
-import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.model.CardAnswer
@@ -27,7 +24,7 @@ class ReverseTranslateLessonCardTypeService(
 
     override suspend fun createProgress(lessonId: Int, words: List<Word>) {
         withContext(Dispatchers.IO) {
-            val existingDictionaryIds = lessonProgressRepository
+            val existingWordIds = lessonProgressRepository
                 .getByLessonCardType(lessonId, CardTypeEnum.REVERSE_TRANSLATE)
                 .mapNotNull { it.wordId }
                 .toSet()
@@ -35,7 +32,7 @@ class ReverseTranslateLessonCardTypeService(
             val candidates = words
                 .asSequence()
                 .filter { it.baseWordId == null || it.baseWordId == it.id }
-                .filterNot { existingDictionaryIds.contains(it.id) }
+                .filterNot { existingWordIds.contains(it.id) }
                 .toList()
 
             if (candidates.isEmpty()) {
@@ -43,11 +40,11 @@ class ReverseTranslateLessonCardTypeService(
             }
 
             val createdAt = timeProvider()
-            val progressEntries = candidates.map { dictionary ->
+            val progressEntries = candidates.map { word ->
                 LessonProgress(
                     lessonId = lessonId,
                     cardType = CardTypeEnum.REVERSE_TRANSLATE,
-                    wordId = dictionary.id,
+                    wordId = word.id,
                     nextReviewDate = createdAt,
                     intervalMinutes = MINUTES_IN_DAY,
                     ef = DEFAULT_EF,
@@ -73,8 +70,8 @@ class ReverseTranslateLessonCardTypeService(
             .associateBy { it.id }
 
         return readyProgress.map { progress ->
-            val dictionary = progress.wordId?.let { words[it] }
-            ReverseTranslateLessonCardDto.fromProgress(progress, dictionary)
+            val word = progress.wordId?.let { words[it] }
+            ReverseTranslateLessonCardDto.fromProgress(progress, word)
         }
     }
 
@@ -124,8 +121,8 @@ class ReverseTranslateLessonCardTypeService(
     }
 
     private suspend fun buildCardFromProgress(progress: LessonProgress): ReverseTranslateLessonCardDto {
-        val dictionary = progress.wordId?.let { wordRepository.getById(it) }
-        return ReverseTranslateLessonCardDto.fromProgress(progress, dictionary)
+        val word = progress.wordId?.let { wordRepository.getById(it) }
+        return ReverseTranslateLessonCardDto.fromProgress(progress, word)
     }
 
     private fun handleIncorrect(

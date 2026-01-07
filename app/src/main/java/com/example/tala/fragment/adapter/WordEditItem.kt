@@ -1,12 +1,12 @@
 package com.example.tala.fragment.adapter
 
 import com.example.tala.entity.word.Word
-import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.WordLevel
 import com.example.tala.entity.word.PartOfSpeech
 import com.example.tala.entity.word.TagType
 import java.util.UUID
 
-data class DictionaryEditItem(
+data class WordEditItem(
     val key: String = UUID.randomUUID().toString(),
     var id: Int = 0,
     var baseWordId: Int? = null,
@@ -17,10 +17,10 @@ data class DictionaryEditItem(
     var hint: String = "",
     var imagePath: String = "",
     var frequencyText: String = "",
-    var level: DictionaryLevel? = null,
+    var level: WordLevel? = null,
     val tags: MutableSet<TagType> = mutableSetOf(),
 ) {
-    fun toDictionaryOrNull(): Word? {
+    fun toWordOrNull(): Word? {
         val cleanedWord = word.trim()
         val cleanedTranslation = translation.trim()
         if (cleanedWord.isEmpty() || cleanedTranslation.isEmpty()) {
@@ -46,25 +46,25 @@ data class DictionaryEditItem(
     }
 
     companion object {
-        fun fromWord(dictionary: Word): DictionaryEditItem {
-            val key = if (dictionary.id != 0) {
-                "existing_${dictionary.id}"
+        fun fromWord(word: Word): WordEditItem {
+            val key = if (word.id != 0) {
+                "existing_${word.id}"
             } else {
                 UUID.randomUUID().toString()
             }
-            return DictionaryEditItem(
+            return WordEditItem(
                 key = key,
-                id = dictionary.id,
-                baseWordId = dictionary.baseWordId,
-                word = dictionary.word,
-                translation = dictionary.translation,
-                partOfSpeech = dictionary.partOfSpeech,
-                ipa = dictionary.ipa.orEmpty(),
-                hint = dictionary.hint.orEmpty(),
-                imagePath = dictionary.imagePath.orEmpty(),
-                frequencyText = dictionary.frequency?.toString().orEmpty(),
-                level = dictionary.level,
-                tags = dictionary.tags.toMutableSet(),
+                id = word.id,
+                baseWordId = word.baseWordId,
+                word = word.word,
+                translation = word.translation,
+                partOfSpeech = word.partOfSpeech,
+                ipa = word.ipa.orEmpty(),
+                hint = word.hint.orEmpty(),
+                imagePath = word.imagePath.orEmpty(),
+                frequencyText = word.frequency?.toString().orEmpty(),
+                level = word.level,
+                tags = word.tags.toMutableSet(),
             )
         }
     }

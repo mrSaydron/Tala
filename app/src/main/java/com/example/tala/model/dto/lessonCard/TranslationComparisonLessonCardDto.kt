@@ -36,17 +36,17 @@ data class TranslationComparisonLessonCardDto(
         fun fromProgress(
             lessonId: Int,
             progresses: List<LessonProgress>,
-            dictionaries: Map<Int, Word?>
+            words: Map<Int, Word?>
         ): TranslationComparisonLessonCardDto {
             val items = progresses.map { progress ->
-                val dictionary = progress.wordId?.let { dictionaries[it] }
+                val word = progress.wordId?.let { words[it] }
                 Item(
                     progressId = progress.id,
                     wordId = progress.wordId,
-                    word = dictionary?.word.orEmpty(),
-                    translation = dictionary?.translation.orEmpty(),
-                    hint = dictionary?.hint,
-                    imagePath = dictionary?.imagePath,
+                    word = word?.word.orEmpty(),
+                    translation = word?.translation.orEmpty(),
+                    hint = word?.hint,
+                    imagePath = word?.imagePath,
                     status = progress.status,
                     intervalMinutes = progress.intervalMinutes,
                     ef = progress.ef,

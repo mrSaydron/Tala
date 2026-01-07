@@ -14,18 +14,18 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import java.util.Locale
 
-class GeminiDictionarySearchProvider(
+class GeminiWordSearchProvider(
     private val modelName: String = DEFAULT_MODEL,
-    private val fallbackProvider: DictionarySearchProvider? = null,
+    private val fallbackProvider: WordSearchProvider? = null,
     private val temperature: Float = DEFAULT_TEMPERATURE,
     private val gson: Gson = Gson(),
-) : DictionarySearchProvider {
+) : WordSearchProvider {
 
     private val model = Firebase.ai(backend = GenerativeBackend.googleAI())
         .generativeModel(
             modelName = modelName,
             generationConfig = generationConfig {
-                this.temperature = this@GeminiDictionarySearchProvider.temperature
+                this.temperature = this@GeminiWordSearchProvider.temperature
                 responseMimeType = APPLICATION_JSON
                 responseSchema = RESPONSE_SCHEMA
             },
@@ -34,37 +34,37 @@ class GeminiDictionarySearchProvider(
             }
         )
 
-    override fun detectLanguage(term: String): DictionarySearchLanguage {
+    override fun detectLanguage(term: String): WordSearchLanguage {
         val trimmed = term.trim()
-        if (trimmed.isEmpty()) return DictionarySearchLanguage.UNKNOWN
+        if (trimmed.isEmpty()) return WordSearchLanguage.UNKNOWN
 
         val hasCyrillic = trimmed.any { it in CYRILLIC_CHARS }
         val hasLatin = trimmed.any { it in LATIN_CHARS }
 
         return when {
-            hasCyrillic && !hasLatin -> DictionarySearchLanguage.RUSSIAN
-            hasLatin && !hasCyrillic -> DictionarySearchLanguage.ENGLISH
-            hasLatin -> DictionarySearchLanguage.ENGLISH
-            hasCyrillic -> DictionarySearchLanguage.RUSSIAN
-            else -> DictionarySearchLanguage.UNKNOWN
+            hasCyrillic && !hasLatin -> WordSearchLanguage.RUSSIAN
+            hasLatin && !hasCyrillic -> WordSearchLanguage.ENGLISH
+            hasLatin -> WordSearchLanguage.ENGLISH
+            hasCyrillic -> WordSearchLanguage.RUSSIAN
+            else -> WordSearchLanguage.UNKNOWN
         }
     }
 
     override suspend fun searchByRussian(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
-        return fetchWithFallback(normalized, DictionarySearchLanguage.RUSSIAN)
+        return fetchWithFallback(normalized, WordSearchLanguage.RUSSIAN)
     }
 
     override suspend fun searchByEnglish(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
-        return fetchWithFallback(normalized, DictionarySearchLanguage.ENGLISH)
+        return fetchWithFallback(normalized, WordSearchLanguage.ENGLISH)
     }
 
     private suspend fun fetchWithFallback(
         term: String,
-        language: DictionarySearchLanguage,
+        language: WordSearchLanguage,
     ): List<List<Word>> {
         val geminiResult = runCatching { requestEntries(term, language) }
             .onFailure { error ->
@@ -78,15 +78,15 @@ class GeminiDictionarySearchProvider(
 
         val fallback = fallbackProvider ?: return emptyList()
         return when (language) {
-            DictionarySearchLanguage.RUSSIAN -> fallback.searchByRussian(term)
-            DictionarySearchLanguage.ENGLISH,
-            DictionarySearchLanguage.UNKNOWN -> fallback.searchByEnglish(term)
+            WordSearchLanguage.RUSSIAN -> fallback.searchByRussian(term)
+            WordSearchLanguage.ENGLISH,
+            WordSearchLanguage.UNKNOWN -> fallback.searchByEnglish(term)
         }
     }
 
     private suspend fun requestEntries(
         term: String,
-        language: DictionarySearchLanguage,
+        language: WordSearchLanguage,
     ): List<List<Word>> {
         val response = model.generateContent(buildPrompt(term, language))
 
@@ -96,18 +96,18 @@ class GeminiDictionarySearchProvider(
         val parsed = parseResponse(rawContent) ?: return emptyList()
         if (parsed.entries.isEmpty()) return emptyList()
 
-        val dictionaries = mapEntries(parsed)
+        val words = mapEntries(parsed)
             .filter { it.word.isNotBlank() && it.translation.isNotBlank() }
             .distinctBy { it.word.lowercase(Locale.ROOT) to it.translation.lowercase(Locale.ROOT) }
 
-        return groupByBaseWord(dictionaries)
+        return groupByBaseWord(words)
     }
 
-    private fun parseResponse(raw: String): GeminiDictionaryResponse? {
+    private fun parseResponse(raw: String): GeminiWordResponse? {
         val sanitized = sanitizeJson(raw)
         if (sanitized.isBlank()) return null
 
-        return runCatching { gson.fromJson(sanitized, GeminiDictionaryResponse::class.java) }
+        return runCatching { gson.fromJson(sanitized, GeminiWordResponse::class.java) }
             .recoverCatching { error ->
                 if (error !is JsonSyntaxException) throw error
                 val fallbackJson = extractJsonObject(sanitized)
@@ -115,7 +115,7 @@ class GeminiDictionarySearchProvider(
                     Log.e(TAG, "Unable to parse Gemini JSON: ${error.message}")
                     null
                 } else {
-                    gson.fromJson(fallbackJson, GeminiDictionaryResponse::class.java)
+                    gson.fromJson(fallbackJson, GeminiWordResponse::class.java)
                 }
             }
             .onFailure { parseError ->
@@ -142,7 +142,7 @@ class GeminiDictionarySearchProvider(
         return raw.substring(start, end + 1)
     }
 
-    private fun mapEntries(response: GeminiDictionaryResponse): List<Word> {
+    private fun mapEntries(response: GeminiWordResponse): List<Word> {
         val results = mutableListOf<Word>()
 
         response.entries.forEach { entry ->
@@ -152,7 +152,7 @@ class GeminiDictionarySearchProvider(
             val entryId = entry.id?.hashCode()
             val baseId = entry.baseWordId?.hashCode() ?: entryId
 
-            results += buildDictionaryEntry(
+            results += buildWordEntry(
                 id = entryId,
                 baseWordId = baseId,
                 word = word,
@@ -172,10 +172,10 @@ class GeminiDictionarySearchProvider(
     private fun groupByBaseWord(entries: List<Word>): List<List<Word>> {
         if (entries.isEmpty()) return emptyList()
 
-        val grouped = entries.groupBy { dictionary ->
-            dictionary.baseWordId
-                ?: dictionary.id.takeIf { it != 0 }
-                ?: (dictionary.word.lowercase(Locale.ROOT) + "|" + dictionary.translation.lowercase(Locale.ROOT)).hashCode()
+        val grouped = entries.groupBy { word ->
+            word.baseWordId
+                ?: word.id.takeIf { it != 0 }
+                ?: (word.word.lowercase(Locale.ROOT) + "|" + word.translation.lowercase(Locale.ROOT)).hashCode()
         }
 
         return grouped.values.map { group ->
@@ -183,11 +183,11 @@ class GeminiDictionarySearchProvider(
         }
     }
 
-    private fun buildPrompt(term: String, language: DictionarySearchLanguage): String {
+    private fun buildPrompt(term: String, language: WordSearchLanguage): String {
         val (inputLanguage, targetLanguage) = when (language) {
-            DictionarySearchLanguage.ENGLISH -> "English" to "Russian"
-            DictionarySearchLanguage.RUSSIAN -> "Russian" to "English"
-            DictionarySearchLanguage.UNKNOWN -> "English" to "Russian"
+            WordSearchLanguage.ENGLISH -> "English" to "Russian"
+            WordSearchLanguage.RUSSIAN -> "Russian" to "English"
+            WordSearchLanguage.UNKNOWN -> "English" to "Russian"
         }
 
         return """
@@ -231,7 +231,7 @@ class GeminiDictionarySearchProvider(
         """.trimIndent()
     }
 
-    private fun buildDictionaryEntry(
+    private fun buildWordEntry(
         id: Int?,
         baseWordId: Int?,
         word: String,
@@ -252,7 +252,7 @@ class GeminiDictionarySearchProvider(
             hint = hint,
             baseWordId = baseWordId,
             frequency = frequency,
-            level = level?.let { runCatching { com.example.tala.entity.word.DictionaryLevel.valueOf(it) }.getOrNull() },
+            level = level?.let { runCatching { com.example.tala.entity.word.WordLevel.valueOf(it) }.getOrNull() },
             tags = tags,
         )
     }
@@ -304,11 +304,11 @@ class GeminiDictionarySearchProvider(
         }
     }
 
-    data class GeminiDictionaryResponse(
-        val entries: List<GeminiDictionaryEntry> = emptyList(),
+    data class GeminiWordResponse(
+        val entries: List<GeminiWordEntry> = emptyList(),
     )
 
-    data class GeminiDictionaryEntry(
+    data class GeminiWordEntry(
         val id: String? = null,
         val word: String? = null,
         val translation: String? = null,
@@ -356,7 +356,7 @@ class GeminiDictionarySearchProvider(
                                 nullable = true
                             ),
                             "level" to Schema.enumeration(
-                                values = com.example.tala.entity.word.DictionaryLevel.values().map { it.name },
+                                values = com.example.tala.entity.word.WordLevel.values().map { it.name },
                                 nullable = true
                             )
                         ),

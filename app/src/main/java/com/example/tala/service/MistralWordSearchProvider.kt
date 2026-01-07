@@ -2,7 +2,7 @@ package com.example.tala.service
 
 import android.util.Log
 import com.example.tala.entity.word.Word
-import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.WordLevel
 import com.example.tala.entity.word.PartOfSpeech
 import com.example.tala.entity.word.TagType
 import com.example.tala.integration.mistral.MistralApi
@@ -12,46 +12,46 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import java.util.Locale
 
-class MistralDictionarySearchProvider(
+class MistralWordSearchProvider(
     private val api: MistralApi = ApiClient.mistralApi,
     private val apiKey: String = MistralApi.MISTRAL_API_KEY,
     private val model: String = DEFAULT_MODEL,
-    private val fallbackLevel: DictionaryLevel? = null,
-    private val fallbackProvider: DictionarySearchProvider? = null,
+    private val fallbackLevel: WordLevel? = null,
+    private val fallbackProvider: WordSearchProvider? = null,
     private val gson: Gson = Gson(),
-) : DictionarySearchProvider {
+) : WordSearchProvider {
 
-    override fun detectLanguage(term: String): DictionarySearchLanguage {
+    override fun detectLanguage(term: String): WordSearchLanguage {
         val trimmed = term.trim()
-        if (trimmed.isEmpty()) return DictionarySearchLanguage.UNKNOWN
+        if (trimmed.isEmpty()) return WordSearchLanguage.UNKNOWN
 
         val hasCyrillic = trimmed.any { it in CYRILLIC_CHARS }
         val hasLatin = trimmed.any { it in LATIN_CHARS }
 
         return when {
-            hasCyrillic && !hasLatin -> DictionarySearchLanguage.RUSSIAN
-            hasLatin && !hasCyrillic -> DictionarySearchLanguage.ENGLISH
-            hasLatin -> DictionarySearchLanguage.ENGLISH
-            hasCyrillic -> DictionarySearchLanguage.RUSSIAN
-            else -> DictionarySearchLanguage.UNKNOWN
+            hasCyrillic && !hasLatin -> WordSearchLanguage.RUSSIAN
+            hasLatin && !hasCyrillic -> WordSearchLanguage.ENGLISH
+            hasLatin -> WordSearchLanguage.ENGLISH
+            hasCyrillic -> WordSearchLanguage.RUSSIAN
+            else -> WordSearchLanguage.UNKNOWN
         }
     }
 
     override suspend fun searchByRussian(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
-        return fetchWithFallback(normalized, DictionarySearchLanguage.RUSSIAN)
+        return fetchWithFallback(normalized, WordSearchLanguage.RUSSIAN)
     }
 
     override suspend fun searchByEnglish(term: String): List<List<Word>> {
         val normalized = term.trim()
         if (normalized.isEmpty()) return emptyList()
-        return fetchWithFallback(normalized, DictionarySearchLanguage.ENGLISH)
+        return fetchWithFallback(normalized, WordSearchLanguage.ENGLISH)
     }
 
     private suspend fun fetchWithFallback(
         term: String,
-        language: DictionarySearchLanguage,
+        language: WordSearchLanguage,
     ): List<List<Word>> {
         val mistralResult = runCatching { requestEntries(term, language) }
             .onFailure { error ->
@@ -65,14 +65,14 @@ class MistralDictionarySearchProvider(
 
         val fallback = fallbackProvider ?: return emptyList()
         return when (language) {
-            DictionarySearchLanguage.RUSSIAN -> fallback.searchByRussian(term)
-            DictionarySearchLanguage.ENGLISH, DictionarySearchLanguage.UNKNOWN -> fallback.searchByEnglish(term)
+            WordSearchLanguage.RUSSIAN -> fallback.searchByRussian(term)
+            WordSearchLanguage.ENGLISH, WordSearchLanguage.UNKNOWN -> fallback.searchByEnglish(term)
         }
     }
 
     private suspend fun requestEntries(
         term: String,
-        language: DictionarySearchLanguage,
+        language: WordSearchLanguage,
     ): List<Word> {
         val response = api.generateText(
             apiKey = apiKey,
@@ -97,17 +97,17 @@ class MistralDictionarySearchProvider(
         val parsed = parseResponse(rawContent) ?: return emptyList()
         if (parsed.entries.isEmpty()) return emptyList()
 
-        val dictionaries = mapEntries(parsed)
-        return dictionaries
+        val words = mapEntries(parsed)
+        return words
             .filter { it.word.isNotBlank() && it.translation.isNotBlank() }
             .distinctBy { (it.word.lowercase(Locale.ROOT) to it.translation.lowercase(Locale.ROOT)) }
     }
 
-    private fun parseResponse(raw: String): LlmDictionaryResponse? {
+    private fun parseResponse(raw: String): LlmWordResponse? {
         val sanitized = sanitizeJson(raw)
         if (sanitized.isBlank()) return null
 
-        return runCatching { gson.fromJson(sanitized, LlmDictionaryResponse::class.java) }
+        return runCatching { gson.fromJson(sanitized, LlmWordResponse::class.java) }
             .getOrElse { error ->
                 if (error !is JsonSyntaxException) return null
                 val fallbackJson = extractJsonObject(sanitized)
@@ -115,7 +115,7 @@ class MistralDictionarySearchProvider(
                     Log.e(TAG, "Unable to parse Mistral JSON: ${error.message}")
                     return null
                 }
-                runCatching { gson.fromJson(fallbackJson, LlmDictionaryResponse::class.java) }
+                runCatching { gson.fromJson(fallbackJson, LlmWordResponse::class.java) }
                     .onFailure { inner ->
                         Log.e(TAG, "Fallback JSON parse failed: ${inner.message}")
                     }
@@ -141,7 +141,7 @@ class MistralDictionarySearchProvider(
         return raw.substring(start, end + 1)
     }
 
-    private fun mapEntries(response: LlmDictionaryResponse): List<Word> {
+    private fun mapEntries(response: LlmWordResponse): List<Word> {
         val result = mutableListOf<Word>()
         response.entries.forEach { entry ->
             val word = entry.word?.takeIf { it.isNotBlank() } ?: return@forEach
@@ -155,7 +155,7 @@ class MistralDictionarySearchProvider(
                 listToHint("Примеры", entry.examples)
             )
 
-            result += buildDictionaryEntry(
+            result += buildWordEntry(
                 word = word,
                 translation = translation,
                 partOfSpeech = mapPartOfSpeech(entry.partOfSpeech),
@@ -172,7 +172,7 @@ class MistralDictionarySearchProvider(
                 val formTags = (mapTags(form.tags) + listOfNotNull(mapTag(form.label))).toSet()
                 val formHint = mergeHints(form.hint, form.notes)
 
-                result += buildDictionaryEntry(
+                result += buildWordEntry(
                     word = formWord,
                     translation = formTranslation,
                     partOfSpeech = mapPartOfSpeech(form.partOfSpeech ?: entry.partOfSpeech),
@@ -192,7 +192,7 @@ class MistralDictionarySearchProvider(
                     listToHint("Примеры", derived.examples)
                 )
 
-                result += buildDictionaryEntry(
+                result += buildWordEntry(
                     word = derivedWord,
                     translation = derivedTranslation,
                     partOfSpeech = mapPartOfSpeech(derived.partOfSpeech),
@@ -206,11 +206,11 @@ class MistralDictionarySearchProvider(
         return result
     }
 
-    private fun buildPrompt(term: String, language: DictionarySearchLanguage): String {
+    private fun buildPrompt(term: String, language: WordSearchLanguage): String {
         val (inputLanguage, targetLanguage) = when (language) {
-            DictionarySearchLanguage.ENGLISH -> "English" to "Russian"
-            DictionarySearchLanguage.RUSSIAN -> "Russian" to "English"
-            DictionarySearchLanguage.UNKNOWN -> "English" to "Russian"
+            WordSearchLanguage.ENGLISH -> "English" to "Russian"
+            WordSearchLanguage.RUSSIAN -> "Russian" to "English"
+            WordSearchLanguage.UNKNOWN -> "English" to "Russian"
         }
 
         return """
@@ -261,7 +261,7 @@ class MistralDictionarySearchProvider(
         """.trimIndent()
     }
 
-    private fun buildDictionaryEntry(
+    private fun buildWordEntry(
         word: String,
         translation: String,
         partOfSpeech: PartOfSpeech,
@@ -332,9 +332,9 @@ class MistralDictionarySearchProvider(
         }
     }
 
-    private fun wrapAsSingleGroup(dictionaries: List<Word>): List<List<Word>> {
-        if (dictionaries.isEmpty()) return emptyList()
-        return listOf(dictionaries)
+    private fun wrapAsSingleGroup(words: List<Word>): List<List<Word>> {
+        if (words.isEmpty()) return emptyList()
+        return listOf(words)
     }
 
     private fun mergeHints(vararg parts: String?): String? {
@@ -349,11 +349,11 @@ class MistralDictionarySearchProvider(
         return "$title: ${content.joinToString(separator = "; ")}"
     }
 
-    data class LlmDictionaryResponse(
-        val entries: List<LlmDictionaryEntry> = emptyList(),
+    data class LlmWordResponse(
+        val entries: List<LlmWordEntry> = emptyList(),
     )
 
-    data class LlmDictionaryEntry(
+    data class LlmWordEntry(
         val word: String?,
         val translation: String?,
         val partOfSpeech: String? = null,
@@ -364,11 +364,11 @@ class MistralDictionarySearchProvider(
         val tags: List<String>? = null,
         val examples: List<String>? = null,
         val exceptions: List<String>? = null,
-        val forms: List<LlmDictionaryForm>? = null,
-        val derived: List<LlmDictionaryDerived>? = null,
+        val forms: List<LlmWordForm>? = null,
+        val derived: List<LlmWordDerived>? = null,
     )
 
-    data class LlmDictionaryForm(
+    data class LlmWordForm(
         val word: String?,
         val translation: String? = null,
         val partOfSpeech: String? = null,
@@ -378,7 +378,7 @@ class MistralDictionarySearchProvider(
         val tags: List<String>? = null,
     )
 
-    data class LlmDictionaryDerived(
+    data class LlmWordDerived(
         val word: String?,
         val translation: String?,
         val partOfSpeech: String? = null,

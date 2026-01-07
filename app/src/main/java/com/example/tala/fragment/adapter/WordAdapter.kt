@@ -11,10 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.tala.R
 import com.example.tala.entity.word.Word
-import com.example.tala.fragment.adapter.DictionaryAdapter.ListItem.GroupHeader
-import com.example.tala.fragment.adapter.DictionaryAdapter.ListItem.GroupWord
+import com.example.tala.fragment.adapter.WordAdapter.ListItem.GroupHeader
+import com.example.tala.fragment.adapter.WordAdapter.ListItem.GroupWord
 
-class DictionaryAdapter(
+class WordAdapter(
     private val onItemClick: (Word) -> Unit,
     private val onAddToCollectionClick: ((Word) -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -52,8 +52,8 @@ class DictionaryAdapter(
                             .thenBy { it.word.lowercase() }
                             .thenBy { it.translation.lowercase() }
                     )
-                    .forEach { dictionary ->
-                        items += GroupWord(dictionary)
+                    .forEach { word ->
+                        items += GroupWord(word)
                     }
             }
         }
@@ -82,7 +82,7 @@ class DictionaryAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
             is GroupHeader -> (holder as GroupViewHolder).bind(item)
-            is GroupWord -> (holder as GroupWordViewHolder).bind(item.dictionary)
+            is GroupWord -> (holder as GroupWordViewHolder).bind(item.word)
         }
     }
 
@@ -99,7 +99,7 @@ class DictionaryAdapter(
 
     inner class GroupViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        private val dictionaryImageView: ImageView = itemView.findViewById(R.id.wordImageView)
+        private val wordImageView: ImageView = itemView.findViewById(R.id.wordImageView)
         private val wordTextView: TextView = itemView.findViewById(R.id.wordTextView)
         private val translationTextView: TextView = itemView.findViewById(R.id.translationTextView)
         private val dependentCountTextView: TextView = itemView.findViewById(R.id.dependentCountTextView)
@@ -117,7 +117,7 @@ class DictionaryAdapter(
             dependentCountTextView.isVisible = totalWords > 1
             if (totalWords > 1) {
                 dependentCountTextView.text = itemView.context.getString(
-                    R.string.dictionary_group_word_count_template,
+                    R.string.word_group_word_count_template,
                     totalWords
                 )
             }
@@ -128,9 +128,9 @@ class DictionaryAdapter(
                     .load(imagePath)
                     .placeholder(R.drawable.ic_image)
                     .centerCrop()
-                    .into(dictionaryImageView)
+                    .into(wordImageView)
             } else {
-                dictionaryImageView.setImageResource(R.drawable.ic_image)
+                wordImageView.setImageResource(R.drawable.ic_image)
             }
 
             val addClick = onAddToCollectionClick
@@ -144,11 +144,11 @@ class DictionaryAdapter(
 
         private fun updateHeaderContentVisibility(isExpanded: Boolean) {
             if (isExpanded) {
-                dictionaryImageView.isVisible = false
+                wordImageView.isVisible = false
                 wordTextView.isVisible = false
                 translationTextView.isVisible = false
             } else {
-                dictionaryImageView.isVisible = true
+                wordImageView.isVisible = true
                 wordTextView.isVisible = true
                 translationTextView.isVisible = true
             }
@@ -183,9 +183,9 @@ class DictionaryAdapter(
                 }
                 expandButton.contentDescription = itemView.context.getString(
                     if (isExpanded) {
-                        R.string.dictionary_collapse_group_button
+                        R.string.word_collapse_group_button
                     } else {
-                        R.string.dictionary_expand_group_button
+                        R.string.word_expand_group_button
                     }
                 )
             } else {
@@ -201,11 +201,11 @@ class DictionaryAdapter(
         private val translationTextView: TextView = itemView.findViewById(R.id.wordGroupWordTranslationTextView)
         private val addButton: ImageButton = itemView.findViewById(R.id.wordGroupWordAddButton)
 
-        fun bind(dictionary: Word) {
-            wordTextView.text = dictionary.word
-            translationTextView.text = dictionary.translation
+        fun bind(word: Word) {
+            wordTextView.text = word.word
+            translationTextView.text = word.translation
 
-            val imagePath = dictionary.imagePath
+            val imagePath = word.imagePath
             if (!imagePath.isNullOrBlank()) {
                 Glide.with(itemView.context)
                     .load(imagePath)
@@ -217,14 +217,14 @@ class DictionaryAdapter(
             }
 
             itemView.setOnClickListener {
-                onItemClick(dictionary)
+                onItemClick(word)
             }
 
             val addClick = onAddToCollectionClick
             if (addClick != null) {
                 addButton.isVisible = true
                 addButton.setOnClickListener {
-                    addClick(dictionary)
+                    addClick(word)
                 }
             } else {
                 addButton.isVisible = false
@@ -235,7 +235,7 @@ class DictionaryAdapter(
 
     sealed class ListItem {
         data class GroupHeader(val group: Group, val isExpanded: Boolean) : ListItem()
-        data class GroupWord(val dictionary: Word) : ListItem()
+        data class GroupWord(val word: Word) : ListItem()
     }
 
     companion object {

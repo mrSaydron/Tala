@@ -16,18 +16,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tala.R
 import com.example.tala.databinding.FragmentWordAddBinding
 import com.example.tala.entity.word.Word
-import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.WordLevel
 import com.example.tala.entity.word.WordViewModel
 import com.example.tala.entity.word.PartOfSpeech
-import com.example.tala.fragment.adapter.DictionaryEditGroup
-import com.example.tala.fragment.adapter.DictionaryEditItem
-import com.example.tala.fragment.adapter.DictionaryEditorAdapter
-import com.example.tala.fragment.adapter.DictionaryEditorAdapter.DictionaryGroupPayload
+import com.example.tala.fragment.adapter.WordEditGroup
+import com.example.tala.fragment.adapter.WordEditItem
+import com.example.tala.fragment.adapter.WordEditorAdapter
+import com.example.tala.fragment.adapter.WordEditorAdapter.WordGroupPayload
 import com.example.tala.fragment.dialog.ImagePickerDialog
 import com.example.tala.integration.picture.ImageRepository
-import com.example.tala.service.DictionarySearchProvider
-import com.example.tala.service.GeminiDictionarySearchProvider
-import com.example.tala.service.YandexDictionarySearchProvider
+import com.example.tala.service.WordSearchProvider
+import com.example.tala.service.GeminiWordSearchProvider
+import com.example.tala.service.YandexWordSearchProvider
 import com.example.tala.util.ImageStorage
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
@@ -35,20 +35,20 @@ import java.io.File
 
 private data class ImageTarget(val groupIndex: Int, val itemIndex: Int)
 
-class DictionaryAddFragment : Fragment() {
+class WordAddFragment : Fragment() {
 
     private var _binding: FragmentWordAddBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var dictionaryViewModel: WordViewModel
-    private lateinit var groupAdapter: DictionaryEditorAdapter
+    private lateinit var wordViewModel: WordViewModel
+    private lateinit var groupAdapter: WordEditorAdapter
 
-    private val groups: MutableList<DictionaryEditGroup> = mutableListOf()
+    private val groups: MutableList<WordEditGroup> = mutableListOf()
 
-    private val dictionarySearchProvider: DictionarySearchProvider =
-        GeminiDictionarySearchProvider(fallbackProvider = YandexDictionarySearchProvider())
+    private val wordSearchProvider: WordSearchProvider =
+        GeminiWordSearchProvider(fallbackProvider = YandexWordSearchProvider())
     private val partOfSpeechItems = PartOfSpeech.values().toList()
-    private val levelItems = listOf<DictionaryLevel?>(null) + DictionaryLevel.values().toList()
+    private val levelItems = listOf<WordLevel?>(null) + WordLevel.entries
 
     private var entryId: Int? = null
     private var existingEntry: Word? = null
@@ -86,7 +86,7 @@ class DictionaryAddFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dictionaryViewModel = ViewModelProvider(requireActivity())[WordViewModel::class.java]
+        wordViewModel = ViewModelProvider(requireActivity())[WordViewModel::class.java]
 
         setupToolbar()
         setupRecycler()
@@ -96,7 +96,7 @@ class DictionaryAddFragment : Fragment() {
         if (entryId != null) {
             binding.wordSearchContainer.isVisible = false
             binding.addGroupButton.isVisible = false
-            binding.saveWordButton.text = getString(R.string.dictionary_update_button)
+            binding.saveWordButton.text = getString(R.string.word_update_button)
             loadEntry(entryId!!)
         } else {
             binding.deleteWordButton.isVisible = false
@@ -113,10 +113,10 @@ class DictionaryAddFragment : Fragment() {
     }
 
     private fun setupRecycler() {
-        groupAdapter = DictionaryEditorAdapter(
+        groupAdapter = WordEditorAdapter(
             partOfSpeechItems = partOfSpeechItems,
             levelItems = levelItems,
-            listener = object : DictionaryEditorAdapter.Listener {
+            listener = object : WordEditorAdapter.Listener {
                 override fun onToggleGroup(groupIndex: Int) {
                     val group = groups.getOrNull(groupIndex) ?: return
                     group.isExpanded = !group.isExpanded
@@ -132,7 +132,7 @@ class DictionaryAddFragment : Fragment() {
                 override fun onAddWord(groupIndex: Int) {
                     val group = groups.getOrNull(groupIndex) ?: return
                     group.items.add(
-                        DictionaryEditItem(
+                        WordEditItem(
                             baseWordId = group.baseWordId,
                             level = group.level
                         )
@@ -171,9 +171,9 @@ class DictionaryAddFragment : Fragment() {
 
     private fun loadEntry(id: Int) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val group = dictionaryViewModel.getGroupByEntryId(id)
+            val group = wordViewModel.getGroupByEntryId(id)
             if (group.isEmpty()) {
-                Toast.makeText(requireContext(), getString(R.string.dictionary_error_not_found), Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.word_error_not_found), Toast.LENGTH_SHORT).show()
                 parentFragmentManager.popBackStack()
                 return@launch
             }
@@ -188,10 +188,10 @@ class DictionaryAddFragment : Fragment() {
 
         groups.clear()
         val first = entries.first()
-        groups += DictionaryEditGroup(
+        groups += WordEditGroup(
             baseWordId = first.baseWordId ?: first.id,
             level = first.level,
-            items = entries.map { DictionaryEditItem.fromWord(it) }.toMutableList(),
+            items = entries.map { WordEditItem.fromWord(it) }.toMutableList(),
             isExpanded = true
         )
         refreshGroups()
@@ -201,7 +201,7 @@ class DictionaryAddFragment : Fragment() {
         val groupPayloads = groupAdapter.validateAndBuildGroups() ?: return
 
         if (groupPayloads.isEmpty()) {
-            Toast.makeText(requireContext(), getString(R.string.dictionary_empty_results), Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.word_empty_results), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -210,10 +210,10 @@ class DictionaryAddFragment : Fragment() {
             try {
                 if (existingEntry == null) {
                     saveNewGroups(groupPayloads)
-                    Toast.makeText(requireContext(), getString(R.string.dictionary_save_success), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.word_save_success), Toast.LENGTH_SHORT).show()
                 } else {
                     updateExistingGroups(groupPayloads)
-                    Toast.makeText(requireContext(), getString(R.string.dictionary_update_success), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.word_update_success), Toast.LENGTH_SHORT).show()
                 }
                 parentFragmentManager.popBackStack()
             } finally {
@@ -222,55 +222,54 @@ class DictionaryAddFragment : Fragment() {
         }
     }
 
-    private suspend fun saveNewGroups(groups: List<DictionaryGroupPayload>) {
+    private suspend fun saveNewGroups(groups: List<WordGroupPayload>) {
         groups.forEach { payload ->
-            if (payload.dictionaries.isEmpty()) return@forEach
+            if (payload.word.isEmpty()) return@forEach
 
-            val normalized = payload.dictionaries.mapIndexed { index, dictionary ->
+            val normalized = payload.word.mapIndexed { index, word ->
                 if (index == 0) {
-                    dictionary.copy(id = 0, baseWordId = null)
+                    word.copy(id = 0, baseWordId = null)
                 } else {
-                    dictionary.copy(id = 0, baseWordId = null)
+                    word.copy(id = 0, baseWordId = null)
                 }
             }
-
             val baseEntry = normalized.first()
-            val insertedId = dictionaryViewModel.insertSync(baseEntry)
+            val insertedId = wordViewModel.insertSync(baseEntry)
             val baseId = insertedId.toInt()
 
-            dictionaryViewModel.updateSync(baseEntry.copy(id = baseId, baseWordId = baseId))
+            wordViewModel.updateSync(baseEntry.copy(id = baseId, baseWordId = baseId))
 
             normalized.drop(1).forEach { entry ->
-                dictionaryViewModel.insertSync(entry.copy(id = 0, baseWordId = baseId))
+                wordViewModel.insertSync(entry.copy(id = 0, baseWordId = baseId))
             }
         }
     }
 
-    private suspend fun updateExistingGroups(groups: List<DictionaryGroupPayload>) {
+    private suspend fun updateExistingGroups(groups: List<WordGroupPayload>) {
         val baseId = existingEntry?.baseWordId ?: existingEntry?.id ?: return
 
         val (existingGroup, newGroups) = groups.partition { payload ->
-            payload.baseWordId == baseId || payload.dictionaries.any { it.id == existingEntry?.id }
+            payload.baseWordId == baseId || payload.word.any { it.id == existingEntry?.id }
         }
 
         existingGroup.firstOrNull()?.let { payload ->
-            payload.dictionaries.forEach { entry ->
+            payload.word.forEach { entry ->
                 val normalized = entry.copy(baseWordId = baseId)
                 when {
-                    normalized.id == existingEntry?.id -> dictionaryViewModel.updateSync(normalized)
-                    normalized.id == 0 -> dictionaryViewModel.insertSync(normalized.copy(baseWordId = baseId))
-                    else -> dictionaryViewModel.updateSync(normalized)
+                    normalized.id == existingEntry?.id -> wordViewModel.updateSync(normalized)
+                    normalized.id == 0 -> wordViewModel.insertSync(normalized.copy(baseWordId = baseId))
+                    else -> wordViewModel.updateSync(normalized)
                 }
             }
 
-            val payloadIds = payload.dictionaries.mapNotNull { it.id.takeIf { id -> id != 0 } }.toSet()
-            val currentEntries = dictionaryViewModel.getGroupByBaseId(baseId)
+            val payloadIds = payload.word.mapNotNull { it.id.takeIf { id -> id != 0 } }.toSet()
+            val currentEntries = wordViewModel.getGroupByBaseId(baseId)
             currentEntries
                 .filter { it.id !in payloadIds }
-                .forEach { dictionaryViewModel.delete(it) }
+                .forEach { wordViewModel.delete(it) }
         }
 
-        val newPayloads = newGroups.filter { it.dictionaries.isNotEmpty() }
+        val newPayloads = newGroups.filter { it.word.isNotEmpty() }
         if (newPayloads.isNotEmpty()) {
             saveNewGroups(newPayloads)
         }
@@ -301,7 +300,7 @@ class DictionaryAddFragment : Fragment() {
             ?: item?.translation?.takeIf { it.isNotBlank() }
             ?: ""
         ImagePickerDialog.newInstance(query)
-            .show(parentFragmentManager, "DictionaryImagePickerDialog")
+            .show(parentFragmentManager, "WordImagePickerDialog")
     }
 
     private fun removeImageForItem(groupIndex: Int, itemIndex: Int) {
@@ -317,7 +316,7 @@ class DictionaryAddFragment : Fragment() {
                 if (localUri != null) {
                     setImageWithOptionalCrop(target, localUri)
                 } else {
-                    Toast.makeText(requireContext(), R.string.dictionary_error_state, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.word_error_state, Toast.LENGTH_SHORT).show()
                     if (pendingPickerTarget == target) {
                         pendingPickerTarget = null
                     }
@@ -372,22 +371,22 @@ class DictionaryAddFragment : Fragment() {
 
     private fun handleDelete() {
         val entry = existingEntry ?: return
-        dictionaryViewModel.delete(entry)
-        Toast.makeText(requireContext(), getString(R.string.dictionary_delete_success), Toast.LENGTH_SHORT).show()
+        wordViewModel.delete(entry)
+        Toast.makeText(requireContext(), getString(R.string.word_delete_success), Toast.LENGTH_SHORT).show()
         parentFragmentManager.popBackStack()
     }
 
     private fun handleSearch() {
         val query = binding.wordSearchEditText.text?.toString()?.trim().orEmpty()
         if (query.isBlank()) {
-            binding.wordSearchInputLayout.error = getString(R.string.dictionary_error_required)
+            binding.wordSearchInputLayout.error = getString(R.string.word_error_required)
             return
         }
         binding.wordSearchInputLayout.error = null
 
         viewLifecycleOwner.lifecycleScope.launch {
             showLoading(true)
-            val result = runCatching { dictionarySearchProvider.search(query) }
+            val result = runCatching { wordSearchProvider.search(query) }
             showLoading(false)
 
             result.onSuccess { grouped ->
@@ -395,17 +394,17 @@ class DictionaryAddFragment : Fragment() {
                 if (!hasEntries) {
                     groups.clear()
                     refreshGroups()
-                    updateEmptyState(getString(R.string.dictionary_empty_results))
+                    updateEmptyState(getString(R.string.word_empty_results))
                 } else {
                     existingEntry = null
                     binding.deleteWordButton.isVisible = false
                     groups.clear()
-                    grouped.filter { it.isNotEmpty() }.forEachIndexed { index, dictionaries ->
-                        val baseEntry = dictionaries.first()
-                        val items = dictionaries.map { dictionary ->
-                            DictionaryEditItem.fromWord(dictionary.copy(id = 0))
+                    grouped.filter { it.isNotEmpty() }.forEachIndexed { index, word ->
+                        val baseEntry = word.first()
+                        val items = word.map { word ->
+                            WordEditItem.fromWord(word.copy(id = 0))
                         }.toMutableList()
-                        groups += DictionaryEditGroup(
+                        groups += WordEditGroup(
                             baseWordId = baseEntry.baseWordId,
                             level = baseEntry.level,
                             items = items,
@@ -413,22 +412,22 @@ class DictionaryAddFragment : Fragment() {
                         )
                     }
                     if (groups.isEmpty()) {
-                        updateEmptyState(getString(R.string.dictionary_empty_results))
+                        updateEmptyState(getString(R.string.word_empty_results))
                     } else {
                         refreshGroups()
                         binding.wordGroupsRecyclerView.scrollToPosition(0)
                     }
                 }
             }.onFailure {
-                Toast.makeText(requireContext(), getString(R.string.dictionary_error_state), Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.word_error_state), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun addGroup() {
         val shouldExpand = groups.isEmpty()
-        val group = DictionaryEditGroup(
-            items = mutableListOf(DictionaryEditItem()),
+        val group = WordEditGroup(
+            items = mutableListOf(WordEditItem()),
             isExpanded = shouldExpand
         )
         groups += group
@@ -458,7 +457,7 @@ class DictionaryAddFragment : Fragment() {
         binding.wordGroupsRecyclerView.isVisible = !isLoading && groups.isNotEmpty()
         binding.wordEmptyStateTextView.isVisible = isEmpty
         if (isEmpty) {
-            binding.wordEmptyStateTextView.text = message ?: getString(R.string.dictionary_empty_results)
+            binding.wordEmptyStateTextView.text = message ?: getString(R.string.word_empty_results)
         }
         if (entryId == null) {
             binding.addGroupButton.isVisible = !isLoading
@@ -511,10 +510,10 @@ class DictionaryAddFragment : Fragment() {
     }
 
     companion object {
-        private const val ARG_ENTRY_ID = "arg_dictionary_entry_id"
+        private const val ARG_ENTRY_ID = "arg_word_entry_id"
 
-        fun newInstance(entryId: Int? = null): DictionaryAddFragment {
-            return DictionaryAddFragment().apply {
+        fun newInstance(entryId: Int? = null): WordAddFragment {
+            return WordAddFragment().apply {
                 arguments = Bundle().apply {
                     entryId?.let { putInt(ARG_ENTRY_ID, it) }
                 }

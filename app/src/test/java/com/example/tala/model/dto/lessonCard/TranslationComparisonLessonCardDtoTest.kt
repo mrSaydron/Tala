@@ -52,7 +52,7 @@ class TranslationComparisonLessonCardDtoTest {
         val dto = TranslationComparisonLessonCardDto.fromProgress(
             lessonId = 42,
             progresses = listOf(progressOne, progressTwo),
-            dictionaries = dictionaries
+            words = dictionaries
         )
 
         assertEquals(42, dto.lessonId)

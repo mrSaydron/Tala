@@ -1,32 +1,32 @@
 package com.example.tala.service
 
 import com.example.tala.entity.word.Word
-import com.example.tala.entity.word.DictionaryLevel
+import com.example.tala.entity.word.WordLevel
 import com.example.tala.entity.word.PartOfSpeech
 import com.example.tala.entity.word.TagType
 import com.example.tala.integration.dictionary.YandexDictionaryApi
 import com.example.tala.integration.dictionary.dto.Definition
 import com.example.tala.integration.dictionary.dto.Translation
 
-class YandexDictionarySearchProvider(
+class YandexWordSearchProvider(
     private val api: YandexDictionaryApi = ApiClient.yandexDictionaryApi,
     private val apiKey: String = YandexDictionaryApi.YANDEX_API_KEY,
-    private val fallbackLevel: DictionaryLevel? = null,
-) : DictionarySearchProvider {
+    private val fallbackLevel: WordLevel? = null,
+) : WordSearchProvider {
 
-    override fun detectLanguage(term: String): DictionarySearchLanguage {
+    override fun detectLanguage(term: String): WordSearchLanguage {
         val trimmed = term.trim()
-        if (trimmed.isEmpty()) return DictionarySearchLanguage.UNKNOWN
+        if (trimmed.isEmpty()) return WordSearchLanguage.UNKNOWN
 
         val hasCyrillic = trimmed.any { it in CYRILLIC_CHARS }
         val hasLatin = trimmed.any { it in LATIN_CHARS }
 
         return when {
-            hasCyrillic && !hasLatin -> DictionarySearchLanguage.RUSSIAN
-            hasLatin && !hasCyrillic -> DictionarySearchLanguage.ENGLISH
-            hasLatin -> DictionarySearchLanguage.ENGLISH
-            hasCyrillic -> DictionarySearchLanguage.RUSSIAN
-            else -> DictionarySearchLanguage.UNKNOWN
+            hasCyrillic && !hasLatin -> WordSearchLanguage.RUSSIAN
+            hasLatin && !hasCyrillic -> WordSearchLanguage.ENGLISH
+            hasLatin -> WordSearchLanguage.ENGLISH
+            hasCyrillic -> WordSearchLanguage.RUSSIAN
+            else -> WordSearchLanguage.UNKNOWN
         }
     }
 
@@ -78,7 +78,7 @@ class YandexDictionarySearchProvider(
 
         return definition.tr.map { translation ->
             val pos = translation.pos.ifBlank { definition.pos }
-            buildDictionaryEntry(
+            buildWordEntry(
                 word = definition.text,
                 translation = translation.text,
                 partOfSpeech = mapPartOfSpeech(pos),
@@ -95,7 +95,7 @@ class YandexDictionarySearchProvider(
 
         return definition.tr.map { translation ->
             val pos = translation.pos.ifBlank { definition.pos }
-            buildDictionaryEntry(
+            buildWordEntry(
                 word = translation.text,
                 translation = definition.text,
                 partOfSpeech = mapPartOfSpeech(pos),
@@ -107,7 +107,7 @@ class YandexDictionarySearchProvider(
         }
     }
 
-    private fun buildDictionaryEntry(
+    private fun buildWordEntry(
         word: String,
         translation: String,
         partOfSpeech: PartOfSpeech,
@@ -166,9 +166,9 @@ class YandexDictionarySearchProvider(
         return parts.takeIf { it.isNotEmpty() }?.joinToString("\n")
     }
 
-    private fun wrapAsSingleGroup(dictionaries: List<Word>): List<List<Word>> {
-        if (dictionaries.isEmpty()) return emptyList()
-        return listOf(dictionaries)
+    private fun wrapAsSingleGroup(words: List<Word>): List<List<Word>> {
+        if (words.isEmpty()) return emptyList()
+        return listOf(words)
     }
 
     companion object {

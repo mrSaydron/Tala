@@ -1,19 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingVertical="12dp"
-    android:paddingHorizontal="8dp">
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="@color/lesson_card_bg"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
+    app:cardUseCompatPadding="true">
 
-    <TextView
-        android:id="@+id/lessonNameTextView"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textStyle="bold"
-        tools:text="Lesson name" />
+        android:minHeight="50dp"
+        android:paddingHorizontal="11dp"
+        android:paddingVertical="5dp">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/lessonNameTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/black"
+            android:textStyle="normal"
+            app:layout_constraintEnd_toStartOf="@id/lessonEditButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Неправильные глаголы" />
 
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/lessonStatusChipGroup"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="visible"
+            app:chipSpacingHorizontal="4dp"
+            app:chipSpacingVertical="0dp"
+            app:layout_constraintEnd_toStartOf="@id/lessonEditButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lessonNameTextView"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:singleLine="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/lessonNewChip"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="16dp"
+                android:maxWidth="64dp"
+                android:textColor="@color/status_new_text"
+                android:textSize="10sp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:chipBackgroundColor="@color/white"
+                app:chipCornerRadius="8dp"
+                app:chipIconTint="@color/status_new_text"
+                app:chipMinHeight="16dp"
+                tools:text="10 - новые" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/lessonReturnedChip"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="16dp"
+                android:maxWidth="103dp"
+                android:textColor="@color/status_reset_text"
+                android:textSize="10sp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:chipBackgroundColor="@color/white"
+                app:chipCornerRadius="8dp"
+                app:chipIconTint="@color/status_reset_text"
+                app:chipMinHeight="16dp"
+                tools:text="5 - возвращенные" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/lessonLearningChip"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="16dp"
+                android:maxWidth="103dp"
+                android:textColor="@color/status_in_progress_text"
+                android:textSize="10sp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:chipBackgroundColor="@color/white"
+                app:chipCornerRadius="8dp"
+                app:chipIconTint="@color/status_in_progress_text"
+                app:chipMinHeight="16dp"
+                tools:text="154 - на обучении" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/lessonEditButton"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:backgroundTint="@android:color/transparent"
+            android:contentDescription="@string/lesson_edit_button"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:padding="0dp"
+            app:icon="@drawable/ic_more_vert"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="18dp"
+            app:iconTint="@color/black"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:rippleColor="@color/white" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -6,10 +6,7 @@ import com.example.tala.entity.word.Word
 import com.example.tala.entity.word.WordRepository
 import com.example.tala.entity.lessonprogress.LessonProgress
 import com.example.tala.entity.lessonprogress.LessonProgressRepository
-import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.LessonCardDto
-import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
-import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
 import com.example.tala.model.enums.CardTypeEnum
 import com.example.tala.model.enums.StatusEnum
@@ -27,7 +24,7 @@ class TranslationComparisonLessonCardTypeService(
 
     override suspend fun createProgress(lessonId: Int, words: List<Word>) {
         withContext(Dispatchers.IO) {
-            val existingDictionaryIds = lessonProgressRepository
+            val existingWordIds = lessonProgressRepository
                 .getByLessonCardType(lessonId, CardTypeEnum.TRANSLATION_COMPARISON)
                 .mapNotNull { it.wordId }
                 .toSet()
@@ -35,7 +32,7 @@ class TranslationComparisonLessonCardTypeService(
             val candidates = words
                 .asSequence()
                 .filter { it.baseWordId == null || it.baseWordId == it.id }
-                .filterNot { existingDictionaryIds.contains(it.id) }
+                .filterNot { existingWordIds.contains(it.id) }
                 .toList()
 
             if (candidates.isEmpty()) {
@@ -43,11 +40,11 @@ class TranslationComparisonLessonCardTypeService(
             }
 
             val createdAt = timeProvider()
-            val progressEntries = candidates.map { dictionary ->
+            val progressEntries = candidates.map { word ->
                 LessonProgress(
                     lessonId = lessonId,
                     cardType = CardTypeEnum.TRANSLATION_COMPARISON,
-                    wordId = dictionary.id,
+                    wordId = word.id,
                     nextReviewDate = createdAt,
                     intervalMinutes = MINUTES_IN_DAY,
                     ef = DEFAULT_EF,
@@ -77,7 +74,7 @@ class TranslationComparisonLessonCardTypeService(
             TranslationComparisonLessonCardDto.fromProgress(
                 lessonId = group.first().lessonId,
                 progresses = group,
-                dictionaries = words
+                words = words
             )
         }
     }
@@ -117,7 +114,7 @@ class TranslationComparisonLessonCardTypeService(
             TranslationComparisonLessonCardDto.fromProgress(
                 lessonId = dto.lessonId,
                 progresses = updatedProgresses,
-                dictionaries = words
+                words = words
             )
         } else {
             null

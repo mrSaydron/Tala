@@ -10,13 +10,14 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.example.tala.MainActivity
 import com.example.tala.R
 import com.example.tala.databinding.FragmentLessonListBinding
+import com.example.tala.entity.lesson.Lesson
 import com.example.tala.entity.lesson.LessonViewModel
 import com.example.tala.fragment.adapter.LessonListAdapter
-import com.example.tala.fragment.CollectionListFragment
-import com.example.tala.fragment.DictionaryListFragment
-import com.example.tala.fragment.SettingsFragment
+import com.example.tala.model.enums.StatusEnum
+import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
 
 class LessonListFragment : Fragment() {
@@ -26,6 +27,9 @@ class LessonListFragment : Fragment() {
 
     private lateinit var lessonViewModel: LessonViewModel
     private lateinit var adapter: LessonListAdapter
+
+    private val lessonCardService: LessonCardService
+        get() = MainActivity.lessonCardService
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,13 +45,18 @@ class LessonListFragment : Fragment() {
 
         lessonViewModel = ViewModelProvider(requireActivity())[LessonViewModel::class.java]
 
-        adapter = LessonListAdapter { lesson ->
-            openLesson(lesson.id)
-        }
+        adapter = LessonListAdapter(
+            onItemClick = { lesson ->
+                openLesson(lesson.id)
+            },
+            onEditClick = { lesson ->
+                openEditLesson(lesson.id)
+            }
+        )
         binding.lessonRecyclerView.adapter = adapter
         binding.lessonRecyclerView.itemAnimator = null
 
-        binding.lessonAddButton.setOnClickListener {
+        binding.lessonAddFab.setOnClickListener {
             val fragment = LessonAddFragment()
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)
@@ -97,7 +106,22 @@ class LessonListFragment : Fragment() {
                 lessonViewModel.getAll()
             }.onSuccess { lessons ->
                 val sorted = lessons.sortedBy { it.name.lowercase() }
-                adapter.submitList(sorted)
+                
+                // Загружаем статистику для каждого урока
+                val lessonsWithStats = sorted.map { lesson ->
+                    val stats = runCatching {
+                        lessonCardService.countCardsByStatus(lesson.id)
+                    }.getOrElse { emptyMap() }
+                    
+                    LessonWithStats(
+                        lesson = lesson,
+                        newCount = stats[StatusEnum.NEW] ?: 0,
+                        returnedCount = stats[StatusEnum.PROGRESS_RESET] ?: 0,
+                        learningCount = stats[StatusEnum.IN_PROGRESS] ?: 0
+                    )
+                }
+                
+                adapter.submitList(lessonsWithStats)
                 binding.lessonRecyclerView.isVisible = sorted.isNotEmpty()
                 binding.lessonListEmptyState.isVisible = sorted.isEmpty()
             }.onFailure {
@@ -110,6 +134,13 @@ class LessonListFragment : Fragment() {
             setLoading(false)
         }
     }
+
+    data class LessonWithStats(
+        val lesson: Lesson,
+        val newCount: Int,
+        val returnedCount: Int,
+        val learningCount: Int
+    )
 
     private fun setLoading(isLoading: Boolean) {
         binding.lessonListProgressBar.isVisible = isLoading
@@ -124,7 +155,7 @@ class LessonListFragment : Fragment() {
     }
 
     private fun openWord() {
-        val fragment = DictionaryListFragment.newInstance()
+        val fragment = WordListFragment.newInstance()
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
@@ -141,6 +172,15 @@ class LessonListFragment : Fragment() {
 
     private fun openSettings() {
         val fragment = SettingsFragment()
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openEditLesson(lessonId: Int) {
+        val fragment = LessonAddFragment()
+        // TODO: Передать lessonId для редактирования, когда LessonAddFragment будет поддерживать редактирование
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)

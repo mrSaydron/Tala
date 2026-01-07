@@ -74,6 +74,27 @@ class LessonCardService(
         return result
     }
 
+    /**
+     * Возвращает количество карточек в каждом статусе для переданного списка.
+     * Карточки с неизвестным статусом пропускаются.
+     */
+    fun countCardsByStatus(cards: List<LessonCardDto>): Map<StatusEnum, Int> {
+        if (cards.isEmpty()) return emptyMap()
+        return cards.mapNotNull { it.statusAndNextReview()?.first }
+            .groupingBy { it }
+            .eachCount()
+    }
+
+    /**
+     * Возвращает количество карточек в каждом статусе для указанного урока.
+     * Использует {@link #getCards(Int)} для получения актуального набора карточек.
+     */
+    suspend fun countCardsByStatus(lessonId: Int): Map<StatusEnum, Int> {
+        val cards = getCards(lessonId)
+        if (cards.isEmpty()) return emptyMap()
+        return countCardsByStatus(cards)
+    }
+
     private suspend fun filterCardTypesByConditions(
         lessonId: Int,
         lessonCardTypes: List<LessonCardType>

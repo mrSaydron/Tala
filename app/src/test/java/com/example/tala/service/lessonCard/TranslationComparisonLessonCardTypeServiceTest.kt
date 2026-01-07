@@ -18,7 +18,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -70,7 +69,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
         val card = TranslationComparisonLessonCardDto.fromProgress(
             lessonId = 1,
             progresses = progresses,
-            dictionaries = emptyMap()
+            words = emptyMap()
         )
         val matches = card.items.map { CardAnswer.Comparison.Match(it.progressId, it.wordId) }
         val result = service.answerResult(card, CardAnswer.Comparison(matches), 5, NOW)
@@ -92,7 +91,7 @@ class TranslationComparisonLessonCardTypeServiceTest {
         val card = TranslationComparisonLessonCardDto.fromProgress(
             lessonId = 1,
             progresses = progresses,
-            dictionaries = emptyMap()
+            words = emptyMap()
         )
         val matches = card.items.mapIndexed { index, item ->
             val selected = if (index == 0) item.wordId?.plus(100) else item.wordId

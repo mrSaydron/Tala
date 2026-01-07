@@ -42,15 +42,15 @@ data class EnterWordLessonCardDto(
     companion object {
         fun fromProgress(
             progress: LessonProgress,
-            dictionary: Word?
+            word: Word?
         ): EnterWordLessonCardDto = EnterWordLessonCardDto(
             progressId = progress.id,
             lessonId = progress.lessonId,
             wordId = progress.wordId,
-            word = dictionary?.word ?: "",
-            translation = dictionary?.translation ?: "",
-            hint = dictionary?.hint,
-            imagePath = dictionary?.imagePath,
+            word = word?.word ?: "",
+            translation = word?.translation ?: "",
+            hint = word?.hint,
+            imagePath = word?.imagePath,
             status = progress.status,
             intervalMinutes = progress.intervalMinutes,
             ef = progress.ef,
