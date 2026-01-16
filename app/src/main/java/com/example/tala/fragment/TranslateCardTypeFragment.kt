@@ -1,11 +1,14 @@
 package com.example.tala.fragment
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -32,6 +35,16 @@ class TranslateCardTypeFragment : Fragment() {
 
     private val info: WordCardInfo
         get() = dto.cardInfo
+
+    private val statsNewCount: Int by lazy {
+        requireArguments().getInt(ARG_STATS_NEW_COUNT, 0)
+    }
+    private val statsReturnedCount: Int by lazy {
+        requireArguments().getInt(ARG_STATS_RETURNED_COUNT, 0)
+    }
+    private val statsInProgressCount: Int by lazy {
+        requireArguments().getInt(ARG_STATS_IN_PROGRESS_COUNT, 0)
+    }
 
     private var isSubmitting: Boolean = false
     private var answerRevealed: Boolean = false
@@ -61,6 +74,7 @@ class TranslateCardTypeFragment : Fragment() {
 
         setupHint()
         loadImage(blurred = true)
+        updateStats()
 
         binding.translateCardHardButton.text = getString(
             R.string.translate_card_answer_hard
@@ -124,14 +138,41 @@ class TranslateCardTypeFragment : Fragment() {
         }
     }
 
+    private fun updateStats() {
+        binding.translateCardNewCount.text = statsNewCount.toString()
+        binding.translateCardReturnedCount.text = statsReturnedCount.toString()
+        binding.translateCardInProgressCount.text = statsInProgressCount.toString()
+
+        clearStatsHighlight()
+        when (dto.status) {
+            StatusEnum.NEW -> highlightStat(binding.translateCardNewCount, R.color.status_new_bg)
+            StatusEnum.PROGRESS_RESET -> highlightStat(binding.translateCardReturnedCount, R.color.status_reset_bg)
+            StatusEnum.IN_PROGRESS -> highlightStat(binding.translateCardInProgressCount, R.color.status_in_progress_bg)
+            else -> Unit
+        }
+    }
+
+    private fun clearStatsHighlight() {
+        ViewCompat.setBackgroundTintList(binding.translateCardNewCount, null)
+        ViewCompat.setBackgroundTintList(binding.translateCardReturnedCount, null)
+        ViewCompat.setBackgroundTintList(binding.translateCardInProgressCount, null)
+    }
+
+    private fun highlightStat(target: View, colorRes: Int) {
+        val color = ContextCompat.getColor(requireContext(), colorRes)
+        ViewCompat.setBackgroundTintList(target, ColorStateList.valueOf(color))
+    }
+
     private fun loadImage(blurred: Boolean) {
         val path = info.imagePath ?: dto.imagePath
         if (path.isNullOrBlank()) {
+            binding.translateCardImageContainer.visibility = View.GONE
             binding.translateCardImageView.visibility = View.GONE
             binding.translateCardImageView.setImageDrawable(null)
             return
         }
 
+        binding.translateCardImageContainer.visibility = View.VISIBLE
         binding.translateCardImageView.visibility = View.VISIBLE
         val request = Glide.with(this)
             .load(path)
@@ -227,6 +268,9 @@ class TranslateCardTypeFragment : Fragment() {
         const val RESULT_REVIEW_COMPLETED = "translate_card_result"
         const val RESULT_ARG_PROGRESS_ID = "progress_id"
         const val RESULT_ARG_QUALITY = "quality"
+        private const val ARG_STATS_NEW_COUNT = "stats_new_count"
+        private const val ARG_STATS_RETURNED_COUNT = "stats_returned_count"
+        private const val ARG_STATS_IN_PROGRESS_COUNT = "stats_in_progress_count"
 
         private const val QUALITY_HARD = 0
         private const val QUALITY_MEDIUM = 3
@@ -234,10 +278,18 @@ class TranslateCardTypeFragment : Fragment() {
         private const val HARD_INTERVAL_HINT = "<10 мин."
         private const val MINUTES_IN_DAY = 1440.0
 
-        fun newInstance(dto: TranslateLessonCardDto): TranslateCardTypeFragment {
+        fun newInstance(
+            dto: TranslateLessonCardDto,
+            newCount: Int,
+            returnedCount: Int,
+            inProgressCount: Int
+        ): TranslateCardTypeFragment {
             return TranslateCardTypeFragment().apply {
                 arguments = Bundle().apply {
-                putParcelable(ARG_CARD_DTO, dto)
+                    putParcelable(ARG_CARD_DTO, dto)
+                    putInt(ARG_STATS_NEW_COUNT, newCount)
+                    putInt(ARG_STATS_RETURNED_COUNT, returnedCount)
+                    putInt(ARG_STATS_IN_PROGRESS_COUNT, inProgressCount)
                 }
             }
         }

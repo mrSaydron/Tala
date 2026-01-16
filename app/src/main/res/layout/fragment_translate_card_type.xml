@@ -3,51 +3,66 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="16dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp">
+    android:layout_height="match_parent"
+    android:layout_margin="0dp"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="320dp"
-        android:padding="20dp">
+        android:layout_height="match_parent"
+        android:paddingBottom="24dp">
 
-        <ImageView
-            android:id="@+id/translateCardImageView"
+        <FrameLayout
+            android:id="@+id/translateCardImageContainer"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:contentDescription="@string/content_description_card_image"
-            android:scaleType="centerCrop"
+            android:layout_height="202dp"
+            android:clipToOutline="true"
             android:visibility="gone"
-            app:layout_constraintDimensionRatio="16:9"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="ContentDescription"
-            tools:visibility="visible"
-            tools:srcCompat="@tools:sample/backgrounds/scenic" />
+            tools:visibility="visible">
+
+            <ImageView
+                android:id="@+id/translateCardImageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/content_description_card_image"
+                android:scaleType="centerCrop"
+                tools:ignore="ContentDescription"
+                tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
+            <View
+                android:id="@+id/translateCardImageOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/translate_card_image_overlay"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no" />
+        </FrameLayout>
 
         <LinearLayout
             android:id="@+id/translateCardWordContainer"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center_vertical"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/translateCardImageView"
+            app:layout_constraintTop_toBottomOf="@id/translateCardImageContainer"
             tools:layout_editor_absoluteX="20dp">
 
             <TextView
                 android:id="@+id/translateCardWordTextView"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textStyle="bold"
+                android:gravity="center_vertical"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
                 tools:text="train" />
 
             <ImageButton
@@ -66,7 +81,9 @@
             android:id="@+id/translateCardHintTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="8dp"
             android:drawablePadding="6dp"
             android:drawableStart="@drawable/ic_info"
             android:gravity="center_vertical"
@@ -77,14 +94,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/translateCardWordContainer"
             app:drawableTint="?attr/colorOnSurfaceVariant"
-            tools:text="подсказка, что слово используется в значении 'поезд'" 
+            tools:text="подсказка, что слово используется в значении 'поезд'"
             tools:visibility="visible" />
 
         <TextView
             android:id="@+id/translateCardTranslationTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
             android:textStyle="bold"
             android:visibility="gone"
@@ -98,56 +118,135 @@
             android:id="@+id/translateCardShowAnswerButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="16dp"
             android:text="@string/translate_card_show_translation"
             android:textAllCaps="false"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:textColor="@android:color/black"
+            android:visibility="visible"
+            app:backgroundTint="@color/lesson_card_bg"
+            app:cornerRadius="24dp"
+            app:elevation="6dp"
+            app:icon="@drawable/ic_visibility"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@android:color/black"
+            app:layout_constraintBottom_toTopOf="@id/translateCardStatsContainer"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/translateCardTranslationTextView"
-            tools:layout_editor_absoluteY="400dp" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <LinearLayout
             android:id="@+id/translateCardAnswerButtonsGroup"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="16dp"
             android:gravity="center"
             android:orientation="horizontal"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/translateCardStatsContainer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/translateCardTranslationTextView"
             tools:visibility="visible">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/translateCardHardButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="2"
+                android:minWidth="102dp"
+                android:paddingVertical="12dp"
                 android:text="@string/translate_card_answer_hard"
-                android:textAllCaps="false" />
+                android:textAllCaps="false"
+                android:textColor="@android:color/black"
+                app:backgroundTint="@color/translate_card_hard_bg"
+                app:cornerRadius="21dp"
+                app:elevation="6dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/translateCardMediumButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="2"
+                android:minWidth="102dp"
+                android:paddingVertical="12dp"
                 android:text="@string/translate_card_answer_medium"
-                android:textAllCaps="false" />
+                android:textAllCaps="false"
+                android:textColor="@android:color/black"
+                app:backgroundTint="@color/translate_card_medium_bg"
+                app:cornerRadius="21dp"
+                app:elevation="6dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/translateCardEasyButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="2"
+                android:minWidth="102dp"
+                android:paddingVertical="12dp"
                 android:text="@string/translate_card_answer_easy"
-                android:textAllCaps="false" />
-    </LinearLayout>
+                android:textAllCaps="false"
+                android:textColor="@android:color/black"
+                app:backgroundTint="@color/translate_card_easy_bg"
+                app:cornerRadius="21dp"
+                app:elevation="6dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/translateCardStatsContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <TextView
+                android:id="@+id/translateCardNewCount"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/translate_card_stat_background"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                tools:text="3" />
+
+            <TextView
+                android:id="@+id/translateCardReturnedCount"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/translate_card_stat_background"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                tools:text="1" />
+
+            <TextView
+                android:id="@+id/translateCardInProgressCount"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/translate_card_stat_background"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                tools:text="8" />
+        </LinearLayout>
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/translateCardLoadingIndicator"

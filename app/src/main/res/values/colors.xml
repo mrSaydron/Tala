@@ -14,4 +14,7 @@
     <color name="comparison_bg_incorrect">#FFCDD2</color>
     <color name="lesson_nav_bg">#7EE3F7</color>
     <color name="lesson_card_bg">#7EE3F7</color>
+    <color name="translate_card_hard_bg">#F4D4D1</color>
+    <color name="translate_card_medium_bg">#7EE3F7</color>
+    <color name="translate_card_easy_bg">#7EE3F7</color>
 </resources>

@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +15,7 @@ import com.example.tala.model.dto.lessonCard.TranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.ReverseTranslateLessonCardDto
 import com.example.tala.model.dto.lessonCard.EnterWordLessonCardDto
 import com.example.tala.model.dto.lessonCard.TranslationComparisonLessonCardDto
+import com.example.tala.model.enums.StatusEnum
 import com.example.tala.service.lessonCard.LessonCardService
 import kotlinx.coroutines.launch
 
@@ -43,26 +42,6 @@ class LessonFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.lessonToolbar.setNavigationIcon(R.drawable.ic_expand_more)
-        binding.lessonToolbar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
-
-        val initialPaddingLeft = binding.root.paddingLeft
-        val initialPaddingTop = binding.root.paddingTop
-        val initialPaddingRight = binding.root.paddingRight
-        val initialPaddingBottom = binding.root.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(
-                initialPaddingLeft,
-                initialPaddingTop + systemBars.top,
-                initialPaddingRight,
-                initialPaddingBottom + systemBars.bottom
-            )
-            WindowInsetsCompat.CONSUMED
-        }
 
         loadLessonCards()
         childFragmentManager.setFragmentResultListener(
@@ -91,14 +70,20 @@ class LessonFragment : Fragment() {
                 return@launch
             }
 
-            displayCard(nextCard)
+            val statusCounts = lessonCardService.countCardsByStatus(cards)
+            displayCard(nextCard, statusCounts)
         }
     }
 
-    private fun displayCard(card: LessonCardDto) {
+    private fun displayCard(card: LessonCardDto, statusCounts: Map<StatusEnum, Int>) {
         binding.lessonEmptyStateTextView.isVisible = false
         val fragment = when (card) {
-            is TranslateLessonCardDto -> TranslateCardTypeFragment.newInstance(card)
+            is TranslateLessonCardDto -> TranslateCardTypeFragment.newInstance(
+                card,
+                statusCounts[StatusEnum.NEW] ?: 0,
+                statusCounts[StatusEnum.PROGRESS_RESET] ?: 0,
+                statusCounts[StatusEnum.IN_PROGRESS] ?: 0
+            )
             is ReverseTranslateLessonCardDto -> ReverseTranslateCardTypeFragment.newInstance(card)
             is EnterWordLessonCardDto -> EnterWordCardTypeFragment.newInstance(card)
             is TranslationComparisonLessonCardDto -> TranslationComparisonCardTypeFragment.newInstance(card)
